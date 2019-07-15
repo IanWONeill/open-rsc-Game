@@ -1720,15 +1720,18 @@ public final class Admins implements CommandListener {
 			}
 			player.message(j.getPetOwnerA2() + "");
 			player.message(j.getPetNpc() + "");
-		} else if (cmd.equalsIgnoreCase("petinfo")) {
+		} else if (cmd.equalsIgnoreCase("petfatigue")) {
 			if (args.length > 1) {
 				player.message(badSyntaxPrefix + cmd.toUpperCase() + "");
 				return;
 			}
 			Npc j;
 			j = world.getNpc(203, player.getX() - 5, player.getX() + 5, player.getY() - 10, player.getY() + 10);
-			player.message(player.getPetFatigue() + "");
-			player.message(j.getPetNpcType() + "");
+			player.message(player.getPet0Fatigue() + "");
+			player.message(player.getPet1Fatigue() + "");
+			player.message(player.getPet2Fatigue() + "");
+			player.message(player.getPet3Fatigue() + "");
+			player.message(player.getPet4Fatigue() + "");
 		} else if (cmd.equalsIgnoreCase("setnpcstats")) {
 			if (args.length < 5) {
 				player.message(badSyntaxPrefix + cmd.toUpperCase() + " [npc id] [str lvl]");

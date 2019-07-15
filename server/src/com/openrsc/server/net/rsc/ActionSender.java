@@ -373,10 +373,52 @@ public class ActionSender {
 		s.writeShort(player.getFatigue() / 750);
 		player.write(s.toPacket());
 	}
-	public static void sendPetFatigue(Player player) {
+	public static void sendPet0Fatigue(Player player) {
 		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
-		s.setID(Opcode.SEND_PET_FATIGUE.opcode);
-		s.writeShort(player.getPetFatigue() / 750);
+		s.setID(Opcode.SEND_PET0_FATIGUE.opcode);
+		s.writeShort(player.getPet0Fatigue() / 750);
+		player.write(s.toPacket());
+	}
+	public static void sendPet1Fatigue(Player player) {
+		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
+		s.setID(Opcode.SEND_PET1_FATIGUE.opcode);
+		s.writeShort(player.getPet1Fatigue() / 750);
+		player.write(s.toPacket());
+	}
+	public static void sendPet2Fatigue(Player player) {
+		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
+		s.setID(Opcode.SEND_PET2_FATIGUE.opcode);
+		s.writeShort(player.getPet2Fatigue() / 750);
+		player.write(s.toPacket());
+	}
+	public static void sendPet3Fatigue(Player player) {
+		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
+		s.setID(Opcode.SEND_PET3_FATIGUE.opcode);
+		s.writeShort(player.getPet3Fatigue() / 750);
+		player.write(s.toPacket());
+	}
+	public static void sendPet4Fatigue(Player player) {
+		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
+		s.setID(Opcode.SEND_PET4_FATIGUE.opcode);
+		s.writeShort(player.getPet4Fatigue() / 750);
+		player.write(s.toPacket());
+	}
+	public static void sendPetOut(Player player) {
+		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
+		s.setID(Opcode.SEND_PETOUT.opcode);
+		s.writeShort(player.getPetOut());
+		player.write(s.toPacket());
+	}
+	public static void sendPetInCombat(Player player) {
+		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
+		s.setID(Opcode.SEND_PETINCOMBAT.opcode);
+		s.writeShort(player.getPetInCombat());
+		player.write(s.toPacket());
+	}
+	public static void sendBeingHealed(Player player) {
+		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
+		s.setID(Opcode.SEND_BEINGHEALED.opcode);
+		s.writeShort(player.getBeingHealed());
 		player.write(s.toPacket());
 	}
 	public static void sendKills2(Player player) {
@@ -796,6 +838,14 @@ public class ActionSender {
 		}
 		player.write(s.toPacket());
 	}
+	public static void sendPets(Player player, boolean[] activatedPets) {
+		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
+		s.setID(Opcode.SEND_PETS_ACTIVE.opcode);
+		for (boolean petActive : activatedPets) {
+			s.writeByte((byte) (petActive ? 1 : 0));
+		}
+		player.write(s.toPacket());
+	}
 
 	private static void sendPrivacySettings(Player player) {
 		com.openrsc.server.net.PacketBuilder s = new com.openrsc.server.net.PacketBuilder();
@@ -1195,8 +1245,13 @@ public class ActionSender {
 				sendStats(p);
 				sendEquipmentStats(p);
 				sendFatigue(p);
-				sendPetFatigue(p);
+				sendPet2Fatigue(p);
+				sendPet0Fatigue(p);
+				sendPet1Fatigue(p);
+				sendPet3Fatigue(p);
+				sendPet4Fatigue(p);
 				sendKills2(p);
+				sendBeingHealed(p);
 
 				sendCombatStyle(p);
 				sendIronManMode(p);
@@ -1382,6 +1437,8 @@ public class ActionSender {
 		SEND_SYSTEM_UPDATE(52),
 		SEND_INVENTORY(53),
 		SEND_ELIXIR(54),
+		SEND_PETOUT(55),
+		SEND_PETINCOMBAT(62),
 		SEND_APPEARANCE_CHANGE(59),
 		SEND_DEATH(83),
 		SEND_STOPSLEEP(84),
@@ -1397,8 +1454,13 @@ public class ActionSender {
 		SEND_CLAN(112),
 		SEND_IRONMAN(113),
 		SEND_KILLS2(147),
+		SEND_BEINGHEALED(85),
 		SEND_FATIGUE(114),
-		SEND_PET_FATIGUE(140),
+		SEND_PET2_FATIGUE(140),
+		SEND_PET1_FATIGUE(144),
+		SEND_PET0_FATIGUE(138),
+		SEND_PET3_FATIGUE(148),
+		SEND_PET4_FATIGUE(150),
 		SEND_ON_BLACK_HOLE(115),
 		SEND_SLEEPSCREEN(117),
 		SEND_KILL_ANNOUNCEMENT(118),
@@ -1431,6 +1493,7 @@ public class ActionSender {
 		SEND_BANK_CLOSE(203),
 		SEND_PLAY_SOUND(204),
 		SEND_PRAYERS_ACTIVE(206),
+		SEND_PETS_ACTIVE(207),
 		SEND_DUEL_ACCEPTED(210),
 		SEND_BOX(222),
 		SEND_OPEN_RECOVERY(224),

@@ -11,6 +11,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.entity.update.Bubble;
 import com.openrsc.server.model.entity.update.ChatMessage;
+import com.openrsc.server.model.entity.update.Heal;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.entity.update.UpdateFlags;
@@ -281,6 +282,7 @@ public final class GameStateUpdater {
 		ArrayDeque<ChatMessage> chatMessagesNeedingDisplayed = new ArrayDeque<ChatMessage>();
 		ArrayDeque<Projectile> projectilesNeedingDisplayed = new ArrayDeque<Projectile>();
 		ArrayDeque<Damage> playersNeedingDamageUpdate = new ArrayDeque<Damage>();
+		ArrayDeque<Heal> playersNeedingHealUpdate = new ArrayDeque<Heal>();
 		ArrayDeque<Player> playersNeedingAppearanceUpdate = new ArrayDeque<Player>();
 
 		if (player.getUpdateFlags().hasBubble()) {
@@ -298,6 +300,10 @@ public final class GameStateUpdater {
 		if (player.getUpdateFlags().hasTakenDamage()) {
 			Damage damage = player.getUpdateFlags().getDamage().get();
 			playersNeedingDamageUpdate.add(damage);
+		}
+		if (player.getUpdateFlags().hasTakenHeal()) {
+			Heal heal = player.getUpdateFlags().getHeal().get();
+			playersNeedingHealUpdate.add(heal);
 		}
 		if (player.getUpdateFlags().hasAppearanceChanged()) {
 			playersNeedingAppearanceUpdate.add(player);
@@ -322,21 +328,25 @@ public final class GameStateUpdater {
 				Damage damage = updateFlags.getDamage().get();
 				playersNeedingDamageUpdate.add(damage);
 			}
+			if (updateFlags.hasTakenHeal()) {
+				Heal heal = updateFlags.getHeal().get();
+				playersNeedingHealUpdate.add(heal);
+			}
 			if (player.requiresAppearanceUpdateFor(otherPlayer))
 				playersNeedingAppearanceUpdate.add(otherPlayer);
 
 		}
 		issuePlayerAppearanceUpdatePacket(player, bubblesNeedingDisplayed, chatMessagesNeedingDisplayed,
-			projectilesNeedingDisplayed, playersNeedingDamageUpdate, playersNeedingAppearanceUpdate);
+			projectilesNeedingDisplayed, playersNeedingDamageUpdate, playersNeedingHealUpdate, playersNeedingAppearanceUpdate);
 	}
 
 	private static void issuePlayerAppearanceUpdatePacket(Player player, Queue<Bubble> bubblesNeedingDisplayed,
 														  Queue<ChatMessage> chatMessagesNeedingDisplayed, Queue<Projectile> projectilesNeedingDisplayed,
-														  Queue<Damage> playersNeedingDamageUpdate, Queue<Player> playersNeedingAppearanceUpdate) {
+														  Queue<Damage> playersNeedingDamageUpdate, Queue<Heal> playersNeedingHealUpdate, Queue<Player> playersNeedingAppearanceUpdate) {
 		if (player.loggedIn()) {
 			int updateSize = bubblesNeedingDisplayed.size() + chatMessagesNeedingDisplayed.size()
 				+ playersNeedingDamageUpdate.size() + projectilesNeedingDisplayed.size()
-				+ playersNeedingAppearanceUpdate.size();
+				+ playersNeedingAppearanceUpdate.size() + playersNeedingHealUpdate.size();;
 
 			if (updateSize > 0) {
 				PacketBuilder appearancePacket = new PacketBuilder();
@@ -427,6 +437,14 @@ public final class GameStateUpdater {
 					appearancePacket.writeByte(playerNeedingAppearanceUpdate.stateIsInvulnerable() ? 1 : 0);
 					appearancePacket.writeByte(playerNeedingAppearanceUpdate.getGroupID());
 					appearancePacket.writeInt(playerNeedingAppearanceUpdate.getIcon());
+				}
+				Heal playerNeedingHits2Update;
+				while ((playerNeedingHits2Update = playersNeedingHealUpdate.poll()) != null) {
+					appearancePacket.writeShort(playerNeedingHits2Update.getIndex());
+					appearancePacket.writeByte((byte) 8);
+					appearancePacket.writeByte((byte) playerNeedingHits2Update.getHeal());
+					appearancePacket.writeByte((byte) playerNeedingHits2Update.getCurHits());
+					appearancePacket.writeByte((byte) playerNeedingHits2Update.getMaxHits());
 				}
 
 				player.write(appearancePacket.toPacket());

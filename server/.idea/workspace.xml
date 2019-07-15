@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="ba4be148-2f97-4560-904a-6fe916a89f14" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../client/.idea/client.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../client/.idea/client.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../client/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../client/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../client/Cache/ip.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../client/Cache/ip.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../client/src/com/openrsc/client/entityhandling/EntityHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../client/src/com/openrsc/client/entityhandling/EntityHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../client/src/orsc/PacketHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../client/src/orsc/PacketHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../client/src/orsc/enumerations/MenuItemAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/../client/src/orsc/enumerations/MenuItemAction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../client/src/orsc/mudclient.java" beforeDir="false" afterPath="$PROJECT_DIR$/../client/src/orsc/mudclient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/default.conf" beforeDir="false" afterPath="$PROJECT_DIR$/default.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/com/openrsc/server/plugins/commands/Admins.java" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/com/openrsc/server/plugins/commands/Admins.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/com/openrsc/server/plugins/itemactions/pets/BabyBlueDragonCrystal.java" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/com/openrsc/server/plugins/itemactions/pets/BabyBlueDragonCrystal.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/com/openrsc/server/plugins/npcs/Bankers.java" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/com/openrsc/server/plugins/npcs/Bankers.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/GameStateUpdater.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/GameStateUpdater.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/event/rsc/impl/RangeEventNpc.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/event/rsc/impl/RangeEventNpc.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/external/EntityHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/external/EntityHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/model/PathValidation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/model/PathValidation.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/model/Skills.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/model/Skills.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/Mob.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/Mob.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/npc/Npc.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/npc/Npc.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/npc/NpcBehavior.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/npc/NpcBehavior.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/player/Player.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/player/Player.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/update/UpdateFlags.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/model/entity/update/UpdateFlags.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/net/rsc/ActionSender.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/net/rsc/ActionSender.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/net/rsc/OpcodeIn.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/net/rsc/OpcodeIn.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/net/rsc/PacketHandlerLookup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/net/rsc/PacketHandlerLookup.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/openrsc/server/sql/DatabasePlayerLoader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/openrsc/server/sql/DatabasePlayerLoader.java" afterDir="false" />
+    </list>
+    <ignored path="$PROJECT_DIR$/classes/" />
+    <ignored path="$PROJECT_DIR$/.gradle/" />
+    <ignored path="$PROJECT_DIR$/build/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DefaultGradleProjectSettings">
+    <option name="testRunner" value="GRADLE" />
+    <option name="delegatedBuild" value="true" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectConfigurationFiles">
+    <option name="files">
+      <list>
+        <option value="$PROJECT_DIR$/.idea/vcs.xml" />
+        <option value="$PROJECT_DIR$/.idea/misc.xml" />
+        <option value="$PROJECT_DIR$/.idea/gradle.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="-12" />
+    <option name="y" value="76" />
+    <option name="width" value="1630" />
+    <option name="height" value="1010" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="PackagesPane" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="server" type="b2602c69:ProjectViewProjectNode" />
+              <item name="server" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/core.jar" />
+    <property name="project.structure.last.edited" value="Project" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.0" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="JAR Application.Unnamed">
+    <configuration name="Unnamed" type="Application" factoryName="Application" nameIsGenerated="true">
+      <module name="server" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Unnamed" type="JarApplication" nameIsGenerated="true">
+      <option name="JAR_PATH" value="$PROJECT_DIR$/core.jar" />
+      <option name="WORKING_DIRECTORY" value="D:\Games\RSC\Game\server" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Application.Unnamed" />
+      <item itemvalue="JAR Application.Unnamed" />
+    </list>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ba4be148-2f97-4560-904a-6fe916a89f14" name="Default Changelist" comment="" />
+      <created>1563089562085</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1563089562085</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-9" y="61" width="1304" height="808" extended-state="0" />
+    <layout>
+      <window_info id="Image Layers" />
+      <window_info id="Designer" />
+      <window_info id="UI Designer" />
+      <window_info id="Capture Tool" />
+      <window_info id="Favorites" side_tool="true" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.29903537" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="Version Control" />
+      <window_info anchor="bottom" id="Terminal" />
+      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Build" weight="0.34319526" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.39940828" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="right" id="Palette" />
+      <window_info anchor="right" id="Gradle" />
+      <window_info anchor="right" id="Theme Preview" />
+      <window_info anchor="right" id="Maven" />
+      <window_info anchor="right" id="Capture Analysis" />
+      <window_info anchor="right" id="Palette&#9;" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <settings>
+          <artifact-editor />
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="FacetStructureConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ModuleStructureConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <last-edited>12</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>

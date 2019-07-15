@@ -46,7 +46,7 @@ public class BabyBlueDragonCrystal implements InvActionListener, InvActionExecut
 						player.message("You may only summon one pet at a time!");
 						return;
 					}
-					if(player.getPets() > 1) {
+					if(player.getFatigue() > 1) {
 					player.message("Which Pet would you like to summon?");
 					int menu = showMenu(player,
 					"Pet 1",

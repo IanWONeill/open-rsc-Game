@@ -132,6 +132,7 @@ public final class Player extends Mob {
 	 * Prayers
 	 */
 	private Prayers prayers;
+	private Pets pets;
 	/**
 	 * Bank for banked items
 	 */
@@ -162,7 +163,11 @@ public final class Player extends Mob {
 	 * Amount of fatigue - 0 to 75000
 	 */
 	private int fatigue = 0, sleepStateFatigue = 0;
-	private int petFatigue = 0;
+	private int pet0Fatigue = 0;
+	private int pet1Fatigue = 0;
+	private int pet2Fatigue = 0;
+	private int pet3Fatigue = 0;
+	private int pet4Fatigue = 0;
 	/**
 	 * The main accounts group is
 	 */
@@ -354,8 +359,11 @@ public final class Player extends Mob {
 	 **/
 	private int kills = 0;
 	private int kills2 = 0;
+	private int beingHealed = 0;
 	private int pet = 0;
-	private int pets = 0;
+	private int petOut = 0;
+	private int petInCombat = 0;
+	//private int pets = 0;
 	private int deaths = 0;
 	private int npcDeaths = 0;
 	private WalkToAction walkToAction;
@@ -387,6 +395,7 @@ public final class Player extends Mob {
 		playerSettings = new PlayerSettings(this);
 		social = new Social(this);
 		prayers = new Prayers(this);
+		pets = new Pets(this);
 
 	}
 
@@ -900,14 +909,46 @@ public final class Player extends Mob {
 		}
 	}
 
-	public int getPetFatigue() {
+public int getPet0Fatigue() {
 		if (Constants.GameServer.WANT_FATIGUE) {
-			return petFatigue;
-		} else {
+			return pet0Fatigue;
+		}
+		else {
 			return 0;
 		}
 	}
-
+	public int getPet1Fatigue() {
+		if (Constants.GameServer.WANT_FATIGUE) {
+			return pet1Fatigue;
+		}
+		else {
+			return 0;
+		}
+	}
+	public int getPet2Fatigue() {
+		if (Constants.GameServer.WANT_FATIGUE) {
+			return pet2Fatigue;
+		}
+		else {
+			return 0;
+		}
+	}
+	public int getPet3Fatigue() {
+		if (Constants.GameServer.WANT_FATIGUE) {
+			return pet3Fatigue;
+		}
+		else {
+			return 0;
+		}
+	}
+	public int getPet4Fatigue() {
+		if (Constants.GameServer.WANT_FATIGUE) {
+			return pet4Fatigue;
+		}
+		else {
+			return 0;
+		}
+	}
 	public void setFatigue(int fatigue) {
 		if (Constants.GameServer.WANT_FATIGUE) {
 			this.fatigue = fatigue;
@@ -916,16 +957,46 @@ public final class Player extends Mob {
 			this.fatigue = 0;
 		}
 	}
-
-	public void setPetFatigue(int petFatigue) {
+public void setPet0Fatigue(int pet0Fatigue) {
 		if (Constants.GameServer.WANT_FATIGUE) {
-			this.petFatigue = petFatigue;
-			ActionSender.sendPetFatigue(this);
+			this.pet0Fatigue = pet0Fatigue;
+			ActionSender.sendPet0Fatigue(this);
 		} else {
-			this.petFatigue = 0;
+			this.pet0Fatigue = 0;
 		}
 	}
-
+	public void setPet1Fatigue(int pet1Fatigue) {
+		if (Constants.GameServer.WANT_FATIGUE) {
+			this.pet1Fatigue = pet1Fatigue;
+			ActionSender.sendPet1Fatigue(this);
+		} else {
+			this.pet1Fatigue = 0;
+		}
+	}
+	public void setPet2Fatigue(int pet2Fatigue) {
+		if (Constants.GameServer.WANT_FATIGUE) {
+			this.pet2Fatigue = pet2Fatigue;
+			ActionSender.sendPet2Fatigue(this);
+		} else {
+			this.pet2Fatigue = 0;
+		}
+	}
+	public void setPet3Fatigue(int pet3Fatigue) {
+		if (Constants.GameServer.WANT_FATIGUE) {
+			this.pet3Fatigue = pet3Fatigue;
+			ActionSender.sendPet3Fatigue(this);
+		} else {
+			this.pet3Fatigue = 0;
+		}
+	}
+	public void setPet4Fatigue(int pet4Fatigue) {
+		if (Constants.GameServer.WANT_FATIGUE) {
+			this.pet4Fatigue = pet4Fatigue;
+			ActionSender.sendPet4Fatigue(this);
+		} else {
+			this.pet4Fatigue = 0;
+		}
+	}
 	public int getIncorrectSleepTimes() {
 		return incorrectSleepTries;
 	}
@@ -1343,7 +1414,56 @@ public final class Player extends Mob {
 		skills.addExperience(skill, (int) skillXP);
 		// ActionSender.sendExperience(this, skill);
 	}
+		public void incPet2Exp(int skill, int skillXP, boolean usePetFatigue) {
+		if (Constants.GameServer.WANT_FATIGUE) {
+			if (isExperienceFrozen()) {
+				//ActionSender.sendMessage(this, "You can not gain experience right now!");
+				return;
+			}
+		}
 
+		if (Constants.GameServer.WANT_FATIGUE) {
+			if (usePetFatigue) {
+				if (pet2Fatigue >= this.MAX_PET_FATIGUE) {
+					ActionSender.sendMessage(this, "@gre@Your companion is too tired, and has returned to rest.");
+					return;
+				}
+				if (pet2Fatigue >= 69750) {
+					ActionSender.sendMessage(this, "@gre@Your pet is starting to feel tired, maybe you should let it rest soon.");
+				}
+				if (usePetFatigue) {
+					/*pet0Fatigue += skillXP * 4;
+					pet1Fatigue += skillXP * 4;
+					pet4Fatigue += skillXP * 4;
+					pet3Fatigue += skillXP * 4;*/
+					pet2Fatigue += skillXP * 4;
+					/*if (pet0Fatigue > this.MAX_PET_FATIGUE) {
+						pet0Fatigue = this.MAX_PET_FATIGUE;
+					}
+					if (pet1Fatigue > this.MAX_PET_FATIGUE) {
+						pet1Fatigue = this.MAX_PET_FATIGUE;
+					}*/
+					if (pet2Fatigue > this.MAX_PET_FATIGUE) {
+						pet2Fatigue = this.MAX_PET_FATIGUE;
+					}
+					/*if (pet3Fatigue > this.MAX_PET_FATIGUE) {
+						pet3Fatigue = this.MAX_PET_FATIGUE;
+					}
+					if (pet4Fatigue > this.MAX_PET_FATIGUE) {
+						pet4Fatigue = this.MAX_PET_FATIGUE;
+					}*/
+					//ActionSender.sendPet0Fatigue(this);
+					//ActionSender.sendPet1Fatigue(this);
+					ActionSender.sendPet2Fatigue(this);
+					//ActionSender.sendPet3Fatigue(this);
+					//ActionSender.sendPet4Fatigue(this);
+				}
+			}
+		}
+		skillXP *= getExperienceRate(skill);
+		/*skills.addPetExperience(skill, (int) skillXP);
+		ActionSender.sendPetExperience(this, skill);*/
+	}
 	public void incPet1Exp(int skill, int skillXP, boolean usePetFatigue) {
 		if (Constants.GameServer.WANT_FATIGUE) {
 			if (isExperienceFrozen()) {
@@ -1354,19 +1474,39 @@ public final class Player extends Mob {
 
 		if (Constants.GameServer.WANT_FATIGUE) {
 			if (usePetFatigue) {
-				if (fatigue >= this.MAX_PET_FATIGUE) {
-					ActionSender.sendMessage(this, "@gre@Your companion is too tired to gain experience.");
+				/*if (pet1Fatigue >= this.MAX_PET_FATIGUE) {
+					ActionSender.sendMessage(this, "@gre@Your companion is too tired, and has returned to rest.");
 					return;
+				}*/
+				if (pet1Fatigue >= 69750) {
+					ActionSender.sendMessage(this, "@gre@Your pet is starting to feel tired, maybe you should let it rest soon.");
 				}
-				//if (fatigue >= 69750) {
-				//	ActionSender.sendMessage(this, "@gre@You start to feel tired, maybe you should rest soon.");
-				//}
-				if (skill >= 3 && usePetFatigue) {
-					petFatigue += skillXP * 4;
-					if (petFatigue > this.MAX_PET_FATIGUE) {
-						petFatigue = this.MAX_PET_FATIGUE;
+				if (usePetFatigue) {
+					/*pet0Fatigue += skillXP * 4;
+					pet1Fatigue += skillXP * 4;
+					pet4Fatigue += skillXP * 4;
+					pet3Fatigue += skillXP * 4;*/
+					pet1Fatigue += skillXP * 4;
+					/*if (pet0Fatigue > this.MAX_PET_FATIGUE) {
+						pet0Fatigue = this.MAX_PET_FATIGUE;
 					}
-					ActionSender.sendPetFatigue(this);
+					if (pet1Fatigue > this.MAX_PET_FATIGUE) {
+						pet1Fatigue = this.MAX_PET_FATIGUE;
+					}*/
+					if (pet1Fatigue > this.MAX_PET_FATIGUE) {
+						pet1Fatigue = this.MAX_PET_FATIGUE;
+					}
+					/*if (pet3Fatigue > this.MAX_PET_FATIGUE) {
+						pet3Fatigue = this.MAX_PET_FATIGUE;
+					}
+					if (pet4Fatigue > this.MAX_PET_FATIGUE) {
+						pet4Fatigue = this.MAX_PET_FATIGUE;
+					}*/
+					//ActionSender.sendPet0Fatigue(this);
+					//ActionSender.sendPet1Fatigue(this);
+					ActionSender.sendPet1Fatigue(this);
+					//ActionSender.sendPet3Fatigue(this);
+					//ActionSender.sendPet4Fatigue(this);
 				}
 			}
 		}
@@ -1485,6 +1625,7 @@ public final class Player extends Mob {
 			prayerDrainEvent = new PrayerDrainEvent(this, Integer.MAX_VALUE);
 			Server.getServer().getGameEventHandler().add(prayerDrainEvent);
 			Server.getServer().getGameEventHandler().add(statRestorationEvent);
+			Server.getServer().getGameEventHandler().add(petFatigueRestorationEvent);
 		}
 		this.loggedIn = loggedIn;
 	}
@@ -1883,6 +2024,24 @@ public final class Player extends Mob {
 		if (getLocation().inMageArena()) {
 			teleport(228, 109);
 		}
+		if (getPetOut() != 99) {
+			setPetOut(99);
+			ActionSender.sendPetOut(this);
+		}
+		if (getPetInCombat() != 0) {
+			setPetInCombat(0);
+			ActionSender.sendPetInCombat(this);
+		}
+		for (Npc n : World.getWorld().getNpcs()) {
+			//String userN = getUsername();
+			//Player p28 = World.getWorld().getPlayer(DataConversions.usernameToHash(userN));
+			if(n.getPetOwnerA2() == this) {
+				for (Player p : World.getWorld().getPlayers()) {
+					p.message("REMOVE PET");
+				}
+				n.remove();
+			}
+		}
 		// store kitten growth progress
 		getCache().set("kitten_events", getAttribute("kitten_events", 0));
 		getCache().set("kitten_hunger", getAttribute("kitten_hunger", 0));
@@ -2120,6 +2279,13 @@ public final class Player extends Mob {
 	public int getKills() {
 		return kills;
 	}
+	
+	public int getPetOut() {
+		return petOut;
+	}
+	public int getPetInCombat() {
+		return petInCombat;
+	}
 
 	public void setKills(int i) {
 		this.kills = i;
@@ -2136,13 +2302,13 @@ public final class Player extends Mob {
 	public int getKills2() {
 		return kills2;
 	}
+	
+	public int getBeingHealed() {
+		return beingHealed;
+	}
 
 	public int getPet() {
 		return pet;
-	}
-
-	public int getPets() {
-		return pets;
 	}
 
 	public void setDeaths(int i) {
@@ -2157,23 +2323,27 @@ public final class Player extends Mob {
 		this.kills2 = i;
 		ActionSender.sendKills2(this);
 	}
+	
+	public void setBeingHealed(int i) {
+		this.beingHealed = i;
+		ActionSender.sendBeingHealed(this);
+	}
 
 	public void setPet(int i) {
 		this.pet = i;
 		//ActionSender.sendKills2(this);
 	}
-
-	public void setPets(int i) {
-		this.pets = i;
-		//ActionSender.sendKills2(this);
+	
+	public void setPetOut(int i) {
+		this.petOut = i;
+		ActionSender.sendPetOut(this);
 	}
-
+	public void setPetInCombat(int i) {
+		this.petInCombat = i;
+		ActionSender.sendPetInCombat(this);
+	}
 	private void incDeaths() {
 		deaths++;
-	}
-
-	private void incPets() {
-		pets++;
 	}
 
 	private void incNpcDeaths() {
@@ -2449,6 +2619,10 @@ public final class Player extends Mob {
 
 	public Prayers getPrayers() {
 		return prayers;
+	}
+	
+	public Pets getPets() {
+		return pets;
 	}
 
 	public int getIcon() {

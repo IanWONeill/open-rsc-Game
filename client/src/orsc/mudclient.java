@@ -149,6 +149,7 @@ import static orsc.Config.S_WANT_GLOBAL_CHAT;
 import static orsc.Config.S_WANT_HIDE_IP;
 import static orsc.Config.S_WANT_KEYBOARD_SHORTCUTS;
 import static orsc.Config.S_WANT_KILL_FEED;
+import static orsc.Config.S_WANT_PETS;
 import static orsc.Config.S_WANT_QUEST_MENUS;
 import static orsc.Config.S_WANT_REMEMBER;
 import static orsc.Config.S_WANT_SKILL_MENUS;
@@ -247,6 +248,7 @@ public final class mudclient implements Runnable {
 	private final int[] playerStatBase = new int[18];
 	private final int[] playerStatEquipment = new int[5];
 	private final boolean[] prayerOn = new boolean[50];
+	private final boolean[] petOn = new boolean[50];
 	private final int projectileMaxRange = 40;
 	private final int[] shopItemCount = new int[256];
 	private final int[] shopItemID = new int[256];
@@ -375,6 +377,7 @@ public final class mudclient implements Runnable {
 	private int frameCounter = 0;
 	private int combatStyle = 0;
 	private int combatTimeout = 0;
+	private int healTimeout = 0;
 	private int controlButtonAppearanceHeadMinus;
 	private int controlButtonAppearanceHeadPlus;
 	private int controlLoginPass;
@@ -597,7 +600,14 @@ public final class mudclient implements Runnable {
 	private int spriteCount = 0;
 	private int statFatigue = 0;
 	private int statKills2 = 0;
-	private int petFatigue = 0;
+	private int petOut = 0;
+	private int petInCombat = 0;
+	private int pet2Fatigue = 0;
+	private int pet0Fatigue = 0;
+	private int pet1Fatigue = 0;
+	private int pet3Fatigue = 0;
+	private int pet4Fatigue = 0;
+	private int beingHealed = 0;
 	private MudClientGraphics surface;
 	private int systemUpdate = 0;
 	private int elixirTimer = 0;
@@ -629,6 +639,7 @@ public final class mudclient implements Runnable {
 	private int worldOffsetZ = 0;
 	private int prayerMenuIndex = 0;
 	private int magicMenuIndex = 0;
+	private int petsMenuIndex = 0;
 	private Panel menuNewUser;
 	private int menuNewUserUsername;
 	private int menuNewUserPassword;
@@ -4059,6 +4070,8 @@ public final class mudclient implements Runnable {
 			if (!this.welcomeLastLoggedInIp.equalsIgnoreCase("0.0.0.0")) {
 				var2 += 45;
 			}
+			this.setPetOut(99);
+			this.setPetInCombat(0);
 			int welcomeWindowX = (getGameWidth() - 400) / 2;
 			int welcomeWindowY = (getGameHeight() - var2) / 2;
 
@@ -5636,7 +5649,7 @@ public final class mudclient implements Runnable {
 						var15 = x - overlayMovement * 10 / 100;
 					}
 
-					this.getSurface().drawSprite(spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.DAMAGEGIVEN.id())), var15 - (12 - width1 / 2),
+					this.getSurface().drawSprite(spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.DAMAGETAKEN.id())), var15 - (12 - width1 / 2),
 						y + height / 2 - 12);
 					this.getSurface().drawColoredStringCentered(width1 / 2 - 1 + var15, "" + npc.damageTaken, 0xFFFFFF,
 						0, 3, 5 + y + height / 2);
@@ -5813,8 +5826,8 @@ public final class mudclient implements Runnable {
 				}
 
 				if (player.direction == ORSCharacterDirection.COMBAT_A
-					|| player.direction == ORSCharacterDirection.COMBAT_B || player.combatTimeout != 0) {
-					if (player.combatTimeout > 0) {
+					|| player.direction == ORSCharacterDirection.COMBAT_B || player.combatTimeout != 0 || player.healTimeout != 0) {
+					if (player.combatTimeout > 0 || player.healTimeout > 0) {
 						int var14 = x;
 						if (player.direction == ORSCharacterDirection.COMBAT_B) {
 							var14 = x + overlayMovement * 20 / 100;
@@ -5827,6 +5840,27 @@ public final class mudclient implements Runnable {
 						this.characterHealthY[this.characterHealthCount] = y;
 						this.characterHealthBar[this.characterHealthCount++] = healthStep;
 					}
+					
+					if (player.healTimeout > 150) {
+						int var14 = x;
+						if (player.direction == ORSCharacterDirection.COMBAT_B) {
+							var14 = x + overlayMovement * 10 / 100;
+						} else if (player.direction == ORSCharacterDirection.COMBAT_A) {
+							var14 = x - overlayMovement * 10 / 100;
+						}
+						//if (player.healTaken > 0) {
+						//this.getSurface().drawSprite(mudclient.spriteMedia + 33, width / 2 + var14 - 12, height / 2 + (y - 40));
+						this.getSurface().drawSprite(spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.DAMAGEGIVEN.id())), width / 2 + var14 - 12, height / 2 + (y - 40));
+						this.getSurface().drawColoredStringCentered(width / 2 + (var14 - 1), "+" + player.healTaken,
+							0xFFFFFF, 0, 3, height / 2 + y - 23);
+						//}
+						/*this.getSurface().drawSprite(mudclient.spriteMedia + 11, width / 2 + var14 - 12,
+							height / 2 + (y - 12));
+						this.getSurface().drawColoredStringCentered(width / 2 + (var14 - 1), "" + player.damageTaken,
+							0xFFFFFF, 0, 3, height / 2 + y + 5);*/
+					
+
+					}
 
 					if (player.combatTimeout > 150) {
 						int var14 = x;
@@ -5836,7 +5870,7 @@ public final class mudclient implements Runnable {
 							var14 = x - overlayMovement * 10 / 100;
 						}
 
-						this.getSurface().drawSprite(spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.DAMAGETAKEN.id())), width / 2 + var14 - 12,
+						this.getSurface().drawSprite(spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.DAMAGEGIVEN.id())), width / 2 + var14 - 12,
 							height / 2 + (y - 12));
 						this.getSurface().drawColoredStringCentered(width / 2 + (var14 - 1), "" + player.damageTaken,
 							0xFFFFFF, 0, 3, height / 2 + y + 5);
@@ -6860,6 +6894,21 @@ public final class mudclient implements Runnable {
 											"@yel@" + EntityHandler.getNpcDef(this.npcs[var9].npcId).getName()
 												+ var11);
 									}
+									if (EntityHandler.getNpcDef(var13).isAttackable() && this.petOut == 1) {
+										if (this.petInCombat != 1) {
+										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex,
+											levelDifference >= 0 ? MenuItemAction.NPC_PETATTACK1 : MenuItemAction.NPC_ATTACK2,
+											"Pet Warrior Attack",
+											"@yel@" + EntityHandler.getNpcDef(this.npcs[var9].npcId).getName()
+												+ var11);
+										} else {
+											this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex,
+											levelDifference >= 0 ? MenuItemAction.NPC_PETATTACK1 : MenuItemAction.NPC_ATTACK2,
+											"Pet Warrior Retreat",
+											"@yel@" + EntityHandler.getNpcDef(this.npcs[var9].npcId).getName()
+												+ var11);
+										}
+									}
 									if (developerMenu) {
 										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex,
 											MenuItemAction.DEV_REMOVE_NPC, "@gr2@Remove NPC",
@@ -7450,6 +7499,384 @@ public final class mudclient implements Runnable {
 	// spells menu
 	private void drawUiTabMagic(boolean var1, byte var2) {
 		try {
+			if (S_WANT_PETS) {
+			int var3 = this.getSurface().width2 - 199;
+			byte var4 = 36;
+			this.getSurface().drawSprite(spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.MENUSPELLS.id())), var3 - 49, 3);
+			short var5 = 196;
+			short var6 = 182;
+			int var8;
+			int var99;
+			int var7 = var8 = var99 = GenUtil.buildColor(160, 160, 160);
+			if(this.m_Ji != 0 && this.m_Ji != 2) {
+				var8 = GenUtil.buildColor(220, 220, 220);
+			} else if(this.m_Ji != 1 && this.m_Ji != 2) {
+				var7 = GenUtil.buildColor(220, 220, 220);
+			} else if(this.m_Ji != 1 && this.m_Ji != 0) {
+				var99 = GenUtil.buildColor(220, 220, 220);
+			}
+			
+			this.getSurface().drawBoxAlpha(var3, var4, var5 / 2 - 33, 24, var7, 128);
+			this.getSurface().drawBoxAlpha(var3 + 66, var4, var5 / 2 - 33, 24, var8, 128);
+			this.getSurface().drawBoxAlpha(var3 + 132, var4, var5 / 2 - 33, 24, var99, 128);
+			//this.getSurface().drawBoxAlpha(var5 / 2 + var3, var4, var5 / 2, 24, var8, 128);
+			//this.getSurface().drawBoxAlpha(var3, var4, var5 / 2 - 33, 24, var7, 128);
+			//this.getSurface().drawBoxAlpha(var3 + 66, var4, var5 / 2 - 33, 24, var8, 128);
+			//this.getSurface().drawBoxAlpha(var3 - 66, var4, var5 / 2 - 33, 24, var8, 128);
+			//this.getSurface().drawBoxAlpha(var3 + 132, var4, var5 / 2 - 33, 24, var8, 128);
+			//this.getSurface().drawBoxAlpha(var3 + 132, var4, var5 / 2 - 99, 24, var8, 128);
+			//this.getSurface().drawBoxAlpha(var3 + 132, var4, var5 / 2 + 140, 24, var8, 128);
+			this.getSurface().drawBoxAlpha(var3, var4 + 24, var5, 90, GenUtil.buildColor(220, 220, 220), 128);
+			//this.getSurface().drawBoxAlpha(var3, 114 + var4, var5, var6 - 24 - 90, GenUtil.buildColor(160, 160, 160),
+				//128);
+			this.getSurface().drawLineHoriz(var3, 24 + var4, var5, 0);
+			this.getSurface().drawLineVert(var3 + var5 / 2 - 33, 0 + var4, 0, 24);
+			this.getSurface().drawLineVert(var3 + var5 / 2 + 33, 0 + var4, 0, 24);
+			//this.getSurface().drawLineHoriz(var3, var4 + 113, var5, 0);
+			if (var2 == -74) {
+				this.getSurface().drawColoredStringCentered(var5 / 4 + var3 - 17, "Magic", 0, var2 + 74, 4, 16 + var4);
+				this.getSurface().drawColoredStringCentered(var3 + var5 / 4 + var5 / 2 - 49, "Prayers", 0, 0, 4, 16 + var4);
+				this.getSurface().drawColoredStringCentered(var3 + var5 / 4 + var5 / 2 + 17, "Pets", 0, 0, 4, 16 + var4);
+				int var9;
+				int var10;
+				String var11;
+				int var12;
+				int var18;
+				if (this.m_Ji == 0) {
+					this.getSurface().drawBoxAlpha(var3, 114 + var4, var5, var6 - 24 - 90, GenUtil.buildColor(160, 160, 160),
+				128);
+					this.getSurface().drawLineHoriz(var3, var4 + 113, var5, 0);
+					this.panelMagic.clearList(this.controlMagicPanel);
+					var9 = 0;
+
+					int var13;
+					for (var10 = 0; var10 < EntityHandler.spellCount(); ++var10) {
+						var11 = "@yel@";
+
+						for (Entry<?, ?> e : EntityHandler.getSpellDef(var10).getRunesRequired()) {
+							var13 = (Integer) e.getKey();
+							if (!this.hasRunes(var13, (Integer) e.getValue())) {
+								var11 = "@whi@";
+								break;
+							}
+						}
+
+						var12 = this.playerStatCurrent[6];
+						if (EntityHandler.getSpellDef(var10).getReqLevel() > var12) {
+							var11 = "@bla@";
+						}
+
+						this.panelMagic
+							.setListEntry(this.controlMagicPanel, var9++,
+								var11 + "Level " + EntityHandler.getSpellDef(var10).getReqLevel() + ": "
+									+ EntityHandler.getSpellDef(var10).getName(),
+								0, null, null);
+					}
+
+					this.panelMagic.drawPanel();
+					var10 = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+					if (var10 != -1) {
+						this.getSurface().drawString(
+							"Level " + EntityHandler.getSpellDef(var10).getReqLevel() + ": "
+								+ EntityHandler.getSpellDef(var10).getName(),
+							2 + var3, var4 + 124, 0xFFFF00, 1);
+						this.getSurface().drawString(EntityHandler.getSpellDef(var10).getDescription(), 2 + var3,
+							136 + var4, 0xFFFFFF, 0);
+						var18 = 0;
+						for (Entry<Integer, Integer> e : EntityHandler.getSpellDef(var10).getRunesRequired()) {
+							var12 = e.getKey();
+							this.getSurface().drawSprite(
+								spriteSelect(EntityHandler.getItemDef(var12)),
+								2 + var3 + var18 * 44, var4 + 150);
+							var13 = this.getInventoryCount(var12);
+							int var14 = e.getValue();
+							String var15 = "@red@";
+							if (this.hasRunes(var12, var14)) {
+								var15 = "@gre@";
+							}
+							this.getSurface().drawString(var15 + var13 + "/" + var14, 2 + var3 + var18 * 44, var4 + 150,
+								0xFFFFFF, 1);
+							var18++;
+						}
+					} else {
+						this.getSurface().drawString("Point at a spell for a description", var3 + 2, var4 + 124, 0, 1);
+					}
+				}
+
+				if (this.m_Ji == 1) {
+					this.getSurface().drawBoxAlpha(var3, 114 + var4, var5, var6 - 24 - 90, GenUtil.buildColor(160, 160, 160),
+				128);
+					this.getSurface().drawLineHoriz(var3, var4 + 113, var5, 0);
+					this.panelMagic.clearList(this.controlMagicPanel);
+					var9 = 0;
+
+					for (var10 = 0; var10 < EntityHandler.prayerCount(); ++var10) {
+						var11 = "@whi@";
+						if (EntityHandler.getPrayerDef(var10).getReqLevel() > this.playerStatBase[5]) {
+							var11 = "@bla@";
+						}
+
+						if (this.prayerOn[var10]) {
+							var11 = "@gre@";
+						}
+
+						this.panelMagic
+							.setListEntry(this.controlMagicPanel, var9++,
+								var11 + "Level " + EntityHandler.getPrayerDef(var10).getReqLevel() + ": "
+									+ EntityHandler.getPrayerDef(var10).getName(),
+								0, null, null);
+					}
+
+					this.panelMagic.drawPanel();
+					var10 = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+					if (var10 == -1) {
+						this.getSurface().drawString("Point at a prayer for a description", var3 + 2, var4 + 124, 0, 1);
+					} else {
+						this.getSurface()
+							.drawColoredStringCentered(var3 + var5 / 2,
+								"Level " + EntityHandler.getPrayerDef(var10).getReqLevel() + ": "
+									+ EntityHandler.getPrayerDef(var10).getName(),
+								0xFFFF00, 0, 1, var4 + 130);
+						this.getSurface().drawColoredStringCentered(var3 + var5 / 2,
+							EntityHandler.getPrayerDef(var10).getDescription(), 0xFFFFFF, 0, 0, 145 + var4);
+						this.getSurface().drawColoredStringCentered(var3 + var5 / 2,
+							"Drain rate: " + EntityHandler.getPrayerDef(var10).getDrainRate(), 0, 0, 1, 160 + var4);
+					}
+					// this.getSurface().drawColoredStringCentered(var3 + var5 / 2,
+					//		"Prayer points: " + this.playerStatCurrent[5] + "/" + this.playerStatBase[5], 0, 0, 1, 175 + var4);
+				}
+				if (this.m_Ji == 2) {
+					this.getSurface().drawBoxAlpha(var3, 114 + var4, var5, var6 - 24 - 90, GenUtil.buildColor(160, 160, 160),
+					128);
+					this.getSurface().drawLineHoriz(var3, var4 + 113, var5, 0);
+					this.panelMagic.clearList(this.controlMagicPanel);
+					var9 = 0;
+					for (var10 = 0; var10 < EntityHandler.petCount(); ++var10) {
+						var11 = "@whi@";
+						/*if (EntityHandler.getPetDef(var10).getReqLevel() > this.playerStatBase[5]) {
+							var11 = "@bla@";
+						}*/
+						if (this.petOn[var10]) {
+							var11 = "@gre@";
+						}
+						this.panelMagic.setListEntry(this.controlMagicPanel, var9++, var11 + /*"" + EntityHandler.getPetDef(var10).getReqLevel() + */""
+						+ EntityHandler.getPetDef(var10).getName(), 0, null, null);
+						if (Config.S_WANT_FATIGUE) {
+						if(this.pet0Fatigue >= 75){
+							this.getSurface().drawString("  -  Fatigue: @red@"+ this.pet0Fatigue + "%", var3 + 44, var4 + 38, 0xFFFFFF, 1);	
+						} else
+						if(this.pet0Fatigue >= 50 && this.pet0Fatigue < 75){
+							this.getSurface().drawString("  -  Fatigue: @or1@"+ this.pet0Fatigue + "%", var3 + 44, var4 + 38, 0xFFFFFF, 1);	
+						} else 
+						if(this.pet0Fatigue >= 25 && this.pet0Fatigue < 50){
+							this.getSurface().drawString("  -  Fatigue: @yel@"+ this.pet0Fatigue + "%", var3 + 44, var4 + 38, 0xFFFFFF, 1);	
+						} else
+						if(this.pet0Fatigue >= 0 && this.pet0Fatigue < 25){
+							this.getSurface().drawString("  -  Fatigue: @gre@"+ this.pet0Fatigue + "%", var3 + 44, var4 + 38, 0xFFFFFF, 1);	
+						}
+						if(this.pet2Fatigue >= 75){
+							this.getSurface().drawString("  -  Fatigue: @red@"+ this.pet2Fatigue + "%", var3 + 44, var4 + 66, 0xFFFFFF, 1);	
+						} else
+						if(this.pet2Fatigue >= 50 && this.pet2Fatigue < 75){
+							this.getSurface().drawString("  -  Fatigue: @or1@"+ this.pet2Fatigue + "%", var3 + 44, var4 + 66, 0xFFFFFF, 1);	
+						} else 
+						if(this.pet2Fatigue >= 25 && this.pet2Fatigue < 50){
+							this.getSurface().drawString("  -  Fatigue: @yel@"+ this.pet2Fatigue + "%", var3 + 44, var4 + 66, 0xFFFFFF, 1);	
+						} else
+						if(this.pet2Fatigue >= 0 && this.pet2Fatigue < 25){
+							this.getSurface().drawString("  -  Fatigue: @gre@"+ this.pet2Fatigue + "%", var3 + 44, var4 + 66, 0xFFFFFF, 1);	
+						}
+						if(this.pet1Fatigue >= 75){
+							this.getSurface().drawString("  -  Fatigue: @red@"+ this.pet1Fatigue + "%", var3 + 44, var4 + 52, 0xFFFFFF, 1);	
+						} else
+						if(this.pet1Fatigue >= 50 && this.pet1Fatigue < 75){
+							this.getSurface().drawString("  -  Fatigue: @or1@"+ this.pet1Fatigue + "%", var3 + 44, var4 + 52, 0xFFFFFF, 1);	
+						} else 
+						if(this.pet1Fatigue >= 25 && this.pet1Fatigue < 50){
+							this.getSurface().drawString("  -  Fatigue: @yel@"+ this.pet1Fatigue + "%", var3 + 44, var4 + 52, 0xFFFFFF, 1);	
+						} else
+						if(this.pet1Fatigue >= 0 && this.pet1Fatigue < 25){
+							this.getSurface().drawString("  -  Fatigue: @gre@"+ this.pet1Fatigue + "%", var3 + 44, var4 + 52, 0xFFFFFF, 1);	
+						}
+						if(this.pet3Fatigue >= 75){
+							this.getSurface().drawString("  -  Fatigue: @red@"+ this.pet3Fatigue + "%", var3 + 44, var4 + 80, 0xFFFFFF, 1);	
+						} else
+						if(this.pet3Fatigue >= 50 && this.pet3Fatigue < 75){
+							this.getSurface().drawString("  -  Fatigue: @or1@"+ this.pet3Fatigue + "%", var3 + 44, var4 + 80, 0xFFFFFF, 1);	
+						} else 
+						if(this.pet3Fatigue >= 25 && this.pet3Fatigue < 50){
+							this.getSurface().drawString("  -  Fatigue: @yel@"+ this.pet3Fatigue + "%", var3 + 44, var4 + 80, 0xFFFFFF, 1);	
+						} else
+						if(this.pet3Fatigue >= 0 && this.pet3Fatigue < 25){
+							this.getSurface().drawString("  -  Fatigue: @gre@"+ this.pet3Fatigue + "%", var3 + 44, var4 + 80, 0xFFFFFF, 1);	
+						}
+						if(this.pet4Fatigue >= 75){
+							this.getSurface().drawString("  -  Fatigue: @red@"+ this.pet4Fatigue + "%", var3 + 44, var4 + 94, 0xFFFFFF, 1);	
+						} else
+						if(this.pet4Fatigue >= 50 && this.pet4Fatigue < 75){
+							this.getSurface().drawString("  -  Fatigue: @or1@"+ this.pet4Fatigue + "%", var3 + 44, var4 + 94, 0xFFFFFF, 1);	
+						} else 
+						if(this.pet4Fatigue >= 25 && this.pet4Fatigue < 50){
+							this.getSurface().drawString("  -  Fatigue: @yel@"+ this.pet4Fatigue + "%", var3 + 44, var4 + 94, 0xFFFFFF, 1);	
+						} else
+						if(this.pet4Fatigue >= 0 && this.pet4Fatigue < 25){
+							this.getSurface().drawString("  -  Fatigue: @gre@"+ this.pet4Fatigue + "%", var3 + 44, var4 + 94, 0xFFFFFF, 1);	
+						}
+						}
+
+						//this.getSurface().drawLineHoriz(var3, var4 + 41, var5, 0);
+						//this.getSurface().drawLineHoriz(var3, var4 + 69, var5, 0);
+						//this.getSurface().drawLineHoriz(var3, var4 + 83, var5, 0);
+						//this.getSurface().drawLineHoriz(var3, var4 + 55, var5, 0);
+					}
+
+					this.panelMagic.drawPanel();
+					var10 = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+					if (var10 == -1) {
+						this.getSurface().drawString("Point at a pet for a description", var3 + 2, var4 + 124, 0, 1);
+					} else {
+						this.getSurface().drawColoredStringCentered(var3 + var5 / 2, "" /*+ EntityHandler.getPetDef(var10).getReqLevel() + ": "*/
+						+ EntityHandler.getPetDef(var10).getName(), 0xFFFF00, 0, 1, var4 + 130);
+						this.getSurface().drawColoredStringCentered(var3 + var5 / 2, EntityHandler.getPetDef(var10).getDescription(), 0xFFFFFF, 0, 0, 145 + var4);
+						this.getSurface().drawColoredStringCentered(var3 + var5 / 2, "Drain rate: " + EntityHandler.getPetDef(var10).getDrainRate(), 0, 0, 1, 160 + var4);
+					}
+				}
+
+				if (var1) {
+					var3 = 199 - this.getSurface().width2 + this.mouseX;
+					int var17 = this.mouseY - 36;
+					if (var3 >= 0 && var17 >= 0 && var3 < 196 && var17 < 182) {
+						this.panelMagic.handleMouse(var3 + (this.getSurface().width2 - 199), var17 + 36,
+							this.currentMouseButtonDown, this.lastMouseButtonDown);
+						if (var17 <= 24 && this.mouseButtonClick == 1) {
+							if (var3 >= 0 && var3 < 66 && (this.m_Ji == 1 || this.m_Ji == 2)) {
+								this.m_Ji = 0;
+								prayerMenuIndex = this.panelMagic.getScrollPosition(this.controlMagicPanel);
+								this.panelMagic.resetListToIndex(this.controlMagicPanel, magicMenuIndex);
+							} else if (var3 > 66 && var3 < 132 && (this.m_Ji == 0 || this.m_Ji == 2)) {
+								this.m_Ji = 1;
+								magicMenuIndex = this.panelMagic.getScrollPosition(this.controlMagicPanel);
+								this.panelMagic.resetListToIndex(this.controlMagicPanel, prayerMenuIndex);
+							} else if (var3 > 132 && var3 < 196 && (this.m_Ji == 0 || this.m_Ji == 1)) {
+								this.m_Ji = 2;
+								petsMenuIndex = this.panelMagic.getScrollPosition(this.controlMagicPanel);
+								this.panelMagic.resetListToIndex(this.controlMagicPanel, petsMenuIndex);
+							}
+						}
+
+						if (this.mouseButtonClick == 1 && this.m_Ji == 0) {
+							var9 = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+							if (var9 != -1) {
+								var10 = this.playerStatCurrent[6];
+								if (var10 < EntityHandler.getSpellDef(var9).getReqLevel()) {
+									this.showMessage(false, null,
+										"Your magic ability is not high enough for this spell", MessageType.GAME, 0,
+										null);
+								} else {
+									int k3 = 0;
+									for (Entry<Integer, Integer> e : EntityHandler.getSpellDef(var9)
+										.getRunesRequired()) {
+										if (!hasRunes(e.getKey(), e.getValue())) {
+											this.showMessage(false, null,
+												"You don\'t have all the reagents you need for this spell",
+												MessageType.GAME, 0, null);
+											k3 = -1;
+											break;
+										}
+										k3++;
+									}
+									if (k3 == EntityHandler.getSpellDef(var9).getRuneCount()) {
+										this.selectedSpell = var9;
+										lastSelectedSpell = var9;
+										this.selectedItemInventoryIndex = -1;
+										//if (EntityHandler.getSpellDef(var9).getSpellType() == 3 && var9 != 16) {
+										//	showUiTab = 1;
+										//}
+									}
+								}
+							}
+						}
+
+						if (this.mouseButtonClick == 1 && this.m_Ji == 1) {
+							var9 = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+							if (var9 != -1) {
+								var10 = this.playerStatBase[5];
+								if (var10 < EntityHandler.getPrayerDef(var9).getReqLevel()) {
+									this.showMessage(false, null,
+										"Your prayer ability is not high enough for this prayer", MessageType.GAME,
+										0, null);
+								} else if (this.playerStatCurrent[5] == 0) {
+									this.showMessage(false, null,
+										"You have run out of prayer points. Return to a church to recharge",
+										MessageType.GAME, 0, null);
+								} else if (!this.prayerOn[var9]) {
+									this.packetHandler.getClientStream().newPacket(60);
+									this.packetHandler.getClientStream().writeBuffer1.putByte(var9);
+									this.packetHandler.getClientStream().finishPacket();
+									this.prayerOn[var9] = true;
+									this.playSoundFile("prayeron");
+								} else {
+									this.packetHandler.getClientStream().newPacket(254);
+									this.packetHandler.getClientStream().writeBuffer1.putByte(var9);
+									this.packetHandler.getClientStream().finishPacket();
+									this.prayerOn[var9] = false;
+									this.playSoundFile("prayeroff");
+								}
+							}
+						}
+						if (this.mouseButtonClick == 1 && this.m_Ji == 2) {
+							var9 = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+							if (var9 != -1) {
+								//var10 = this.playerStatBase[5];
+								/*if (var10 < EntityHandler.getPetDef(var9).getReqLevel()) {
+									this.showMessage(false, null,
+										"Your pet ability is not high enough for this pet", MessageType.GAME,
+										0, null);
+								} else */
+								if (!Config.S_WANT_PETS) {
+									this.showMessage(false, null,
+										"Pets are disabled.",
+										MessageType.GAME, 0, null);
+								} else if (this.petInCombat == 1) {
+									this.showMessage(false, null,
+										"Your pet is still in combat!",
+										MessageType.GAME, 0, null);
+								} else if (!this.petOn[var9]) {
+									this.packetHandler.getClientStream().newPacket(160);
+									this.packetHandler.getClientStream().writeBuffer1.putByte(var9);
+									this.packetHandler.getClientStream().finishPacket();
+									this.petOn[var9] = true;
+									this.playSoundFile("prayeron");
+								} else {
+									this.packetHandler.getClientStream().newPacket(211);
+									this.packetHandler.getClientStream().writeBuffer1.putByte(var9);
+									this.packetHandler.getClientStream().finishPacket();
+									this.petOn[var9] = false;
+									this.playSoundFile("prayeroff");
+								}
+							}
+						}
+						if (this.mouseButtonClick == 2 && this.m_Ji == 2) {
+							var9 = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+							if (var9 != -1) {
+								//var10 = this.playerStatBase[5];
+								/*if (var10 < EntityHandler.getPetDef(var9).getReqLevel()) {
+									this.showMessage(false, null,
+										"Your pet ability is not high enough for this pet", MessageType.GAME,
+										0, null);
+								} else */
+								this.showMessage(false, null,
+										"Works",
+										MessageType.GAME, 0, null);
+							}
+						}
+
+						this.mouseButtonClick = 0;
+					}
+
+				}
+			}
+		} else {
 			int var3 = this.getSurface().width2 - 199;
 			byte var4 = 36;
 			this.getSurface().drawSprite(spriteSelect(EntityHandler.GUIparts.get(GUIPARTS.MENUSPELLS.id())), var3 - 49, 3);
@@ -7661,6 +8088,7 @@ public final class mudclient implements Runnable {
 
 				}
 			}
+		}
 		} catch (RuntimeException var16) {
 			throw GenUtil.makeThrowable(var16, "client.GA(" + var1 + ',' + var2 + ')');
 		}
@@ -9691,6 +10119,10 @@ public final class mudclient implements Runnable {
 			if (this.combatTimeout > 0) {
 				--this.combatTimeout;
 			}
+			
+			if (this.healTimeout > 0) {
+				--this.healTimeout;
+			}
 
 			if (this.showAppearanceChange) {
 				this.handleAppearancePanelControls(86);
@@ -9798,6 +10230,10 @@ public final class mudclient implements Runnable {
 
 					if (updateEntity.messageTimeout > 0) {
 						--updateEntity.messageTimeout;
+					}
+					
+					if (updateEntity.healTimeout > 0) {
+						--updateEntity.healTimeout;
 					}
 
 					if (this.deathScreenTimeout > 0) {
@@ -9912,6 +10348,10 @@ public final class mudclient implements Runnable {
 
 					if (updateEntity.messageTimeout > 0) {
 						--updateEntity.messageTimeout;
+					}
+					
+					if (updateEntity.healTimeout > 0) {
+						--updateEntity.healTimeout;
 					}
 				}
 
@@ -11141,6 +11581,32 @@ public final class mudclient implements Runnable {
 					cTileZ = (character.currentZ - 64) / this.tileSize;
 					this.walkToActionSource(this.playerLocalX, this.playerLocalZ, cTileX, cTileZ, true);
 					this.packetHandler.getClientStream().newPacket(190);
+					this.packetHandler.getClientStream().writeBuffer1.putShort(indexOrX);
+					this.packetHandler.getClientStream().finishPacket();
+					break;
+				}
+				case NPC_PETATTACK1: {
+					character = this.getServerNPC(indexOrX);
+					if (character == null) {
+						return;
+					}
+					cTileX = (character.currentX - 64) / this.tileSize;
+					cTileZ = (character.currentZ - 64) / this.tileSize;
+					this.walkToActionSource(this.playerLocalX, this.playerLocalZ, cTileX, cTileZ, true);
+					this.packetHandler.getClientStream().newPacket(191);
+					this.packetHandler.getClientStream().writeBuffer1.putShort(indexOrX);
+					this.packetHandler.getClientStream().finishPacket();
+					break;
+				}
+				case NPC_PETATTACK2: {
+					character = this.getServerNPC(indexOrX);
+					if (character == null) {
+						return;
+					}
+					cTileX = (character.currentX - 64) / this.tileSize;
+					cTileZ = (character.currentZ - 64) / this.tileSize;
+					this.walkToActionSource(this.playerLocalX, this.playerLocalZ, cTileX, cTileZ, true);
+					this.packetHandler.getClientStream().newPacket(192);
 					this.packetHandler.getClientStream().writeBuffer1.putShort(indexOrX);
 					this.packetHandler.getClientStream().finishPacket();
 					break;
@@ -12407,6 +12873,8 @@ public final class mudclient implements Runnable {
 						int loginResponse = this.packetHandler.getClientStream().read();
 
 						System.out.println("login response:" + loginResponse);
+						this.setPetOut(99);
+						this.setPetInCombat(99);
 						if ((loginResponse & 0x40) != 0) {
 							this.autoLoginTimeout = 0;
 							this.m_Ce = loginResponse & 0x3;
@@ -12840,6 +13308,9 @@ public final class mudclient implements Runnable {
 
 			for (i = 0; i < 50; ++i) {
 				this.prayerOn[i] = false;
+			}
+			for (i = 0; i < 50; ++i) {
+				this.petOn[i] = false;
 			}
 
 			this.showDialogShop = false;
@@ -13779,9 +14250,17 @@ public final class mudclient implements Runnable {
 	public boolean checkPrayerOn(int i) {
 		return this.prayerOn[i];
 	}
+	
+	public boolean checkPetOn(int i) {
+		return this.petOn[i];
+	}
 
 	public void togglePrayer(int i, boolean toggle) {
 		this.prayerOn[i] = toggle;
+	}
+	
+	public void togglePet(int i, boolean toggle) {
+		this.petOn[i] = toggle;
 	}
 
 	public void setQuestName(int i, String s) {
@@ -14024,14 +14503,51 @@ public final class mudclient implements Runnable {
 		return this.statKills2;
 	}
 
-	public int getPetFatigue() {
-		return this.petFatigue;
+	public int getPetOut() {
+		return this.petOut;
+	}
+	public int getPetInCombat() {
+		return this.petInCombat;
+	}
+	public int getBeingHealed() {
+		return this.beingHealed;
+	}
+	public int getPet2Fatigue() {
+		return this.pet2Fatigue;
+	}
+	public int getPet0Fatigue() {
+		return this.pet0Fatigue;
+	}
+	public int getPet1Fatigue() {
+		return this.pet1Fatigue;
+	}
+	public int getPet3Fatigue() {
+		return this.pet3Fatigue;
+	}
+	public int getPet4Fatigue() {
+		return this.pet4Fatigue;
 	}
 
 	public void setStatFatigue(int fatigue) {
 		if (DEBUG)
 			System.out.println("Fatigue: " + fatigue);
 		this.statFatigue = fatigue;
+	}
+	
+	public void setPetOut(int petOut) {
+		if (DEBUG)
+			System.out.println("PetOut: " + petOut);
+		this.petOut = petOut;
+	}
+	public void setBeingHealed(int beingHealed) {
+		if (DEBUG)
+			System.out.println("BeingHealed: " + beingHealed);
+		this.beingHealed = beingHealed;
+	}
+	public void setPetInCombat(int petInCombat) {
+		if (DEBUG)
+			System.out.println("PetInCombat: " + petInCombat);
+		this.petInCombat = petInCombat;
 	}
 
 	public void setStatKills2(int kills2) {
@@ -14040,10 +14556,30 @@ public final class mudclient implements Runnable {
 		this.statKills2 = kills2;
 	}
 
-	public void setPetFatigue(int petFatigue) {
+	public void setPet2Fatigue(int pet2Fatigue) {
 		if (DEBUG)
-			System.out.println("PetFatigue: " + petFatigue);
-		this.petFatigue = petFatigue;
+			System.out.println("Pet2Fatigue: " + pet2Fatigue);
+		this.pet2Fatigue = pet2Fatigue;
+	}
+	public void setPet0Fatigue(int pet0Fatigue) {
+		if (DEBUG)
+			System.out.println("Pet0Fatigue: " + pet0Fatigue);
+		this.pet0Fatigue = pet0Fatigue;
+	}
+	public void setPet1Fatigue(int pet1Fatigue) {
+		if (DEBUG)
+			System.out.println("Pet1Fatigue: " + pet1Fatigue);
+		this.pet1Fatigue = pet1Fatigue;
+	}
+	public void setPet3Fatigue(int pet3Fatigue) {
+		if (DEBUG)
+			System.out.println("Pet3Fatigue: " + pet3Fatigue);
+		this.pet3Fatigue = pet3Fatigue;
+	}
+	public void setPet4Fatigue(int pet4Fatigue) {
+		if (DEBUG)
+			System.out.println("Pet4Fatigue: " + pet4Fatigue);
+		this.pet4Fatigue = pet4Fatigue;
 	}
 
 	public void setInputTextCurrent(String s) {

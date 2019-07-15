@@ -154,6 +154,20 @@ public class Skills {
 		if (update)
 			sendUpdate(skill);
 	}
+	
+	public void addLevel(int skill, int amount) {
+		addLevel(skill, amount, true);
+	}
+
+	public void addLevel(int skill, int amount, boolean update) {
+		levels[skill] = levels[skill] + amount;
+		if (levels[skill] <= 0) {
+			levels[skill] = 0;
+		}
+
+		if (update)
+			sendUpdate(skill);
+	}
 
 	public int getLevel(int skill) {
 		return levels[skill];

@@ -28,6 +28,10 @@ public class UpdateFlags {
 	 */
 	private AtomicReference<Damage> damage = new AtomicReference<Damage>();
 	/**
+	 * Do we need to get heal update for players around?
+	 */
+	private AtomicReference<Heal> heal = new AtomicReference<Heal>();
+	/**
 	 * Has this player fired a projectile?
 	 */
 	private AtomicReference<Projectile> projectile = new AtomicReference<Projectile>();
@@ -67,9 +71,17 @@ public class UpdateFlags {
 	public AtomicReference<Damage> getDamage() {
 		return damage;
 	}
+	
+	public AtomicReference<Heal> getHeal() {
+		return heal;
+	}
 
 	public void setDamage(Damage damage) {
 		this.damage.set(damage);
+	}
+	
+	public void setHeal(Heal heal) {
+		this.heal.set(heal);
 	}
 
 	public AtomicReference<Projectile> getProjectile() {
@@ -99,6 +111,10 @@ public class UpdateFlags {
 	public boolean hasTakenDamage() {
 		return getDamage().get() != null;
 	}
+	
+	public boolean hasTakenHeal() {
+		return getHeal().get() != null;
+	}
 
 	/**
 	 * Resets all update flags
@@ -107,6 +123,7 @@ public class UpdateFlags {
 		projectile.set(null);
 		actionBubble.set(null);
 		damage.set(null);
+		heal.set(null);
 		projectile.set(null);
 		chatMessage.set(null);
 

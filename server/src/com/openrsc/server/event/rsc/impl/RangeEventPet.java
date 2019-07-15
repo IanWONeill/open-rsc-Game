@@ -26,7 +26,7 @@ import com.openrsc.server.util.rsc.MessageType;
 /**
  * @author n0m
  */
-public class RangeEventNpc extends GameTickEvent {
+public class RangeEventPet extends GameTickEvent {
 
 	private boolean deliveredFirstProjectile;
 	
@@ -50,7 +50,7 @@ public class RangeEventNpc extends GameTickEvent {
 	};
 	private Mob target;
 
-	public RangeEventNpc(Npc owner, Mob victim) {
+	public RangeEventPet(Npc owner, Mob victim) {
 		super(owner, 1);
 		this.setImmediate(true);
 		this.target = victim;
@@ -58,8 +58,8 @@ public class RangeEventNpc extends GameTickEvent {
 	}
 
 	public boolean equals(Object o) {
-		if (o instanceof RangeEventNpc) {
-			RangeEventNpc e = (RangeEventNpc) o;
+		if (o instanceof RangeEventPet) {
+			RangeEventPet e = (RangeEventPet) o;
 			return e.belongsTo(owner);
 		}
 		return false;
@@ -91,6 +91,11 @@ public class RangeEventNpc extends GameTickEvent {
 				stop();
 				return;
 			}
+			if(!owner.getPetOwnerA2().inCombat()) {
+				owner.resetRange();
+				stop();
+				return;
+			}
 			if (target.isNpc() && ((Npc) target).isRemoved()) {
 				owner.resetRange();
 				//p22.message("TEST 45454545");
@@ -110,21 +115,7 @@ public class RangeEventNpc extends GameTickEvent {
 				stop();
 				return;
 			}
-			if(((Npc) owner).getPetNpc() == 0) {
-				if(combDiff > myWildLvl || !target.getLocation().inWilderness() || !owner.getLocation().inWilderness()) {
-					owner.resetRange();
-					//p22.message("TEST 20202020");
-					stop();
-					return;
-				} else
-				if(combDiff > targetWildLvl || !target.getLocation().inWilderness() || !owner.getLocation().inWilderness()) {
-				owner.resetRange();
-				//p22.message("TEST 87878787");
-				stop();
-				return;
-				}
-			}
-			if (owner.getLocation().inWilderness() && target.getLocation().inWilderness() && !canReach(target)) {
+			if (!canReach(target)) {
 				owner.walkToEntity(target.getX(), target.getY());
 				if (owner.nextStep(owner.getX(), owner.getY(), target) == null) {
 					//getPlayerOwner().message("I can't get close enough");
@@ -134,32 +125,8 @@ public class RangeEventNpc extends GameTickEvent {
 					owner.resetRange();
 					stop();
 				}
-			} else if (!owner.getLocation().inWilderness() && !target.getLocation().inWilderness() && !canReach(target)) {
-				owner.walkToEntity(target.getX(), target.getY());
-				if (owner.nextStep(owner.getX(), owner.getY(), target) == null) {
-					//getPlayerOwner().message("I can't get close enough");
-					Player playerTarget = (Player) target;
-					playerTarget.message("You got away");
-					//p22.message("TEST 7x7x8x8x");
-					owner.resetRange();
-					stop();
-					return;
-				}
-			} else if (!owner.getLocation().inWilderness() && !target.getLocation().inWilderness() && !canReach(target)) {
-				//owner.walkToEntity(target.getX(), target.getY());
-				//if (owner.nextStep(owner.getX(), owner.getY(), target) == null) {
-				//getPlayerOwner().message("I can't get close enough");
-				Player playerTarget = (Player) target;
-				playerTarget.message("You got away");
-				//p22.message("TEST 7577373");
-				owner.resetRange();
-				stop();
-				return;
-			//}
 			} else {
-			//p22.message("TEST 12341234");
 			owner.resetPath();
-			//owner.resetRange();
 			boolean canShoot = System.currentTimeMillis() - owner.getAttribute("rangedTimeout", 0L) > 1900;
 			if (canShoot) {
 				if (!PathValidation.checkPath(owner.getLocation(), target.getLocation())) {
@@ -199,10 +166,10 @@ public class RangeEventNpc extends GameTickEvent {
 				}
 				if (owner.isNpc() && owner.getPetNpc() > 0) {
 					Player p28x = owner.getPetOwnerA2();
-					p28x.setPet2Fatigue(p28x.getPet2Fatigue() + 50);
+					p28x.setPet2Fatigue(p28x.getPet2Fatigue() + 150);
 					//p28x.message(owner + " is shooting at you!");
 				}
-				//ActionSender.sendSound(getPlayerOwner(), "shoot");
+				//ActionSender.sendSound(getPlayerOwner(), "shoot");//should player hear his pets projectile?
 				if (EntityHandler.getItemDef(11).getName().toLowerCase().contains("poison") && target.isPlayer()) {
 					if (DataConversions.random(0, 100) <= 10) {
 						target.poisonDamage = target.getSkills().getMaxStat(Skills.HITPOINTS);

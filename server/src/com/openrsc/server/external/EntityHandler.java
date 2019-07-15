@@ -41,6 +41,7 @@ public final class EntityHandler {
 	private static HashMap<Point, TelePoint> objectTelePoints;
 	private static HashMap<Integer, ObjectWoodcuttingDef> objectWoodcutting;
 	private static PrayerDef[] prayers;
+	private static PetDef[] pets;
 	private static TileDef[] tiles;
 
 	static {
@@ -48,6 +49,7 @@ public final class EntityHandler {
 		doors = (DoorDef[]) PersistenceManager.load("defs/DoorDef.xml.gz");
 		gameObjects = (GameObjectDef[]) PersistenceManager.load("defs/GameObjectDef.xml.gz");
 		prayers = (PrayerDef[]) PersistenceManager.load("defs/PrayerDef.xml.gz");
+		pets = (PetDef[]) PersistenceManager.load("defs/PetDef.xml.gz");//is this needed?
 		spells = (SpellDef[]) PersistenceManager.load("defs/SpellDef.xml.gz");
 		tiles = (TileDef[]) PersistenceManager.load("defs/TileDef.xml.gz");
 
@@ -307,6 +309,13 @@ public final class EntityHandler {
 			return null;
 		}
 		return prayers[id];
+	}
+	
+	public static PetDef getPetDef(int id) {
+		if (id < 0 || id >= pets.length) {
+			return null;
+		}
+		return pets[id];
 	}
 
 	/**

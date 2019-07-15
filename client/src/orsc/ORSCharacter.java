@@ -16,9 +16,11 @@ public final class ORSCharacter {
 	public int colourSkin;
 	public int colourTop;
 	public int combatTimeout = 0;
+	public int healTimeout = 0;
 	public int currentX;
 	public int currentZ;
 	public int damageTaken = 0;
+	public int healTaken = 0;
 	public String displayName;
 	public int[] layerAnimation = new int[12];
 	public int healthCurrent = 0;

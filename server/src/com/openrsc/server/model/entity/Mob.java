@@ -5,6 +5,7 @@ import com.openrsc.server.Server;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.impl.PoisonEvent;
 import com.openrsc.server.event.rsc.impl.StatRestorationEvent;
+import com.openrsc.server.event.rsc.impl.PetFatigueRestorationEvent;
 import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.RangeEvent;
 import com.openrsc.server.event.rsc.impl.RangeEventNpc;
@@ -13,6 +14,7 @@ import com.openrsc.server.external.ItemId;
 import com.openrsc.server.model.*;
 import com.openrsc.server.model.Path.PathType;
 import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.entity.update.Heal;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.action.WalkToActionNpc;
 import com.openrsc.server.model.entity.update.Damage;
@@ -237,6 +239,7 @@ public abstract class Mob extends Entity {
 	 * The stat restore event
 	 */
 	protected StatRestorationEvent statRestorationEvent = new StatRestorationEvent(this);
+	protected PetFatigueRestorationEvent petFatigueRestorationEvent = new PetFatigueRestorationEvent(this);
 	/**
 	 * If we are warned to move
 	 */
@@ -488,7 +491,27 @@ public abstract class Mob extends Entity {
 		}
 		getUpdateFlags().setDamage(new Damage(this, damage));
 	}
-
+	
+	public void heal(int heal) {
+		int newHp = skills.getLevel(Skills.HITPOINTS) + heal;
+		if (newHp <= 0) {
+			if (this.isPlayer()) {
+				((Player) this).setStatus(Action.DIED_FROM_DAMAGE);
+				killedBy(null);
+			} else {
+				((Npc) this).setStatus(Action.DIED_FROM_DAMAGE);
+				killedBy(null);
+			}
+		} else {
+			skills.setLevel(3, newHp);
+		}
+		if (this.isPlayer()) {
+			Player p = (Player) this;
+			ActionSender.sendStat(p, 3);
+		}
+		getUpdateFlags().setHeal(new Heal(this, heal));
+	}
+	
 	public void face(Entity entity) {
 		if (entity != null && entity.getLocation() != null) {
 			final int dir = Formulae.getDirection(this, entity.getX(), entity.getY());
@@ -606,6 +629,10 @@ public abstract class Mob extends Entity {
 	public StatRestorationEvent getStatRestorationEvent() {
 		return statRestorationEvent;
 	}
+	
+	public PetFatigueRestorationEvent getPetFatigueRestorationEvent() {
+		return petFatigueRestorationEvent;
+	}
 
 	public UpdateFlags getUpdateFlags() {
 		return updateFlags;
@@ -661,7 +688,7 @@ public abstract class Mob extends Entity {
 
 	public abstract void killedBy(Mob mob);
 	private int petNpc = 0;
-	private int petNpcType = 0;
+	private int petNpcType = 0;//1 = melee, 2 = magic, 3 = ranged, 4 = healer, 5= banker
 	public int getPetNpc() {
 		return petNpc;
 	}
@@ -680,11 +707,18 @@ public abstract class Mob extends Entity {
 		petNpc++;
 	}
 	public Player petOwnerA2;
+	public Mob petOpponent;
 	public Player getPetOwnerA2() {
 			return petOwnerA2;
 	}
+	public Mob getPetOpponent() {
+			return petOpponent;
+	}
 	public void setPetOwnerA2(Player petOwnerA3) {
 		petOwnerA2 = petOwnerA3;
+	}
+	public void setPetOpponent(Mob petOpponent2) {
+		petOpponent = petOpponent2;
 	}
 
 	public void resetCombatEvent() {

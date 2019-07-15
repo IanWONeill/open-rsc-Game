@@ -186,7 +186,7 @@ public class PathValidation {
 		}*/
 	}
 
-	static boolean checkDiagonalPassThroughCollisions(Point curPoint, Point nextPoint) {
+	public static boolean checkDiagonalPassThroughCollisions(Point curPoint, Point nextPoint) {
 
 		int x = curPoint.getX();
 		int y = curPoint.getY();
@@ -216,7 +216,7 @@ public class PathValidation {
 		return false; // No collisions
 	}
 
-	private static boolean checkNortheast(Point curPoint) {
+	public static boolean checkNortheast(Point curPoint) {
 
 		int x = curPoint.getX();
 		int y = curPoint.getY();
@@ -267,7 +267,7 @@ public class PathValidation {
 
 	}
 
-	private static boolean checkNorthwest(Point curPoint) {
+	public static boolean checkNorthwest(Point curPoint) {
 
 		int x = curPoint.getX();
 		int y = curPoint.getY();
@@ -317,7 +317,7 @@ public class PathValidation {
 		return false;
 	}
 
-	private static boolean checkSoutheast(Point curPoint) {
+	public static boolean checkSoutheast(Point curPoint) {
 
 		int x = curPoint.getX();
 		int y = curPoint.getY();
@@ -369,7 +369,7 @@ public class PathValidation {
 
 	}
 
-	private static boolean checkSouthwest(Point curPoint) {
+	public static boolean checkSouthwest(Point curPoint) {
 
 		int x = curPoint.getX();
 		int y = curPoint.getY();

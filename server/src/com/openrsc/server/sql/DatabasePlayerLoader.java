@@ -170,29 +170,33 @@ public class DatabasePlayerLoader {
 			statement.setInt(3, s.getX());
 			statement.setInt(4, s.getY());
 			statement.setInt(5, s.getFatigue());
-			statement.setInt(6, s.getPetFatigue());
-			statement.setInt(7, s.getKills());
-			statement.setInt(8, s.getDeaths());
-			statement.setInt(9, s.getKills2());
-			statement.setInt(10, s.getPets());
-			statement.setInt(11, s.getIronMan());
-			statement.setInt(12, s.getIronManRestriction());
-			statement.setInt(13, s.getHCIronmanDeath());
-			statement.setInt(14, s.calculateQuestPoints());
-			statement.setInt(15, s.getSettings().getAppearance().getHairColour());
-			statement.setInt(16, s.getSettings().getAppearance().getTopColour());
-			statement.setInt(17, s.getSettings().getAppearance().getTrouserColour());
-			statement.setInt(18, s.getSettings().getAppearance().getSkinColour());
-			statement.setInt(19, s.getSettings().getAppearance().getHead());
-			statement.setInt(20, s.getSettings().getAppearance().getBody());
-			statement.setInt(21, s.isMale() ? 1 : 0);
-			statement.setLong(22, s.getSkullTime());
-			statement.setLong(23, s.getChargeTime());
-			statement.setInt(24, s.getCombatStyle());
-			statement.setLong(25, s.getMuteExpires());
-			statement.setLong(26, s.getBankSize());
-			statement.setLong(27, s.getGroupID());
-			statement.setInt(28, s.getDatabaseID());
+			statement.setInt(6, s.getPet2Fatigue());
+			statement.setInt(7, s.getPet0Fatigue());
+			statement.setInt(8, s.getPet1Fatigue());
+			statement.setInt(9, s.getPet3Fatigue());
+			statement.setInt(10, s.getPet4Fatigue());
+			statement.setInt(11, s.getKills());
+			statement.setInt(12, s.getDeaths());
+			statement.setInt(13, s.getKills2());
+			statement.setInt(14, 0);
+			statement.setInt(15, s.getIronMan());
+			statement.setInt(16, s.getIronManRestriction());
+			statement.setInt(17, s.getHCIronmanDeath());
+			statement.setInt(18, s.calculateQuestPoints());
+			statement.setInt(19, s.getSettings().getAppearance().getHairColour());
+			statement.setInt(20, s.getSettings().getAppearance().getTopColour());
+			statement.setInt(21, s.getSettings().getAppearance().getTrouserColour());
+			statement.setInt(22, s.getSettings().getAppearance().getSkinColour());
+			statement.setInt(23, s.getSettings().getAppearance().getHead());
+			statement.setInt(24, s.getSettings().getAppearance().getBody());
+			statement.setInt(25, s.isMale() ? 1 : 0);
+			statement.setLong(26, s.getSkullTime());
+			statement.setLong(27, s.getChargeTime());
+			statement.setInt(28, s.getCombatStyle());
+			statement.setLong(29, s.getMuteExpires());
+			statement.setLong(30, s.getBankSize());
+			statement.setLong(31, s.getGroupID());
+			statement.setInt(32, s.getDatabaseID());
 			statement.executeUpdate();
 
 			// PRIVACY SETTINGS
@@ -408,11 +412,15 @@ public class DatabasePlayerLoader {
 			save.setInitialLocation(new Point(result.getInt("x"), result.getInt("y")));
 
 			save.setFatigue(result.getInt("fatigue"));
-			save.setPetFatigue(result.getInt("petfatigue"));
+			save.setPet2Fatigue(result.getInt("pet2fatigue"));
+			save.setPet0Fatigue(result.getInt("pet0fatigue"));
+			save.setPet1Fatigue(result.getInt("pet1fatigue"));
+			save.setPet3Fatigue(result.getInt("pet3fatigue"));
+			save.setPet4Fatigue(result.getInt("pet4fatigue"));
 			save.setKills(result.getInt("kills"));
 			save.setDeaths(result.getInt("deaths"));
 			save.setKills2(result.getInt("kills2"));
-			save.setPets(result.getInt("pets"));
+			//save.setPets(result.getInt("pets"));
 			save.setIronMan(result.getInt("iron_man"));
 			save.setIronManRestriction(result.getInt("iron_man_restriction"));
 			save.setHCIronmanDeath(result.getInt("hc_ironman_death"));
@@ -803,7 +811,7 @@ public class DatabasePlayerLoader {
 		private static final String basicInfo = "SELECT 1 FROM `" + PREFIX + "players` WHERE `id` = ?";
 
 		private static final String playerData = "SELECT `id`, `group_id`, "
-			+ "`combatstyle`, `login_date`, `login_ip`, `x`, `y`, `fatigue`,  `petfatigue`, `kills`,"
+			+ "`combatstyle`, `login_date`, `login_ip`, `x`, `y`, `fatigue`, `pet2fatigue`, `pet0fatigue`, `pet1fatigue`, `pet3fatigue`, `pet4fatigue`, `kills`,"
 			+ "`deaths`, `kills2`, `pets`, `iron_man`, `iron_man_restriction`,`hc_ironman_death`, `quest_points`, `block_chat`, `block_private`,"
 			+ "`block_trade`, `block_duel`, `cameraauto`,"
 			+ "`onemouse`, `soundoff`, `haircolour`, `topcolour`,"
@@ -852,7 +860,7 @@ public class DatabasePlayerLoader {
 			+ "invitems`(`playerID`, `id`, `amount`, `wielded`, `slot`) VALUES(?, ?, ?, ?, ?)";
 
 		private static final String save_UpdateBasicInfo = "UPDATE `" + PREFIX
-			+ "players` SET `combat`=?, skill_total=?, `x`=?, `y`=?, `fatigue`=?,  `petfatigue`=?, `kills`=?, `deaths`=?, `kills2`=?, `pets`=?, `iron_man`=?, `iron_man_restriction`=?, `hc_ironman_death`=?, `quest_points`=?, `haircolour`=?, `topcolour`=?, `trousercolour`=?, `skincolour`=?, `headsprite`=?, `bodysprite`=?, `male`=?, `skulled`=?, `charged`=?, `combatstyle`=?, `muted`=?, `bank_size`=?, `group_id`=? WHERE `id`=?";
+			+ "players` SET `combat`=?, skill_total=?, `x`=?, `y`=?, `fatigue`=?, `pet2fatigue`=?, `pet0fatigue`=?, `pet1fatigue`=?, `pet3fatigue`=?, `pet4fatigue`=?, `kills`=?, `deaths`=?, `kills2`=?, `pets`=?, `iron_man`=?, `iron_man_restriction`=?, `hc_ironman_death`=?, `quest_points`=?, `haircolour`=?, `topcolour`=?, `trousercolour`=?, `skincolour`=?, `headsprite`=?, `bodysprite`=?, `male`=?, `skulled`=?, `charged`=?, `combatstyle`=?, `muted`=?, `bank_size`=?, `group_id`=? WHERE `id`=?";
 
 		private static final String save_DeleteQuests = "DELETE FROM `" + PREFIX + "quests` WHERE `playerID`=?";
 

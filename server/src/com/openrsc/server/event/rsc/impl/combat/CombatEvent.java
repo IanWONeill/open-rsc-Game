@@ -7,14 +7,17 @@ import com.openrsc.server.model.Skills;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.states.Action;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.net.rsc.handlers.PetHandler;
 import com.openrsc.server.plugins.PluginHandler;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
+import com.openrsc.server.model.entity.player.Pets;
 
 /***
  *
@@ -45,9 +48,23 @@ public class CombatEvent extends GameTickEvent {
 				return;
 			}
 		}
-
+		
+		if(killer.getPetOwnerA2() != null) {
+			killer.setPetOpponent(null);
+		}
+		
 		killed.setLastCombatState(CombatState.WON);
 		killer.setLastCombatState(CombatState.LOST);
+		
+		if(killed.getPetOwnerA2() != null){
+			Player p28x = killed.getPetOwnerA2();
+			if(p28x.getPets().isPetActivated(1)) {
+				p28x.getPets().setPet(1, false);
+				p28x.setPetInCombat(0);
+				p28x.setPetOut(99);
+				p28x.message("Your Warrior pet has died.");
+			}
+		}
 
 		if (killed.isPlayer() && killer.isPlayer()) {
 			Player playerKiller = (Player) killer;
@@ -93,15 +110,17 @@ public class CombatEvent extends GameTickEvent {
 			target.setLastCombatState(CombatState.ERROR);
 			resetCombat();
 		} else {
-			//if(hitter.isNpc() && target.isPlayer() || target.isNpc() && hitter.isPlayer()) {
 			inflictDamage(hitter, target, MeleeFormula.getDamage(hitter, target));
-			//} else {
-			//	inflictDamage(hitter, target, PVPCombatFormula.calcFightHit(hitter, target));
-			//}
 		}
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage) {
+		if(hitter.isNpc()){
+			if(hitter.getID() == 808){
+				Player p28x = hitter.getPetOwnerA2();
+				p28x.setPet1Fatigue(p28x.getPet1Fatigue() + 225);
+			}
+		}
 		hitter.incHitsMade();
 		if (hitter.isNpc() && target.isPlayer()) {
 			Player targetPlayer = (Player) target;
@@ -162,13 +181,14 @@ public class CombatEvent extends GameTickEvent {
 	public void resetCombat() {
 		if (running) {
 			if (defenderMob != null) {
+				Mob j = defenderMob.getOpponent();
 				int delayedAggro = 0;
 				if (defenderMob.isPlayer()) {
 					Player player = (Player) defenderMob;
 					player.setStatus(Action.IDLE);
 					player.resetAll();
 				} else {
-					if (defenderMob.getID() != 210 && defenderMob.getCombatState() == CombatState.RUNNING)
+					if (j.getPetOwnerA2() == null && defenderMob.getID() != 210 && defenderMob.getCombatState() == CombatState.RUNNING)
 						delayedAggro = 17000; // 17 + 3 second aggro timer for npds running
 				}
 

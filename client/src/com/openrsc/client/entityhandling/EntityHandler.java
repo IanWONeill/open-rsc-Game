@@ -6,6 +6,7 @@ import com.openrsc.client.entityhandling.defs.GameObjectDef;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.defs.NPCDef;
 import com.openrsc.client.entityhandling.defs.PrayerDef;
+import com.openrsc.client.entityhandling.defs.PetDef;
 import com.openrsc.client.entityhandling.defs.SpellDef;
 import com.openrsc.client.entityhandling.defs.SpriteDef;
 import com.openrsc.client.entityhandling.defs.TileDef;
@@ -30,6 +31,7 @@ public class EntityHandler {
 	public static ArrayList<SpriteDef> crowns = new ArrayList<>();
 	private static ArrayList<SpellDef> spells = new ArrayList<>();
 	private static ArrayList<PrayerDef> prayers = new ArrayList<>();
+	private static ArrayList<PetDef> pets = new ArrayList<PetDef>();
 	private static ArrayList<TileDef> tiles = new ArrayList<>();
 	private static ArrayList<DoorDef> doors = new ArrayList<>();
 	private static ArrayList<ElevationDef> elevation = new ArrayList<>();
@@ -104,12 +106,23 @@ public class EntityHandler {
 	public static int prayerCount() {
 		return prayers.size();
 	}
+	
+	public static int petCount() {
+		return pets.size();
+	}
 
 	public static PrayerDef getPrayerDef(int id) {
 		if (id < 0 || id >= prayers.size()) {
 			return null;
 		}
 		return prayers.get(id);
+	}
+	
+	public static PetDef getPetDef(int id) {
+		if (id < 0 || id >= pets.size()) {
+			return null;
+		}
+		return pets.get(id);
 	}
 
 	public static int tileCount() {
@@ -185,6 +198,19 @@ public class EntityHandler {
 			"Stops monsters from fighting back"));
 		prayers.add(new PrayerDef(40, 60, "Protect from missiles",
 			"100% protection from ranged attacks"));
+	}
+	
+	private static void loadPetDefinitions() {
+		pets.add(new PetDef(1, 15, "Healer",
+			"Heals you"));
+		pets.add(new PetDef(2, 15, "Warrior",
+			"Fights melee"));
+		pets.add(new PetDef(3, 15, "Archer",
+			"Archery combat"));
+		pets.add(new PetDef(4, 30, "Mage",
+			"A mage"));
+		pets.add(new PetDef(5, 30, "Banker",
+			"A banker"));
 	}
 
 	private static void loadTileDefinitions() {
@@ -2073,7 +2099,17 @@ public class EntityHandler {
 		npcs.add(new NPCDef("Hardcore Iron Man","A Hardcore Iron Man", "Armour", 0, 0, 0, 0, false, sprites, 11167296, 8, 14, 13415270, 145, 220, 6, 6, 5, i++));
 		sprites = new int[] { 309, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 		npcs.add(new NPCDef("Greatwood","A scary hard slamming tree", "", 255, 245, 400, 300, true, sprites, 0, 0, 0, 0, 345, 410, 11, 11, 30, i++));
-
+		//sprites = new int[]{3, 4, 2, -1, 107, 239, -1, -1, -1, -1, 80, -1};
+		sprites = new int[]{3, 4, 2, -1, 107, -1, -1, -1, 46, -1, 80, -1};
+		npcs.add(new NPCDef("Healer", "A healer pet", "", 39, 39, 39, 39, false, sprites, 16753488, 15645504, 3, 45523536, 96, 146, 6, 6, 5, i++));
+		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+		npcs.add(new NPCDef("Banker", "He can look after my money", bankerOption1, bankerOption2, 11, 8, 7, 11, false, sprites, 15921906, 2, 3, 15523536, 96, 146, 6, 6, 5, i++));
+		sprites = new int[]{3, 4, 2, -1, 107, -1, -1, -1, 46, -1, 80, -1};
+		npcs.add(new NPCDef("Archer", "An archer pet", "", 39, 39, 39, 39, false, sprites, 16753488, 23536, 3, 89823536, 96, 146, 6, 6, 5, i++));
+		sprites = new int[]{6, 1, 2, 122, -1, 77, 76, 81, -1, -1, -1, -1};
+		npcs.add(new NPCDef("Mage", "A wizard pet", "", 20, 15, 3, 10, false, sprites, 1, 255, 255, 89829657, 96, 146, 6, 6, 5, i++));
+		sprites = new int[]{6, 1, 2, -1, 52, -1, -1, -1, -1, -1, 80, -1};
+		npcs.add(new NPCDef("Warrior", "A melee combat pet", "", 40, 40, 40, 40, false, sprites, 16752945, 8060124, 3, 19723536, 116, 176, 6, 6, 5, i++));
 		/*try {
 			PrintWriter printWriter = new PrintWriter(new FileOutputStream("NpcType.txt"), true);
 			int count = 0;
@@ -6496,6 +6532,7 @@ public class EntityHandler {
 		loadAnimationDefinitions();
 		loadSpellDefinitions();
 		loadPrayerDefinitions();
+		loadPetDefinitions();
 		loadTileDefinitions();
 		loadDoorDefinitions();
 		loadElevationDefinitions();

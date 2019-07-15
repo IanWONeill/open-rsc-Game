@@ -1,6 +1,7 @@
 package com.openrsc.server.event.rsc.impl;
 
 import static com.openrsc.server.plugins.Functions.getCurrentLevel;
+import static com.openrsc.server.plugins.Functions.getMaxLevel;
 
 import com.openrsc.server.Constants;
 import com.openrsc.server.Server;
@@ -26,7 +27,7 @@ import com.openrsc.server.util.rsc.MessageType;
 /**
  * @author n0m
  */
-public class RangeEventNpc extends GameTickEvent {
+public class RangeHealEventNpcx extends GameTickEvent {
 
 	private boolean deliveredFirstProjectile;
 	
@@ -50,7 +51,7 @@ public class RangeEventNpc extends GameTickEvent {
 	};
 	private Mob target;
 
-	public RangeEventNpc(Npc owner, Mob victim) {
+	public RangeHealEventNpcx(Npc owner, Mob victim) {
 		super(owner, 1);
 		this.setImmediate(true);
 		this.target = victim;
@@ -58,8 +59,8 @@ public class RangeEventNpc extends GameTickEvent {
 	}
 
 	public boolean equals(Object o) {
-		if (o instanceof RangeEventNpc) {
-			RangeEventNpc e = (RangeEventNpc) o;
+		if (o instanceof RangeHealEventNpcx) {
+			RangeHealEventNpcx e = (RangeHealEventNpcx) o;
 			return e.belongsTo(owner);
 		}
 		return false;
@@ -76,9 +77,6 @@ public class RangeEventNpc extends GameTickEvent {
 
 	public void run() {
 		for (Player p22 : World.getWorld().getPlayers()) {
-			int combDiff = Math.abs(owner.getCombatLevel() - target.getCombatLevel());
-			int targetWildLvl = target.getLocation().wildernessLevel();
-			int myWildLvl = owner.getLocation().wildernessLevel();
 			if ((target.isPlayer() && !((Player) target).loggedIn()) || target.getSkills().getLevel(Skills.HITPOINTS) <= 0 || !owner.withinRange(target)) {
 				owner.resetRange();
 				//p22.message("TEST 45454545");
@@ -91,18 +89,6 @@ public class RangeEventNpc extends GameTickEvent {
 				stop();
 				return;
 			}
-			if (target.isNpc() && ((Npc) target).isRemoved()) {
-				owner.resetRange();
-				//p22.message("TEST 45454545");
-				stop();
-				return;
-			}
-			if (owner.isNpc() && ((Npc) owner).isRemoved()) {
-				owner.resetRange();
-				//p22.message("TEST 12121212");
-				stop();
-				return;
-			}
 			if (!target.getLocation().inBounds(((Npc) owner).getLoc().minX - 9, ((Npc) owner).getLoc().minY - 9,
 				((Npc) owner).getLoc().maxX + 9, ((Npc) owner).getLoc().maxY + 9) && ((Npc) owner).isNpc()) {
 				owner.resetRange();
@@ -110,54 +96,6 @@ public class RangeEventNpc extends GameTickEvent {
 				stop();
 				return;
 			}
-			if(((Npc) owner).getPetNpc() == 0) {
-				if(combDiff > myWildLvl || !target.getLocation().inWilderness() || !owner.getLocation().inWilderness()) {
-					owner.resetRange();
-					//p22.message("TEST 20202020");
-					stop();
-					return;
-				} else
-				if(combDiff > targetWildLvl || !target.getLocation().inWilderness() || !owner.getLocation().inWilderness()) {
-				owner.resetRange();
-				//p22.message("TEST 87878787");
-				stop();
-				return;
-				}
-			}
-			if (owner.getLocation().inWilderness() && target.getLocation().inWilderness() && !canReach(target)) {
-				owner.walkToEntity(target.getX(), target.getY());
-				if (owner.nextStep(owner.getX(), owner.getY(), target) == null) {
-					//getPlayerOwner().message("I can't get close enough");
-					Player playerTarget = (Player) target;
-					playerTarget.message("You got away");
-					//p22.message("TEST 6x6x5x5x");
-					owner.resetRange();
-					stop();
-				}
-			} else if (!owner.getLocation().inWilderness() && !target.getLocation().inWilderness() && !canReach(target)) {
-				owner.walkToEntity(target.getX(), target.getY());
-				if (owner.nextStep(owner.getX(), owner.getY(), target) == null) {
-					//getPlayerOwner().message("I can't get close enough");
-					Player playerTarget = (Player) target;
-					playerTarget.message("You got away");
-					//p22.message("TEST 7x7x8x8x");
-					owner.resetRange();
-					stop();
-					return;
-				}
-			} else if (!owner.getLocation().inWilderness() && !target.getLocation().inWilderness() && !canReach(target)) {
-				//owner.walkToEntity(target.getX(), target.getY());
-				//if (owner.nextStep(owner.getX(), owner.getY(), target) == null) {
-				//getPlayerOwner().message("I can't get close enough");
-				Player playerTarget = (Player) target;
-				playerTarget.message("You got away");
-				//p22.message("TEST 7577373");
-				owner.resetRange();
-				stop();
-				return;
-			//}
-			} else {
-			//p22.message("TEST 12341234");
 			owner.resetPath();
 			//owner.resetRange();
 			boolean canShoot = System.currentTimeMillis() - owner.getAttribute("rangedTimeout", 0L) > 1900;
@@ -171,12 +109,19 @@ public class RangeEventNpc extends GameTickEvent {
 				}
 				owner.face(target);
 				owner.setAttribute("rangedTimeout", System.currentTimeMillis());
-				//((Player) target).setBeingHealed(1);
-				//ActionSender.sendBeingHealed(((Player) target));
+				
+				
+
 				if (target.isPlayer()) {
 					Player playerTarget = (Player) target;
-					if (playerTarget.getPrayers().isPrayerActivated(Prayers.PROTECT_FROM_MISSILES)) {
-						playerTarget.message(owner + " is trying to shoot you!");
+					if(playerTarget.getSkills().getLevel(3) == getMaxLevel(playerTarget, Skills.HITPOINTS) && playerTarget == ((Npc) owner).getPetOwnerA2()) {
+						//playerTarget.message(owner + " is trying to heal you, but you're fully healed. xxxxxxxxxxxx");
+						owner.resetRange();
+						stop();
+						return;
+					} else
+					if(playerTarget.getSkills().getLevel(3) == getMaxLevel(playerTarget, Skills.HITPOINTS)) {
+						playerTarget.message(owner + " is trying to heal you, but you're fully healed.");
 						stop();
 						return;
 					}
@@ -185,8 +130,8 @@ public class RangeEventNpc extends GameTickEvent {
 				//int damage = 1;
 				int damage = Formulae.calcRangeHitNpc(owner, owner.getSkills().getLevel(Skills.RANGED), target.getArmourPoints(), 11);
 				if (Formulae.looseArrow(damage)) {
-					GroundItem arrows = getArrows(11);
-					if (arrows == null) {
+					GroundItem arrows = getArrows(11);//change this to healing arrows
+					if (arrows == null) {//should heals drop arrows?
 						for (Player p : World.getWorld().getPlayers()) {
 						World.getWorld().registerItem(new GroundItem(11, target.getX(), target.getY(), 1, p));
 						}
@@ -195,28 +140,20 @@ public class RangeEventNpc extends GameTickEvent {
 					}
 				}
 				if (target.isPlayer() && owner.isNpc()) {
-					((Player) target).message(owner + " is shooting at you!");
+					((Player) target).message(owner + " is healing you.");
 				}
 				if (owner.isNpc() && owner.getPetNpc() > 0) {
 					Player p28x = owner.getPetOwnerA2();
-					p28x.setPet2Fatigue(p28x.getPet2Fatigue() + 50);
-					//p28x.message(owner + " is shooting at you!");
+					p28x.setPet0Fatigue(p28x.getPet0Fatigue() + 125);
 				}
-				//ActionSender.sendSound(getPlayerOwner(), "shoot");
-				if (EntityHandler.getItemDef(11).getName().toLowerCase().contains("poison") && target.isPlayer()) {
-					if (DataConversions.random(0, 100) <= 10) {
-						target.poisonDamage = target.getSkills().getMaxStat(Skills.HITPOINTS);
-						target.startPoisonEvent();
-					}
-				}
-				Server.getServer().getGameEventHandler().add(new ProjectileEvent(owner, target, damage, 2));
+				//int damage2 = ((Player) target).getKills2();//change this
+				Server.getServer().getGameEventHandler().add(new ProjectileHealEvent(owner, target, 5, 1));
 				//if(owner instanceof Npc){
 				//owner.setChasing(target);
 				//}
 				owner.setKillType(2);
 				deliveredFirstProjectile = true;
 			}
-		}
 	}
 	}
 

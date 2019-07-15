@@ -35,10 +35,13 @@ public class PacketHandlerLookup {
 		bind(OpcodeIn.CHAT_MESSAGE.getOpcode(), ChatHandler.class);
 
 		bind(OpcodeIn.PRAYER_ACTIVATED.getOpcode(), PrayerHandler.class);
+		bind(OpcodeIn.PET_ACTIVATED.getOpcode(), PetHandler.class);
 		bind(OpcodeIn.PRAYER_DEACTIVATED.getOpcode(), PrayerHandler.class);
+		bind(OpcodeIn.PET_DEACTIVATED.getOpcode(), PetHandler.class);
 
 		bind(OpcodeIn.NPC_TALK_TO.getOpcode(), NpcTalkTo.class);
 		bind(OpcodeIn.NPC_ATTACK1.getOpcode(), AttackHandler.class);
+		bind(OpcodeIn.NPC_PETATTACK1.getOpcode(), PetAttackHandler.class);
 		bind(OpcodeIn.CAST_ON_SELF.getOpcode(), SpellHandler.class);
 		bind(OpcodeIn.PLAYER_CAST_SPELL.getOpcode(), SpellHandler.class);
 		bind(OpcodeIn.PLAYER_USE_ITEM.getOpcode(), ItemUseOnPlayer.class);

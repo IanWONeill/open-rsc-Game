@@ -125,3 +125,8 @@ client/Cache/credentials\.txt
 client/Cache/hideIp\.txt
 
 Android/Open RSC Android Client/release/
+client/Cache/ip.txt
+client/Cache/ip.txt
+server/logs
+server/default.conf
+server/default.conf

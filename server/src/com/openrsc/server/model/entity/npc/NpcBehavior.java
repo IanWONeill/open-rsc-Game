@@ -4,6 +4,9 @@ import com.openrsc.server.Constants;
 import com.openrsc.server.event.rsc.impl.combat.AggroEvent;
 import com.openrsc.server.event.rsc.impl.RangeEventNpc;
 import com.openrsc.server.event.rsc.impl.HealEventNpc;
+import com.openrsc.server.event.rsc.impl.RangeEventNpcx;
+import com.openrsc.server.event.rsc.impl.RangeEventPet;
+import com.openrsc.server.event.rsc.impl.RangeHealEventNpcx;
 import com.openrsc.server.event.rsc.impl.StrPotEventNpc;
 import com.openrsc.server.external.ItemId;
 import com.openrsc.server.external.NpcId;
@@ -17,6 +20,7 @@ import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.MessageType;
+import com.openrsc.server.model.PathValidation;
 
 import static com.openrsc.server.plugins.Functions.hasItem;
 import static com.openrsc.server.plugins.Functions.inArray;
@@ -24,6 +28,7 @@ import static com.openrsc.server.plugins.Functions.npcYell;
 import static com.openrsc.server.plugins.Functions.playerTalk;
 import static com.openrsc.server.plugins.Functions.removeItem;
 import static com.openrsc.server.plugins.Functions.showBubble;
+import static com.openrsc.server.plugins.Functions.getMaxLevel;
 
 public class NpcBehavior {
 
@@ -43,6 +48,351 @@ public class NpcBehavior {
 	}
 
 	public void tick() {
+				if(npc.getID() == 803) {//HEALER PET type4
+			Player p28x = npc.getPetOwnerA2();
+			if(p28x.getPet0Fatigue() > 75000) {
+				p28x.setPet0Fatigue(75000);
+			}
+			if(p28x.getPet0Fatigue() >= 75000) {
+				npc.remove();
+				p28x.getPets().setPet(0, false);
+				p28x.setPetInCombat(0);
+				p28x.setPetOut(99);
+				p28x.message("@gre@Your Healer pet is too tired, and has returned to rest.");
+			}
+			if(npc != null) {
+				p28x.setPet0Fatigue(p28x.getPet0Fatigue() + 10);
+			}
+			if(!p28x.getPets().isPetActivated(0)) {
+				npc.remove();
+			}
+			if(!npc.withinRange(p28x, 1)) {
+				Point walkTo = Point.location(DataConversions.random(p28x.getX() - 1, p28x.getX() + 1), DataConversions.random(p28x.getY() - 1, p28x.getY() + 1));
+				if(PathValidation.checkDiagonalPassThroughCollisions(npc.getLocation(), p28x.getLocation()) || !PathValidation.checkAdjacent(npc.getLocation(), p28x.getLocation(), true) || !PathValidation.checkPath(npc.getLocation(), p28x.getLocation()) || npc.nextStep(npc.getX(), npc.getY(), p28x) == null) {
+					//((Player) p28x).message("PET STUCK");
+					npc.setLocation(Point.location(walkTo.getX(), walkTo.getY()), true);
+					//int newXstuck = DataConversions.random(npc.getX() - 5, npc.getX() + 5);//These 3 lines versus teleporting
+					//int newYstuck = DataConversions.random(npc.getY() - 5, npc.getY() + 5);
+					//npc.walk(newXstuck, newYstuck);
+				} else
+				if(walkTo.getX() == p28x.getX() && walkTo.getY() == p28x.getY()){
+				
+				} else {
+					npc.walk(walkTo.getX(), walkTo.getY());
+					npc.face(p28x);
+				}
+			}
+			if(p28x.getSkills().getLevel(Skills.HITPOINTS) < getMaxLevel(p28x, Skills.HITPOINTS)){
+				npc.setRangeHealEventNpcx(new RangeHealEventNpcx(npc, p28x));
+			} /*else
+			if(p28x.inCombat()){
+				npc.setRangeHealEventNpcx(new RangeHealEventNpcx(npc, p28x));
+			}*/
+			if (System.currentTimeMillis() - lastMovement > 2750 && System.currentTimeMillis() - npc.getCombatTimer() > 2750 && npc.finishedPath()) {
+				lastMovement = System.currentTimeMillis();
+				lastTarget = null;
+				int rand = DataConversions.random(0, 1);
+				if (!npc.isBusy() && rand == 1 && !npc.isRemoved()) {
+					int newX = DataConversions.random(p28x.getX() - 1, p28x.getX() + 1);
+					int newY = DataConversions.random(p28x.getY() - 1, p28x.getY() + 1);
+					if(newX == p28x.getX() && newY == p28x.getY()){
+						//npc.walk(newX, newY);
+					} else {
+						npc.walk(newX, newY);
+					}
+				}
+			}
+			String userN = p28x.getUsername();
+			Player p28 = World.getWorld().getPlayer(DataConversions.usernameToHash(userN));
+			if(p28 == null) {
+				for (Player p : World.getWorld().getPlayers()) {
+					//p.message("REMOVE PET");
+				}
+				npc.remove();
+			}
+		}
+		if(npc.getID() == 805) {//ARCHER PET type3
+			Player p28x = npc.getPetOwnerA2();
+			if(p28x.getPet2Fatigue() > 75000) {
+				p28x.setPet2Fatigue(75000);
+			}
+			if(p28x.getPet2Fatigue() >= 75000) {
+				npc.remove();
+				p28x.getPets().setPet(2, false);
+				p28x.setPetInCombat(0);
+				p28x.setPetOut(99);
+				p28x.message("@gre@Your Archer pet is too tired, and has returned to rest.");
+			}
+			if(npc != null) {
+				p28x.setPet2Fatigue(p28x.getPet2Fatigue() + 10);
+			}
+			if(!p28x.getPets().isPetActivated(2)) {
+				npc.remove();
+			}
+			if(!npc.withinRange(p28x, 1)) {
+				Point walkTo = Point.location(DataConversions.random(p28x.getX() - 1, p28x.getX() + 1), DataConversions.random(p28x.getY() - 1, p28x.getY() + 1));
+				if(PathValidation.checkDiagonalPassThroughCollisions(npc.getLocation(), p28x.getLocation()) || !PathValidation.checkAdjacent(npc.getLocation(), p28x.getLocation(), true) || !PathValidation.checkPath(npc.getLocation(), p28x.getLocation()) || npc.nextStep(npc.getX(), npc.getY(), p28x) == null) {
+					//((Player) p28x).message("PET STUCK");
+					npc.setLocation(Point.location(walkTo.getX(), walkTo.getY()), true);
+					//int newXstuck = DataConversions.random(npc.getX() - 5, npc.getX() + 5);//These 3 lines versus teleporting
+					//int newYstuck = DataConversions.random(npc.getY() - 5, npc.getY() + 5);
+					//npc.walk(newXstuck, newYstuck);
+				} else
+				if(walkTo.getX() == p28x.getX() && walkTo.getY() == p28x.getY()){
+				
+				} else {
+					npc.walk(walkTo.getX(), walkTo.getY());
+					npc.face(p28x);
+				}
+			} else
+			if(p28x.inCombat()){
+				npc.setRangeEventPet(new RangeEventPet(npc, p28x.getOpponent()));
+			} /*else
+			if(p28x.inCombat()){
+				npc.setRangeHealEventNpcx(new RangeHealEventNpcx(npc, p28x));
+			}*/ else
+			if (System.currentTimeMillis() - lastMovement > 2750 && System.currentTimeMillis() - npc.getCombatTimer() > 2750 && npc.finishedPath()) {
+				lastMovement = System.currentTimeMillis();
+				lastTarget = null;
+				int rand = DataConversions.random(0, 1);
+				if (!npc.isBusy() && rand == 1 && !npc.isRemoved()) {
+					int newX = DataConversions.random(p28x.getX() - 1, p28x.getX() + 1);
+					int newY = DataConversions.random(p28x.getY() - 1, p28x.getY() + 1);
+					if(newX == p28x.getX() && newY == p28x.getY()){
+						//npc.walk(newX, newY);
+					} else {
+						npc.walk(newX, newY);
+					}
+				}
+			}
+			String userN = p28x.getUsername();
+			Player p28 = World.getWorld().getPlayer(DataConversions.usernameToHash(userN));
+			if(p28 == null) {
+				for (Player p : World.getWorld().getPlayers()) {
+					//p.message("REMOVE PET");
+				}
+				npc.remove();
+			}
+		}
+		if(npc.getID() == 806) {//MAGE PET type2
+			Player p28x = npc.getPetOwnerA2();
+			if(p28x.getPet3Fatigue() > 75000) {
+				p28x.setPet3Fatigue(75000);
+			}
+			if(p28x.getPet3Fatigue() >= 75000) {
+				npc.remove();
+				p28x.getPets().setPet(3, false);
+				p28x.setPetInCombat(0);
+				p28x.setPetOut(99);
+				p28x.message("@gre@Your Mage pet is too tired, and has returned to rest.");
+			}
+			if(!p28x.getPets().isPetActivated(3)) {
+				npc.remove();
+			}
+			if(npc != null) {
+				p28x.setPet3Fatigue(p28x.getPet3Fatigue() + 10);
+			}
+			if(!npc.withinRange(p28x, 1)) {
+				Point walkTo = Point.location(DataConversions.random(p28x.getX() - 1, p28x.getX() + 1), DataConversions.random(p28x.getY() - 1, p28x.getY() + 1));
+				if(PathValidation.checkDiagonalPassThroughCollisions(npc.getLocation(), p28x.getLocation()) || !PathValidation.checkAdjacent(npc.getLocation(), p28x.getLocation(), true) || !PathValidation.checkPath(npc.getLocation(), p28x.getLocation()) || npc.nextStep(npc.getX(), npc.getY(), p28x) == null) {
+					//((Player) p28x).message("PET STUCK");
+					npc.setLocation(Point.location(walkTo.getX(), walkTo.getY()), true);
+					//int newXstuck = DataConversions.random(npc.getX() - 5, npc.getX() + 5);//These 3 lines versus teleporting
+					//int newYstuck = DataConversions.random(npc.getY() - 5, npc.getY() + 5);
+					//npc.walk(newXstuck, newYstuck);
+				} else
+				if(walkTo.getX() == p28x.getX() && walkTo.getY() == p28x.getY()){
+				
+				} else {
+					npc.walk(walkTo.getX(), walkTo.getY());
+					npc.face(p28x);
+				}
+			} else
+			if(p28x.inCombat()){
+				//npc.setRangeEventPet(new RangeEventPet(npc, p28x.getOpponent()));
+			} /*else
+			if(p28x.inCombat()){
+				npc.setRangeHealEventNpcx(new RangeHealEventNpcx(npc, p28x));
+			}*/ else
+			if (System.currentTimeMillis() - lastMovement > 2750 && System.currentTimeMillis() - npc.getCombatTimer() > 2750 && npc.finishedPath()) {
+				lastMovement = System.currentTimeMillis();
+				lastTarget = null;
+				int rand = DataConversions.random(0, 1);
+				if (!npc.isBusy() && rand == 1 && !npc.isRemoved()) {
+					int newX = DataConversions.random(p28x.getX() - 1, p28x.getX() + 1);
+					int newY = DataConversions.random(p28x.getY() - 1, p28x.getY() + 1);
+					if(newX == p28x.getX() && newY == p28x.getY()){
+						//npc.walk(newX, newY);
+					} else {
+						npc.walk(newX, newY);
+					}
+				}
+			}
+			String userN = p28x.getUsername();
+			Player p28 = World.getWorld().getPlayer(DataConversions.usernameToHash(userN));
+			if(p28 == null) {
+				for (Player p : World.getWorld().getPlayers()) {
+					//p.message("REMOVE PET");
+				}
+				npc.remove();
+			}
+		}
+		if(npc.getID() == 807) {//WARRIOR PET type1
+			Player p28x = npc.getPetOwnerA2();
+			Mob j = npc.getPetOpponent();
+			if(p28x.getPet1Fatigue() > 75000) {
+				p28x.setPet1Fatigue(75000);
+			}
+			if(npc.inCombat()){
+				p28x.setPetInCombat(1);
+			} else {
+				//p28x.setPetInCombat(0);
+				if(p28x.getPet1Fatigue() >= 75000) {
+					npc.remove();
+					p28x.getPets().setPet(1, false);
+					p28x.setPetInCombat(0);
+					p28x.setPetOut(99);
+					p28x.message("@gre@Your Warrior pet is too tired, and has returned to rest.");
+				}
+			}
+			if(!p28x.getPets().isPetActivated(1)) {
+				npc.remove();
+			}
+			if(npc != null) {
+				p28x.setPet1Fatigue(p28x.getPet1Fatigue() + 10);
+			}
+			if(j != null && System.currentTimeMillis() - j.getCombatTimer() > 1400 && !npc.inCombat() && !j.inCombat()){//work on this line
+				npc.walk(j.getX(), j.getY());
+				npc.face(j);
+				if(System.currentTimeMillis() - j.getCombatTimer() > 3250 && npc.withinRange(j, 2)){
+					npc.startCombat(j);
+					for (Player p : World.getWorld().getPlayers()) {
+						//p.message("fight");
+					}
+				}
+			} else
+			if(!npc.withinRange(p28x, 1) && j == null) {
+				//npc.setPetOpponent(null);
+				Point walkTo = Point.location(DataConversions.random(p28x.getX() - 1, p28x.getX() + 1), DataConversions.random(p28x.getY() - 1, p28x.getY() + 1));
+				if(PathValidation.checkDiagonalPassThroughCollisions(npc.getLocation(), p28x.getLocation()) || !PathValidation.checkAdjacent(npc.getLocation(), p28x.getLocation(), true) || !PathValidation.checkPath(npc.getLocation(), p28x.getLocation()) || npc.nextStep(npc.getX(), npc.getY(), p28x) == null) {
+					//((Player) p28x).message("PET STUCK");
+					if(!npc.inCombat()){
+					npc.setLocation(Point.location(walkTo.getX(), walkTo.getY()), true);
+					}
+					//int newXstuck = DataConversions.random(npc.getX() - 5, npc.getX() + 5);//These 3 lines versus teleporting
+					//int newYstuck = DataConversions.random(npc.getY() - 5, npc.getY() + 5);
+					//npc.walk(newXstuck, newYstuck);
+				} else
+				if(walkTo.getX() == p28x.getX() && walkTo.getY() == p28x.getY()){
+				
+				} else {
+					if(!npc.inCombat()){
+					npc.walk(walkTo.getX(), walkTo.getY());
+					npc.face(p28x);
+					}
+				}
+			} else
+			/*if(p28x.inCombat()){
+				//npc.setRangeEventPet(new RangeEventPet(npc, p28x.getOpponent()));
+			} else
+			if(p28x.inCombat()){
+				npc.setRangeHealEventNpcx(new RangeHealEventNpcx(npc, p28x));
+			} else*/
+			if (!npc.inCombat() && System.currentTimeMillis() - lastMovement > 2750 && System.currentTimeMillis() - npc.getCombatTimer() > 2750 && npc.finishedPath()) {
+				lastMovement = System.currentTimeMillis();
+				lastTarget = null;
+				int rand = DataConversions.random(0, 1);
+				if (!npc.isBusy() && rand == 1 && !npc.isRemoved()) {
+					int newX = DataConversions.random(p28x.getX() - 1, p28x.getX() + 1);
+					int newY = DataConversions.random(p28x.getY() - 1, p28x.getY() + 1);
+					if(newX == p28x.getX() && newY == p28x.getY()){
+						//npc.walk(newX, newY);
+					} else {
+						npc.walk(newX, newY);
+					}
+				}
+			} else if(j != null && !j.inCombat() && !npc.inCombat()){//work on this line
+				//npc.setPetOpponent(null);
+				npc.walk(j.getX(), j.getY());
+				npc.face(j);
+				if(System.currentTimeMillis() - j.getCombatTimer() > 3250 && npc.withinRange(j, 2)){
+					npc.startCombat(j);
+					for (Player p : World.getWorld().getPlayers()) {
+						p.message("fight2");
+					}
+				}
+			}
+			if(j != null){
+				if(j.getSkills().getLevel(Skills.HITPOINTS) <= 0){
+					npc.setPetOpponent(null);
+				}
+			}
+			String userN = p28x.getUsername();
+			Player p28 = World.getWorld().getPlayer(DataConversions.usernameToHash(userN));
+			if(p28 == null) {
+				for (Player p : World.getWorld().getPlayers()) {
+					//p.message("REMOVE PET");
+				}
+				npc.remove();
+			}
+		}
+		if(npc.getID() == 804) {//BANKER PET type5
+			Player p28x = npc.getPetOwnerA2();
+			if(p28x.getPet4Fatigue() > 75000) {
+				p28x.setPet4Fatigue(75000);
+			}
+			if(p28x.getPet4Fatigue() >= 75000) {
+				npc.remove();
+				p28x.getPets().setPet(4, false);
+				p28x.setPetInCombat(0);
+				p28x.setPetOut(99);
+				p28x.message("@gre@Your Banker pet is too tired, and has returned to rest.");
+			}
+			if(!p28x.getPets().isPetActivated(4)) {
+				npc.remove();
+			}
+			if(npc != null) {
+				p28x.setPet4Fatigue(p28x.getPet4Fatigue() + 10);
+			}
+			if(!npc.withinRange(p28x, 1)) {
+				Point walkTo = Point.location(DataConversions.random(p28x.getX() - 1, p28x.getX() + 1), DataConversions.random(p28x.getY() - 1, p28x.getY() + 1));
+				if(PathValidation.checkDiagonalPassThroughCollisions(npc.getLocation(), p28x.getLocation()) || !PathValidation.checkAdjacent(npc.getLocation(), p28x.getLocation(), true) || !PathValidation.checkPath(npc.getLocation(), p28x.getLocation()) || npc.nextStep(npc.getX(), npc.getY(), p28x) == null) {
+					//((Player) p28x).message("PET STUCK");
+					npc.setLocation(Point.location(walkTo.getX(), walkTo.getY()), true);
+					//int newXstuck = DataConversions.random(npc.getX() - 5, npc.getX() + 5);//These 3 lines versus teleporting
+					//int newYstuck = DataConversions.random(npc.getY() - 5, npc.getY() + 5);
+					//npc.walk(newXstuck, newYstuck);
+				} else
+				if(walkTo.getX() == p28x.getX() && walkTo.getY() == p28x.getY()){
+				
+				} else {
+					npc.walk(walkTo.getX(), walkTo.getY());
+					npc.face(p28x);
+				}
+			} else
+			if (System.currentTimeMillis() - lastMovement > 2750 && System.currentTimeMillis() - npc.getCombatTimer() > 2750 && npc.finishedPath()) {
+				lastMovement = System.currentTimeMillis();
+				lastTarget = null;
+				int rand = DataConversions.random(0, 1);
+				if (!npc.isBusy() && rand == 1 && !npc.isRemoved()) {
+					int newX = DataConversions.random(p28x.getX() - 1, p28x.getX() + 1);
+					int newY = DataConversions.random(p28x.getY() - 1, p28x.getY() + 1);
+					if(newX == p28x.getX() && newY == p28x.getY()){
+						//npc.walk(newX, newY);
+					} else {
+						npc.walk(newX, newY);
+					}
+				}
+			}
+			String userN = p28x.getUsername();
+			Player p28 = World.getWorld().getPlayer(DataConversions.usernameToHash(userN));
+			if(p28 == null) {
+				for (Player p : World.getWorld().getPlayers()) {
+					//p.message("REMOVE PET");
+				}
+				npc.remove();
+			}
+		}
 		if(npc.getID() == 210) {//Npcs in wild - RANGED AGGRO
 			for (Player p5 : npc.getViewArea().getPlayersInView()) {
 			for (Npc npc5 : npc.getViewArea().getNpcsInView()) {
@@ -452,15 +802,8 @@ public class NpcBehavior {
 					}
 					}
 					} else
-						if(npc.getPetNpc() > 0 && npc.getID() != 210 && npc.getID() != 236) {
-				Mob p28x = npc.getPetOwnerA2();
-				if(!p28x.inCombat()) {
-					npc.setFollowing(p28x);
-					npc.resetRange();
-				}
-			} else
 
-		if (state == State.ROAM) {
+		if (state == State.ROAM && npc.getID() != 803 && npc.getID() != 804 && npc.getID() != 805 && npc.getID() != 806 && npc.getID() != 807) {
 
 			if (npc.inCombat()) {
 				state = State.COMBAT;
@@ -691,6 +1034,12 @@ public class NpcBehavior {
 
 	public void retreat() {
 		state = State.RETREAT;
+		Mob j = npc.getOpponent();
+		if(j.getPetOwnerA2() != null) {
+			Player p28x = j.getPetOwnerA2();
+			p28x.setPetInCombat(0);
+		}
+		j.setPetOpponent(null);
 		npc.getOpponent().setLastOpponent(npc);
 		npc.setLastOpponent(npc.getOpponent());
 		npc.setRanAwayTimer();

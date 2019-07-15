@@ -241,6 +241,8 @@ public class PacketHandler {
 			else if (opcode == 240) updateOptionsMenuSettings();
 
 			else if (opcode == 206) togglePrayer(length);
+			
+			else if (opcode == 207) togglePet(length);
 
 			else if (opcode == 232) mc.setShowContactDialogue(true);
 
@@ -318,9 +320,32 @@ public class PacketHandler {
 				// Kills2
 			else if (opcode == 147)
 				mc.setStatKills2(packetsIncoming.getShort());
+			
+			// PetOut
+			else if (opcode == 55)
+				mc.setPetOut(packetsIncoming.getShort());
+			
+			else if (opcode == 62)
+				mc.setPetInCombat(packetsIncoming.getShort());
+			
+			else if (opcode == 85)
+				mc.setBeingHealed(packetsIncoming.getShort());
 
 			else if (opcode == 140)
-				mc.setPetFatigue(packetsIncoming.getShort());
+				mc.setPet2Fatigue(packetsIncoming.getShort());
+			
+			else if (opcode == 144)
+				mc.setPet1Fatigue(packetsIncoming.getShort());
+			
+			else if (opcode == 138)
+				mc.setPet0Fatigue(packetsIncoming.getShort());
+			
+			else if (opcode == 148)
+				mc.setPet3Fatigue(packetsIncoming.getShort());
+			
+			else if (opcode == 150)
+				mc.setPet4Fatigue(packetsIncoming.getShort());
+
 
 				// Server Message Input (Second Style)
 			else if (opcode == 89) showServerMessageDialogTwo();
@@ -1629,6 +1654,20 @@ public class PacketHandler {
 			mc.togglePrayer(i, enabled);
 		}
 	}
+	
+	private void togglePet(int length) {
+		for (int i = 0; length - 1 > i; ++i) {
+			boolean enabled = packetsIncoming.getByte() == 1;
+			if (!mc.checkPetOn(i) && enabled) {
+				//mc.playSoundFile((String) "prayeron");
+			}
+			if (mc.checkPetOn(i) && !enabled) {
+				//mc.playSoundFile((String) "prayeroff");
+			}
+
+			mc.togglePet(i, enabled);
+		}
+	}
 
 	private void updateQuestStage() {
 		int updateQuestType = packetsIncoming.getByte();
@@ -2142,6 +2181,22 @@ public class PacketHandler {
 					player.isInvulnerable = packetsIncoming.getByte() > 0 ? true : false;
 					player.groupID = packetsIncoming.getByte();
 					player.icon = packetsIncoming.get32();
+				}
+			} else if (updateType == 8) {
+				int heal = packetsIncoming.getUnsignedByte();
+				int curhp = packetsIncoming.getUnsignedByte();
+				int maxhp = packetsIncoming.getUnsignedByte();
+				if (player != null) {
+					player.healthMax = maxhp;
+					player.healthCurrent = curhp;
+					player.healTaken = heal;
+					if (mc.getLocalPlayer() == player) {
+						mc.setPlayerStatCurrent(3, curhp);
+						mc.setPlayerStatBase(3, maxhp);
+						mc.setShowDialogServerMessage(false);
+						mc.setShowDialogMessage(false);
+					}
+					player.healTimeout = 200;
 				}
 			}
 		}

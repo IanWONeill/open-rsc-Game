@@ -127,9 +127,17 @@ public class Npc extends Mob {
 	 */
 	private RangeEventNpc rangeEventNpc;
 	private BankEventNpc bankEventNpc;
+	private RangeEventPet rangeEventPet;
+	private RangeHealEventNpcx rangeHealEventNpcx;
 	private ThrowingEvent throwingEvent;
 	public RangeEventNpc getRangeEventNpc() {
 		return rangeEventNpc;
+	}
+	public RangeEventPet getRangeEventPet() {
+		return rangeEventPet;
+	}
+	public RangeHealEventNpcx getRangeHealEventNpcx() {
+		return rangeHealEventNpcx;
 	}
 	public BankEventNpc getBankEventNpc() {
 		return bankEventNpc;
@@ -142,6 +150,22 @@ public class Npc extends Mob {
 		rangeEventNpc = event;
 		setStatus(Action.RANGING_MOB);
 		Server.getServer().getGameEventHandler().add(rangeEventNpc);
+	}
+	public void setRangeEventPet(RangeEventPet event) {
+		if (rangeEventPet != null) {
+			rangeEventPet.stop();
+		}
+		rangeEventPet = event;
+		setStatus(Action.RANGING_MOB);
+		Server.getServer().getGameEventHandler().add(rangeEventPet);
+	}
+	public void setRangeHealEventNpcx(RangeHealEventNpcx event) {
+		if (rangeHealEventNpcx != null) {
+			rangeHealEventNpcx.stop();
+		}
+		rangeHealEventNpcx = event;
+		setStatus(Action.RANGING_MOB);
+		Server.getServer().getGameEventHandler().add(rangeHealEventNpcx);
 	}
 	public void setBankEventNpc(BankEventNpc event) {
 		if (bankEventNpc != null) {
@@ -671,13 +695,7 @@ public class Npc extends Mob {
 			Npc owner = mob instanceof Npc ? (Npc) mob : null;
 			Player owner2 = mob instanceof Player ? (Player) mob : null;
 			if (owner != null) {
-				/*if(owner.getPetNpc() > 0) {
-				owner = handleLootAndXpDistributionPet((Npc) mob);
-				} else*/
 				owner = handleLootAndXpDistribution((Npc) mob);
-				//if(owner2 != null){
-				//owner2 = handleLootAndXpDistribution((Player) mob);
-				//}
 			
 				ItemDropDef[] drops = def.getDrops();
 
@@ -687,10 +705,19 @@ public class Npc extends Mob {
 					total += drop.getWeight();
 					weightTotal += drop.getWeight();
 					if (drop.getWeight() == 0 && drop.getID() != -1) {
-						GroundItem groundItem = new GroundItem(drop.getID(), getX(), getY(), drop.getAmount(), owner);
-						groundItem.setAttribute("npcdrop", true);
-						world.registerItem(groundItem);
-						continue;
+						if(((Npc) mob).getPetOwnerA2() != null){
+							Player p28x = ((Npc) mob).getPetOwnerA2();
+							p28x.setPetInCombat(0);
+							GroundItem groundItem = new GroundItem(drop.getID(), getX(), getY(), drop.getAmount(), ((Npc) mob).getPetOwnerA2());
+							groundItem.setAttribute("npcdrop", true);
+							world.registerItem(groundItem);
+							continue;
+						} else {
+							GroundItem groundItem = new GroundItem(drop.getID(), getX(), getY(), drop.getAmount(), owner);
+							groundItem.setAttribute("npcdrop", true);
+							world.registerItem(groundItem);
+							continue;
+						}
 					}
 				}
 
@@ -750,10 +777,15 @@ public class Npc extends Mob {
 										GoldDrops.drops.getOrDefault(this.getID(), new int[]{1})
 									);
 								}
-
-								GroundItem groundItem = new GroundItem(dropID, getX(), getY(), amount, owner);
-								groundItem.setAttribute("npcdrop", true);
-								world.registerItem(groundItem);
+								if(((Npc) mob).getPetOwnerA2() != null){
+									GroundItem groundItem = new GroundItem(dropID, getX(), getY(), amount, ((Npc) mob).getPetOwnerA2());
+									groundItem.setAttribute("npcdrop", true);
+									world.registerItem(groundItem);
+								} else {
+									GroundItem groundItem = new GroundItem(dropID, getX(), getY(), amount, owner);
+									groundItem.setAttribute("npcdrop", true);
+									world.registerItem(groundItem);
+								}
 							}
 						}
 						break;
@@ -920,6 +952,14 @@ public class Npc extends Mob {
 			newXP = (int) (((double) (totalCombatXP) / (double) (this.getDef().hits)) * (double) (dmgDoneByPlayer));
 			p.incExp(Skills.RANGED, newXP * 4, true);
 			ActionSender.sendStat(p, Skills.RANGED);
+			for (Npc pet : World.getWorld().getNpcs()) {
+				if(pet.getPetOwnerA2() != null){
+					Player p28x = pet.getPetOwnerA2();
+					if(pet.getOpponent() == this) {
+						p28x.setPetInCombat(0);					
+					}
+				}
+			}
 		}
 
 		// Magic damagers
@@ -935,12 +975,18 @@ public class Npc extends Mob {
 				playerWithMostDamage = p;
 				currentHighestDamage = dmgDoneByPlayer;
 			}
+			for (Npc pet : World.getWorld().getNpcs()) {
+				if(pet.getPetOwnerA2() != null){
+					Player p28x = pet.getPetOwnerA2();
+					if(pet.getOpponent() == this) {
+						p28x.setPetInCombat(0);					
+					}
+				}
+			}
 		}
 		//return playerWithMostDamage;
 		
 		Mob npcWithMostDamage = attacker;
-		for (Player p282828 : World.getWorld().getPlayers()) {
-		}
 		// Melee damagers
 		for (int npcID : getCombatDamagers()) {
 			int newXP = 0;
@@ -958,12 +1004,13 @@ public class Npc extends Mob {
 				currentHighestDamage = dmgDoneByNpc;
 			}
 			if(attacker.getPetNpc() > 0) {
-			newXP = (int) (((double) (totalCombatXP) / (double) (this.getDef().hits)) * (double) (dmgDoneByNpc));
-			p28x.incPet1Exp(Skills.PETRANGED, newXP * 4, true);
-			//ActionSender.sendStat(p28x, Skills.PETRANGED);
-			for (Player p282828 : World.getWorld().getPlayers()) {
-				p282828.message("TEST 28");
-			}
+				newXP = (int) (((double) (totalCombatXP) / (double) (this.getDef().hits)) * (double) (dmgDoneByNpc));
+				if(p28x.getPets().isPetActivated(2)) {
+					p28x.incPet2Exp(Skills.PETRANGED, newXP * 4, true);
+					for (Player p282828 : World.getWorld().getPlayers()) {
+						p282828.message("TEST urtyytryr");
+					}
+				}
 			}
 		}
 
@@ -983,12 +1030,13 @@ public class Npc extends Mob {
 				currentHighestDamage = dmgDoneByNpc;
 			}
 			if(attacker.getPetNpc() > 0) {
-			newXP = (int) (((double) (totalCombatXP) / (double) (this.getDef().hits)) * (double) (dmgDoneByNpc));
-			p28x.incPet1Exp(Skills.PETRANGED, newXP * 4, true);
-			//ActionSender.sendStat(p28x, Skills.PETRANGED);
-			for (Player p282828 : World.getWorld().getPlayers()) {
-				p282828.message("TEST 28282828");
-			}
+				newXP = (int) (((double) (totalCombatXP) / (double) (this.getDef().hits)) * (double) (dmgDoneByNpc));
+				if(p28x.getPets().isPetActivated(2)) {
+					p28x.incPet2Exp(Skills.PETRANGED, newXP * 4, true);
+				} else
+				if(p28x.getPets().isPetActivated(1)) {
+					p28x.incPet1Exp(Skills.PETMELEE, newXP * 4, true);
+				}
 			}
 		}
 
@@ -1006,68 +1054,17 @@ public class Npc extends Mob {
 				currentHighestDamage = dmgDoneByNpc;
 			}
 			if(attacker.getPetNpc() > 0) {
-			newXP = (int) (((double) (totalCombatXP) / (double) (this.getDef().hits)) * (double) (dmgDoneByNpc));
-			p28x.incPet1Exp(Skills.PETRANGED, newXP * 4, true);
-			//ActionSender.sendStat(p28x, Skills.PETRANGED);
-			for (Player p282828 : World.getWorld().getPlayers()) {
-				p282828.message("TEST 28111128");
-			}
-			}
-		}
-		return npcWithMostDamage;
-	}
-	
-	
-	private Npc handleLootAndXpDistribution(Npc attacker) {
-
-		Npc npcWithMostDamage = attacker;
-		int currentHighestDamage = 0;
-
-		// Melee damagers
-		for (int npcID : getCombatDamagers()) {
-
-			final Npc n = World.getWorld().getNpcById(npcID);
-			if (n == null)
-				continue;
-			final int dmgDoneByNpc = getCombatDamageDoneBy(n);
-
-			if (dmgDoneByNpc > currentHighestDamage) {
-				npcWithMostDamage = n;
-				currentHighestDamage = dmgDoneByNpc;
-			}
-		}
-
-		// Ranged damagers
-		for (int npcID : getRangeDamagers()) {
-			int newXP = 0;
-			Npc n = World.getWorld().getNpcById(npcID);
-			int dmgDoneByNpc = getRangeDamageDoneBy(n);
-			if (n == null)
-				continue;
-
-			if (dmgDoneByNpc > currentHighestDamage) {
-				npcWithMostDamage = n;
-				currentHighestDamage = dmgDoneByNpc;
-			}
-		}
-
-		// Magic damagers
-		for (int npcID : getMageDamagers()) {
-
-			Npc n = World.getWorld().getNpcById(npcID);
-
-			int dmgDoneByNpc = getMageDamageDoneBy(n);
-			if (n == null)
-				continue;
-
-			if (dmgDoneByNpc > currentHighestDamage) {
-				npcWithMostDamage = n;
-				currentHighestDamage = dmgDoneByNpc;
+				newXP = (int) (((double) (totalCombatXP) / (double) (this.getDef().hits)) * (double) (dmgDoneByNpc));
+				if(p28x.getPets().isPetActivated(2)) {
+					p28x.incPet2Exp(Skills.PETRANGED, newXP * 4, true);
+				} else
+				if(p28x.getPets().isPetActivated(1)) {
+					p28x.incPet1Exp(Skills.PETMELEE, newXP * 4, true);
+				}
 			}
 		}
 		return npcWithMostDamage;
 	}
-	
 		private Npc handleLootAndXpDistributionPet(Npc attacker) {
 		
 		Npc npcWithMostDamage = attacker;
@@ -1093,17 +1090,67 @@ public class Npc extends Mob {
 
 			switch (n.getPetNpcType()) {
 				case 1: //Melee
-					p28x.incPet1Exp(Skills.PETMELEE, totalXP * 3, true);
+					//p28x.incPet1Exp(Skills.PETMELEE, totalXP * 3, true);
 					break;
 				case 2: //Magic
-					p28x.incPet1Exp(Skills.PETMAGIC, totalXP * 3, true);
+					//p28x.incPet2Exp(Skills.PETMAGIC, totalXP * 3, true);
 					break;
 				case 3: //Ranged
-					p28x.incPet1Exp(Skills.PETRANGED, totalXP * 3, true);
+					//p28x.incPet2Exp(Skills.PETRANGED, totalXP * 3, true);
 					break;
 			}
 			//p.incExp(Skills.HITPOINTS, totalXP, true);
 		}
+
+		// Melee damagers
+		for (int npcID : getCombatDamagers()) {
+
+			final Npc n = World.getWorld().getNpcById(npcID);
+			if (n == null)
+				continue;
+			final int dmgDoneByNpc = getCombatDamageDoneBy(n);
+
+			if (dmgDoneByNpc > currentHighestDamage) {
+				npcWithMostDamage = n;
+				currentHighestDamage = dmgDoneByNpc;
+			}
+		}
+
+		// Ranged damagers
+		for (int npcID : getRangeDamagers()) {
+			int newXP = 0;
+			Npc n = World.getWorld().getNpcById(npcID);
+			int dmgDoneByNpc = getRangeDamageDoneBy(n);
+			if (n == null)
+				continue;
+
+			if (dmgDoneByNpc > currentHighestDamage) {
+				npcWithMostDamage = n;
+				currentHighestDamage = dmgDoneByNpc;
+			}
+		}
+
+		// Magic damagers
+		for (int npcID : getMageDamagers()) {
+
+			Npc n = World.getWorld().getNpcById(npcID);
+
+			int dmgDoneByNpc = getMageDamageDoneBy(n);
+			if (n == null)
+				continue;
+
+			if (dmgDoneByNpc > currentHighestDamage) {
+				npcWithMostDamage = n;
+				currentHighestDamage = dmgDoneByNpc;
+			}
+		}
+		return npcWithMostDamage;
+	}
+	
+	private Npc handleLootAndXpDistribution(Npc attacker) {
+
+		Npc npcWithMostDamage = attacker;
+		int currentHighestDamage = 0;
 
 		// Melee damagers
 		for (int npcID : getCombatDamagers()) {
