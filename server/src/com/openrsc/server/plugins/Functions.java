@@ -1528,7 +1528,6 @@ public class Functions {
 				player.setBusy(false);
 				return;
 			}
-			player.getWorld().getServer().post(() -> {
 				npc.resetPath();
 				player.resetPath();
 
@@ -1538,7 +1537,6 @@ public class Functions {
 				if (!player.inCombat()) {
 					player.face(npc);
 				}
-			}, "NPC Talk");
 		}
 	}
 
