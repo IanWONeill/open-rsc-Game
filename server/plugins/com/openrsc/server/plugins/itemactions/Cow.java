@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.itemactions;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -13,19 +14,29 @@ public class Cow implements InvUseOnNpcListener, InvUseOnNpcExecutiveListener {
 
 	@Override
 	public boolean blockInvUseOnNpc(Player player, Npc npc, Item item) {
-		return npc.getID() == 217 && item.getID() == ItemId.BUCKET.id() || npc.getID() == 6 && item.getID() == ItemId.BUCKET.id();
+		return item.getID() == ItemId.BUCKET.id() && (npc.getID() == 217 || npc.getID() == 6);
 	}
 
 	@Override
 	public void onInvUseOnNpc(Player player, Npc npc, Item item) {
-		npc.resetPath();
-		npc.face(player);
-		npc.setBusy(true);
-		showBubble(player, item);
-		if (removeItem(player, item.getID(), 1)) {
-			addItem(player, ItemId.MILK.id(), 1);
-		}
-		message(player, 3500, "You milk the cow");
-		npc.setBusy(false);
+		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0, "Milk Cow") {
+			public void init() {
+				addState(0, () -> {
+					npc.resetPath();
+					npc.face(player);
+					npc.setBusy(true);
+					showBubble(getPlayerOwner(), item);
+					if (removeItem(getPlayerOwner(), item.getID(), 1)) {
+						addItem(getPlayerOwner(), ItemId.MILK.id(), 1);
+					}
+					getPlayerOwner().message("You milk the cow");
+					return nextState(5);
+				});
+				addState(1, () -> {
+					npc.setBusy(false);
+					return null;
+				});
+			}
+		});
 	}
 }
