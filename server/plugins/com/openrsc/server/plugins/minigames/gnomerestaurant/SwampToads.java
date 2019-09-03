@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.minigames.gnomerestaurant;
 
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.player.Player;
@@ -23,11 +24,23 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 
 	@Override
 	public void onInvAction(Item item, Player p, String command) {
-		if (item.getID() == ItemId.SWAMP_TOAD.id()) {
-			message(p, 1900, "you pull the legs off the toad");
-			p.message("poor toad..at least they'll grow back");
-			p.getInventory().replace(item.getID(), ItemId.TOAD_LEGS.id());
-		}
+		p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Process Swamp Toad") {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.SWAMP_TOAD.id()) {
+						getPlayerOwner().message("you pull the legs off the toad");
+						return nextState(3);
+					}
+					return null;
+				});
+				addState(1, () -> {
+					getPlayerOwner().message("poor toad..at least they'll grow back");
+					getPlayerOwner().getInventory().replace(item.getID(), ItemId.TOAD_LEGS.id());
+					return null;
+				});
+
+			}
+		});
 	}
 
 	@Override
@@ -38,15 +51,26 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 	@Override
 	public void onPickup(Player p, GroundItem i) {
 		if (i.getID() == ItemId.SWAMP_TOAD.id()) {
-			p.message("you pick up the swamp toad");
-			if (DataConversions.random(0, 10) >= 3) {
-				message(p, 1900, "but it jumps out of your hands..");
-				p.message("..slippery little blighters");
-			} else {
-				i.remove();
-				addItem(p, ItemId.SWAMP_TOAD.id(), 1);
-				p.message("you just manage to hold onto it");
-			}
+			p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Pickup Swamp Toad") {
+				public void init() {
+					addState(0, () -> {
+						getPlayerOwner().message("you pick up the swamp toad");
+						if (DataConversions.random(0, 10) >= 3) {
+							getPlayerOwner().message("but it jumps out of your hands..");
+							return nextState(3);
+						}
+
+						i.remove();
+						addItem(getPlayerOwner(), ItemId.SWAMP_TOAD.id(), 1);
+						getPlayerOwner().message("you just manage to hold onto it");
+						return null;
+					});
+					addState(1, () -> {
+						getPlayerOwner().message("..slippery little blighters");
+						return null;
+					});
+				}
+			});
 		}
 	}
 }

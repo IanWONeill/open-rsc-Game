@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.minigames.fishingtrawler;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.ObjectActionListener;
@@ -12,13 +13,24 @@ public class FillHole implements ObjectActionExecutiveListener, ObjectActionList
 
 	@Override
 	public void onObjectAction(GameObject obj, String command, Player player) {
-		player.setBusyTimer(1);
-		if (removeItem(player, ItemId.SWAMP_PASTE.id(), 1)) {
-			removeObject(obj);
-			message(player, 0, "you fill the hole with swamp paste");
-		} else {
-			message(player, 0, "you'll need some swamp paste to fill that");
-		}
+		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0, "Fishing Trawler Fill Hole") {
+			public void init() {
+				addState(0, () -> {
+					getPlayerOwner().setBusy(true);
+					if (removeItem(player, ItemId.SWAMP_PASTE.id(), 1)) {
+						removeObject(obj);
+						getPlayerOwner().message("you fill the hole with swamp paste");
+					} else {
+						getPlayerOwner().message("you'll need some swamp paste to fill that");
+					}
+					return nextState(1);
+				});
+				addState(1, () -> {
+					getPlayerOwner().setBusy(false);
+					return null;
+				});
+			}
+		});
 	}
 
 	@Override
