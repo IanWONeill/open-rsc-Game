@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.misc;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
@@ -38,27 +39,38 @@ public class Hopper implements InvUseOnObjectListener, InvUseOnObjectExecutiveLi
 
 	@Override
 	public void onObjectAction(GameObject obj, String command, Player player) {
-		message(player, 500, "You operate the hopper");
-		player.playSound("mechanical");
-		int contains = obj.getAttribute("contains_item", -1);
-		if (contains != ItemId.GRAIN.id()) {
-			player.message("Nothing interesting happens");
-			return;
-		}
-		player.message("The grain slides down the chute");
+		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0, "Operate Hopper") {
+			public void init() {
+				addState(0, () -> {
+						getPlayerOwner().message("You operate the hopper");
+						return nextState(1);
+					});
 
-		int offY = 0;
-		/* Chute in Chef's guild has offsetY -2 from calculated */
-		if (obj.getX() == 179 && obj.getY() == 2371) {
-			offY = -2;
-		}
+				addState(1, () -> {
+					getPlayerOwner().playSound("mechanical");
+					int contains = obj.getAttribute("contains_item", -1);
+					if (contains != ItemId.GRAIN.id()) {
+						getPlayerOwner().message("Nothing interesting happens");
+						return null;
+					}
+					getPlayerOwner().message("The grain slides down the chute");
 
-		if (obj.getID() == 246) {
-			createGroundItem(player.getWorld(), ItemId.FLOUR.id(), 1, 162, 3533);
-		} else {
-			createGroundItem(player.getWorld(), ItemId.FLOUR.id(), 1, obj.getX(), Formulae.getNewY(Formulae.getNewY(obj.getY(), false), false) + offY);
-		}
-		obj.removeAttribute("contains_item");
+					int offY = 0;
+					/* Chute in Chef's guild has offsetY -2 from calculated */
+					if (obj.getX() == 179 && obj.getY() == 2371) {
+						offY = -2;
+					}
+
+					if (obj.getID() == 246) {
+						createGroundItem(getPlayerOwner().getWorld(), ItemId.FLOUR.id(), 1, 162, 3533);
+					} else {
+						createGroundItem(getPlayerOwner().getWorld(), ItemId.FLOUR.id(), 1, obj.getX(), Formulae.getNewY(Formulae.getNewY(obj.getY(), false), false) + offY);
+					}
+					obj.removeAttribute("contains_item");
+					return null;
+				});
+			}
+		});
 	}
 
 }
