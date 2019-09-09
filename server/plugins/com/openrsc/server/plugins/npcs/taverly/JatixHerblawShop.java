@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.taverly;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -37,17 +38,23 @@ public class JatixHerblawShop implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Hello how can I help you?");
-		final int option = showMenu(p, n, new String[]{
-			"What are you selling?", "You can't, I'm beyond help",
-			"I'm okay, thankyou"});
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Hello how can I help you?");
+					final int option = showMenu(p, n, new String[]{
+						"What are you selling?", "You can't, I'm beyond help",
+						"I'm okay, thankyou"});
 
-		if (option == 0) {
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		}
+					if (option == 0) {
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					}
 
+					return null;
+				});
+			}
+		};
 	}
-
 }

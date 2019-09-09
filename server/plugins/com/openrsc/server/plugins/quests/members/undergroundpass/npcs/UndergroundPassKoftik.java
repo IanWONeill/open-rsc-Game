@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.QuestInterface;
@@ -87,213 +88,222 @@ public class UndergroundPassKoftik implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.KOFTIK_ARDOUGNE.id()) {
-			switch (p.getQuestStage(this)) {
-				case 0:
-					p.message("koftik doesn't seem interested in talking");
-					break;
-				case 1:
-					koftikEnterCaveDialogue(p, n);
-					break;
-				case 2:
-					npcTalk(p, n, "i know it's scary in there",
-						"but you'll have to go in alone",
-						"i'll catch up as soon as i can");
-					break;
-				case 3:
-				case 4:
-					playerTalk(p, n, "hello koftik");
-					if (p.getCache().hasKey("orb_of_light1") && p.getCache().hasKey("orb_of_light2") && p.getCache().hasKey("orb_of_light3") && p.getCache().hasKey("orb_of_light4") || p.getQuestStage(this) == 4) {
-						npcTalk(p, n, "it scares me in there",
-							"the voices, don't you hear them?");
-						playerTalk(p, n, "you'll be ok koftik");
-						return;
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.KOFTIK_ARDOUGNE.id()) {
+						switch (p.getQuestStage(quest)) {
+							case 0:
+								p.message("koftik doesn't seem interested in talking");
+								break;
+							case 1:
+								koftikEnterCaveDialogue(p, n);
+								break;
+							case 2:
+								npcTalk(p, n, "i know it's scary in there",
+									"but you'll have to go in alone",
+									"i'll catch up as soon as i can");
+								break;
+							case 3:
+							case 4:
+								playerTalk(p, n, "hello koftik");
+								if (p.getCache().hasKey("orb_of_light1") && p.getCache().hasKey("orb_of_light2") && p.getCache().hasKey("orb_of_light3") && p.getCache().hasKey("orb_of_light4") || p.getQuestStage(quest) == 4) {
+									npcTalk(p, n, "it scares me in there",
+										"the voices, don't you hear them?");
+									playerTalk(p, n, "you'll be ok koftik");
+									return null;
+								}
+								npcTalk(p, n, "once your over the bridge keep going...",
+									"..straight ahead, i'll meet you further up");
+								break;
+							// nothing interesting on stage 5,6,7
+							case 5:
+							case 6:
+							case 7:
+								p.message("koftik doesn't seem interested in talking");
+								break;
+							case 8:
+								playerTalk(p, n, "thanks for getting me out koftik");
+								npcTalk(p, n, "always a pleasure squire",
+									"have you informed the king about iban?");
+								int menu = showMenu(p, n,
+									"no, not yet",
+									"yes, i've told him");
+								if (menu == 0) {
+									npcTalk(p, n, "traveller this is no time to linger",
+										"the king must know that ibans dead",
+										"this is a truly historical moment for ardounge");
+								} else if (menu == 1) {
+									npcTalk(p, n, "good to hear, the sooner we find king Tyras..",
+										"the better");
+								}
+								break;
+							case -1:
+								playerTalk(p, n, "hello koftik");
+								npcTalk(p, n, "hello adventurer, how's things?");
+								playerTalk(p, n, "not bad, yourself?");
+								npcTalk(p, n, "im good, just keeping an eye out");
+								break;
+						}
 					}
-					npcTalk(p, n, "once your over the bridge keep going...",
-						"..straight ahead, i'll meet you further up");
-					break;
-				// nothing interesting on stage 5,6,7
-				case 5:
-				case 6:
-				case 7:
-					p.message("koftik doesn't seem interested in talking");
-					break;
-				case 8:
-					playerTalk(p, n, "thanks for getting me out koftik");
-					npcTalk(p, n, "always a pleasure squire",
-						"have you informed the king about iban?");
-					int menu = showMenu(p, n,
-						"no, not yet",
-						"yes, i've told him");
-					if (menu == 0) {
-						npcTalk(p, n, "traveller this is no time to linger",
-							"the king must know that ibans dead",
-							"this is a truly historical moment for ardounge");
-					} else if (menu == 1) {
-						npcTalk(p, n, "good to hear, the sooner we find king Tyras..",
-							"the better");
+					else if (n.getID() == NpcId.KOFTIK_CAVE1.id()) {
+						switch (p.getQuestStage(quest)) {
+							case 2:
+								playerTalk(p, n, "koftik, how can we cross the bridge?");
+								npcTalk(p, n, "i'm not sure, seems as if others were here before us though");
+								if (!hasItem(p, ItemId.DAMP_CLOTH.id())) {
+									npcTalk(p, n, "i found this cloth amongst the charred remains of arrows");
+									playerTalk(p, n, "charred arrows?");
+									npcTalk(p, n, "they must have been trying to burn something");
+									playerTalk(p, n, "or someone!");
+									addItem(p, ItemId.DAMP_CLOTH.id(), 1);
+								}
+								playerTalk(p, n, "interesting, we better keep our eyes open");
+								npcTalk(p, n, "There also seems to the remains of a diary");
+								int menu = showMenu(p, n, false, //do not send over
+									"not to worry, probably just kid litter", "what does it say?");
+								if (menu == 0) {
+									playerTalk(p, n, "not to worry, probably just litter");
+									npcTalk(p, n, "well..maybe?");
+								} else if (menu == 1) {
+									playerTalk(p, n, "what does it say?");
+									message(p, "@red@it seems to be written by the adventurer Randas, it reads...",
+										"@red@It began as a whisper in my ears. Dismissing the sounds...",
+										"@red@..as the whistling of the wind, I steeled myself against...",
+										"@red@..these forces and continued on my way",
+										"@red@But the whispers became moans...",
+										"@red@at once fearsome and enticing like the call of some beautiful siren",
+										"@red@Join us! The voices cried, Join us!",
+										"@red@Your greatness lies within you, but only Zamorak can unlock your potential..");
+									playerTalk(p, n, "it sounds like randas was losing it");
+								}
+								break;
+							case 3:
+							case 4:
+							case 5:
+							case 6:
+							case 7:
+							case -1:
+								playerTalk(p, n, "hi koftik");
+								if (!hasItem(p, ItemId.DAMP_CLOTH.id())) {
+									addItem(p, ItemId.DAMP_CLOTH.id(), 1);
+									p.message("koftik gives you a damp cloth");
+								}
+								break;
+							case 8:
+								playerTalk(p, n, "thanks for getting me out koftik");
+								npcTalk(p, n, "always a pleasure squire");
+								if (!hasItem(p, ItemId.DAMP_CLOTH.id())) {
+									addItem(p, ItemId.DAMP_CLOTH.id(), 1);
+									p.message("koftik gives you a damp cloth");
+								}
+								break;
+						}
 					}
-					break;
-				case -1:
-					playerTalk(p, n, "hello koftik");
-					npcTalk(p, n, "hello adventurer, how's things?");
-					playerTalk(p, n, "not bad, yourself?");
-					npcTalk(p, n, "im good, just keeping an eye out");
-					break;
+					else if (n.getID() == NpcId.KOFTIK_CAVE2.id()) {
+						switch (p.getQuestStage(quest)) {
+							case 3:
+							case 4:
+								playerTalk(p, n, "hello koftik");
+								npcTalk(p, n, "how are you bearing adventurer?");
+								playerTalk(p, n, "i'm still alive, and you?");
+								npcTalk(p, n, "cold, i can feel it in my blood, so cold");
+								p.message("koftik seems to be poorly");
+								playerTalk(p, n, "where do we go now koftik?");
+								npcTalk(p, n, "straight on again, more winding passages",
+									"more lethal traps, more blood and more pain",
+									"blood..pain.. hee hee,  more blood.. hee hee");
+								playerTalk(p, n, "are you sure you're ok?");
+								npcTalk(p, n, "erm..yes..i'll be fine, just go ahead i'll catch up");
+								break;
+							//nothing interesting happens on stage 5,6,7
+							case 5:
+							case 6:
+							case 7:
+								p.message("koftik doesn't seem interested in talking");
+								break;
+							case 8:
+								playerTalk(p, n, "thanks for getting me out koftik");
+								npcTalk(p, n, "always a pleasure squire");
+								break;
+							case -1:
+								playerTalk(p, n, "hello koftik");
+								npcTalk(p, n, "hello adventurer, how's things?");
+								playerTalk(p, n, "not bad, yourself?");
+								npcTalk(p, n, "im good, just keeping an eye out");
+								break;
+						}
+					}
+					else if (n.getID() == NpcId.KOFTIK_CAVE3.id()) {
+						switch (p.getQuestStage(quest)) {
+							case 3:
+							case 4:
+								playerTalk(p, n, "hello koftik");
+								if (p.getQuestStage(quest) == 4) {
+									npcTalk(p, n, "are you ok?, i heard a rumble further down the cavern",
+										"i thought the whole place was going to cave in");
+									playerTalk(p, n, "im fine");
+								} else {
+									npcTalk(p, n, "keep back foul beast of the nigh.. ,wait, it's you!");
+									playerTalk(p, n, "as far as i know");
+								}
+								npcTalk(p, n, "i assumed you were dead, or worse");
+								playerTalk(p, n, "i've managed to survive so far");
+								npcTalk(p, n, "the passsage ahead's blocked ,but you should be able to get through",
+									"i'll follow behind",
+									"aaaaaarrgghhh");
+								playerTalk(p, n, "what's wrong?");
+								npcTalk(p, n, "it's the voices, can't you hear them?",
+									"they wont leave be",
+									"i feel him calling to me");
+								break;
+							//nothing interesting happens on stage 5,6,7
+							case 5:
+							case 6:
+							case 7:
+								p.message("koftik doesn't seem interested in talking");
+								break;
+							case 8:
+								playerTalk(p, n, "thanks for getting me out koftik");
+								npcTalk(p, n, "always a pleasure squire");
+								break;
+							case -1:
+								playerTalk(p, n, "hello koftik");
+								npcTalk(p, n, "hello adventurer, how's things?");
+								playerTalk(p, n, "not bad, yourself?");
+								npcTalk(p, n, "im good, just keeping an eye out");
+								break;
+						}
+					}
+					else if (n.getID() == NpcId.KOFTIK_CAVE4.id()) {
+						p.message("The Koftik does not appear interested in talking");
+					}
+					else if (n.getID() == NpcId.KOFTIK_RECOVERED.id()) {
+						switch (p.getQuestStage(quest)) {
+							case 8:
+								npcTalk(p, n, "traveller, where am i?, i can't remeber a thing");
+								playerTalk(p, n, "we were losing you to ibans influence");
+								npcTalk(p, n, "what?..of corse, the voices",
+									"but they've stopped, what happened?");
+								playerTalk(p, n, "ibans dead, i destroyed him");
+								npcTalk(p, n, "you've done well, now we must inform the king",
+									"he'll have to send in some high mages to...",
+									"reserrect the well of voyage",
+									"follow me, i'll lead you out");
+								playerTalk(p, n, "at last!, i've had enough of caves");
+								message(p, "koftik leads you back up through the winding caverns");
+								p.teleport(714, 581);
+								p.message("and back to the cave entrance");
+								break;
+						}
+					}
+
+					return null;
+				});
 			}
-		}
-		else if (n.getID() == NpcId.KOFTIK_CAVE1.id()) {
-			switch (p.getQuestStage(this)) {
-				case 2:
-					playerTalk(p, n, "koftik, how can we cross the bridge?");
-					npcTalk(p, n, "i'm not sure, seems as if others were here before us though");
-					if (!hasItem(p, ItemId.DAMP_CLOTH.id())) {
-						npcTalk(p, n, "i found this cloth amongst the charred remains of arrows");
-						playerTalk(p, n, "charred arrows?");
-						npcTalk(p, n, "they must have been trying to burn something");
-						playerTalk(p, n, "or someone!");
-						addItem(p, ItemId.DAMP_CLOTH.id(), 1);
-					}
-					playerTalk(p, n, "interesting, we better keep our eyes open");
-					npcTalk(p, n, "There also seems to the remains of a diary");
-					int menu = showMenu(p, n, false, //do not send over
-							"not to worry, probably just kid litter", "what does it say?");
-					if (menu == 0) {
-						playerTalk(p, n, "not to worry, probably just litter");
-						npcTalk(p, n, "well..maybe?");
-					} else if (menu == 1) {
-						playerTalk(p, n, "what does it say?");
-						message(p, "@red@it seems to be written by the adventurer Randas, it reads...",
-							"@red@It began as a whisper in my ears. Dismissing the sounds...",
-							"@red@..as the whistling of the wind, I steeled myself against...",
-							"@red@..these forces and continued on my way",
-							"@red@But the whispers became moans...",
-							"@red@at once fearsome and enticing like the call of some beautiful siren",
-							"@red@Join us! The voices cried, Join us!",
-							"@red@Your greatness lies within you, but only Zamorak can unlock your potential..");
-						playerTalk(p, n, "it sounds like randas was losing it");
-					}
-					break;
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case -1:
-					playerTalk(p, n, "hi koftik");
-					if (!hasItem(p, ItemId.DAMP_CLOTH.id())) {
-						addItem(p, ItemId.DAMP_CLOTH.id(), 1);
-						p.message("koftik gives you a damp cloth");
-					}
-					break;
-				case 8:
-					playerTalk(p, n, "thanks for getting me out koftik");
-					npcTalk(p, n, "always a pleasure squire");
-					if (!hasItem(p, ItemId.DAMP_CLOTH.id())) {
-						addItem(p, ItemId.DAMP_CLOTH.id(), 1);
-						p.message("koftik gives you a damp cloth");
-					}
-					break;
-			}
-		}
-		else if (n.getID() == NpcId.KOFTIK_CAVE2.id()) {
-			switch (p.getQuestStage(this)) {
-				case 3:
-				case 4:
-					playerTalk(p, n, "hello koftik");
-					npcTalk(p, n, "how are you bearing adventurer?");
-					playerTalk(p, n, "i'm still alive, and you?");
-					npcTalk(p, n, "cold, i can feel it in my blood, so cold");
-					p.message("koftik seems to be poorly");
-					playerTalk(p, n, "where do we go now koftik?");
-					npcTalk(p, n, "straight on again, more winding passages",
-						"more lethal traps, more blood and more pain",
-						"blood..pain.. hee hee,  more blood.. hee hee");
-					playerTalk(p, n, "are you sure you're ok?");
-					npcTalk(p, n, "erm..yes..i'll be fine, just go ahead i'll catch up");
-					break;
-				//nothing interesting happens on stage 5,6,7
-				case 5:
-				case 6:
-				case 7:
-					p.message("koftik doesn't seem interested in talking");
-					break;
-				case 8:
-					playerTalk(p, n, "thanks for getting me out koftik");
-					npcTalk(p, n, "always a pleasure squire");
-					break;
-				case -1:
-					playerTalk(p, n, "hello koftik");
-					npcTalk(p, n, "hello adventurer, how's things?");
-					playerTalk(p, n, "not bad, yourself?");
-					npcTalk(p, n, "im good, just keeping an eye out");
-					break;
-			}
-		}
-		else if (n.getID() == NpcId.KOFTIK_CAVE3.id()) {
-			switch (p.getQuestStage(this)) {
-				case 3:
-				case 4:
-					playerTalk(p, n, "hello koftik");
-					if (p.getQuestStage(this) == 4) {
-						npcTalk(p, n, "are you ok?, i heard a rumble further down the cavern",
-							"i thought the whole place was going to cave in");
-						playerTalk(p, n, "im fine");
-					} else {
-						npcTalk(p, n, "keep back foul beast of the nigh.. ,wait, it's you!");
-						playerTalk(p, n, "as far as i know");
-					}
-					npcTalk(p, n, "i assumed you were dead, or worse");
-					playerTalk(p, n, "i've managed to survive so far");
-					npcTalk(p, n, "the passsage ahead's blocked ,but you should be able to get through",
-						"i'll follow behind",
-						"aaaaaarrgghhh");
-					playerTalk(p, n, "what's wrong?");
-					npcTalk(p, n, "it's the voices, can't you hear them?",
-						"they wont leave be",
-						"i feel him calling to me");
-					break;
-				//nothing interesting happens on stage 5,6,7
-				case 5:
-				case 6:
-				case 7:
-					p.message("koftik doesn't seem interested in talking");
-					break;
-				case 8:
-					playerTalk(p, n, "thanks for getting me out koftik");
-					npcTalk(p, n, "always a pleasure squire");
-					break;
-				case -1:
-					playerTalk(p, n, "hello koftik");
-					npcTalk(p, n, "hello adventurer, how's things?");
-					playerTalk(p, n, "not bad, yourself?");
-					npcTalk(p, n, "im good, just keeping an eye out");
-					break;
-			}
-		}
-		else if (n.getID() == NpcId.KOFTIK_CAVE4.id()) {
-			p.message("The Koftik does not appear interested in talking");
-		}
-		else if (n.getID() == NpcId.KOFTIK_RECOVERED.id()) {
-			switch (p.getQuestStage(this)) {
-				case 8:
-					npcTalk(p, n, "traveller, where am i?, i can't remeber a thing");
-					playerTalk(p, n, "we were losing you to ibans influence");
-					npcTalk(p, n, "what?..of corse, the voices",
-						"but they've stopped, what happened?");
-					playerTalk(p, n, "ibans dead, i destroyed him");
-					npcTalk(p, n, "you've done well, now we must inform the king",
-						"he'll have to send in some high mages to...",
-						"reserrect the well of voyage",
-						"follow me, i'll lead you out");
-					playerTalk(p, n, "at last!, i've had enough of caves");
-					message(p, "koftik leads you back up through the winding caverns");
-					p.teleport(714, 581);
-					p.message("and back to the cave entrance");
-					break;
-			}
-		}
+		};
 	}
 }
 

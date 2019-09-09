@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.varrock;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -40,37 +41,44 @@ public final class AuburysRunes implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		ArrayList<String> menu = new ArrayList<>();
-		menu.add("Yes please");
-		menu.add("Oh it's a rune shop. No thank you, then.");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					ArrayList<String> menu = new ArrayList<>();
+					menu.add("Yes please");
+					menu.add("Oh it's a rune shop. No thank you, then.");
 
-		if (p.getWorld().getServer().getConfig().WANT_RUNECRAFTING)
-			if (p.getQuestStage(Quests.RUNE_MYSTERIES) == 2)
-				menu.add("I've been sent here with a package for you.");
-			else if (p.getQuestStage(Quests.RUNE_MYSTERIES) == 3)
-				menu.add("Rune mysteries");
-			else if (p.getQuestStage(Quests.RUNE_MYSTERIES) == -1)
-				menu.add("Teleport to rune essence");
+					if (p.getWorld().getServer().getConfig().WANT_RUNECRAFTING)
+						if (p.getQuestStage(Quests.RUNE_MYSTERIES) == 2)
+							menu.add("I've been sent here with a package for you.");
+						else if (p.getQuestStage(Quests.RUNE_MYSTERIES) == 3)
+							menu.add("Rune mysteries");
+						else if (p.getQuestStage(Quests.RUNE_MYSTERIES) == -1)
+							menu.add("Teleport to rune essence");
 
-		npcTalk(p, n, "Do you want to buy some runes?");
+					npcTalk(p, n, "Do you want to buy some runes?");
 
-		int opt = showMenu(p, n, false, menu.toArray(new String[menu.size()]));
+					int opt = showMenu(p, n, false, menu.toArray(new String[menu.size()]));
 
-		if (opt == 0) {
-			playerTalk(p, n, "Yes Please");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		}
-		else if (opt == 1) {
-			playerTalk(p, n, "Oh it's a rune shop. No thank you, then");
-			npcTalk(p, n,
-				"Well if you find someone who does want runes,",
-				"send them my way");
-		}
-		else if (opt == 2) {
-			com.openrsc.server.plugins.quests.members.RuneMysteries.auburyDialog(p,n);
-		}
+					if (opt == 0) {
+						playerTalk(p, n, "Yes Please");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					}
+					else if (opt == 1) {
+						playerTalk(p, n, "Oh it's a rune shop. No thank you, then");
+						npcTalk(p, n,
+							"Well if you find someone who does want runes,",
+							"send them my way");
+					}
+					else if (opt == 2) {
+						com.openrsc.server.plugins.quests.members.RuneMysteries.auburyDialog(p,n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
-
 }

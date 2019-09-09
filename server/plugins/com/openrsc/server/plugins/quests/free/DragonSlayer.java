@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -294,98 +295,114 @@ public class DragonSlayer implements QuestInterface, InvUseOnObjectListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		switch (obj.getID()) {
-			case DWARVEN_CHEST_OPEN:
-			case DWARVEN_CHEST_CLOSED:
-				if (command.equalsIgnoreCase("open")) {
-					openGenericObject(obj, p, DWARVEN_CHEST_OPEN, "You open the chest");
-				} else if (command.equalsIgnoreCase("close")) {
-					closeGenericObject(obj, p, DWARVEN_CHEST_CLOSED, "You close the chest");
-				} else {
-					//kosher: could not "drop trick" easy, had to re-enter the door for another piece
-					if (!hasItem(p, ItemId.MAP_PIECE_3.id(), 1) && p.getQuestStage(Quests.DRAGON_SLAYER) == 2
-						&& p.getCache().hasKey("dwarven_unlocked")) {
-						addItem(p, ItemId.MAP_PIECE_3.id(), 1);
-						p.message("You find a piece of map in the chest");
-						p.getCache().remove("dwarven_unlocked");
-					} else {
-						p.message("You find nothing in the chest");
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					switch (obj.getID()) {
+						case DWARVEN_CHEST_OPEN:
+						case DWARVEN_CHEST_CLOSED:
+							if (command.equalsIgnoreCase("open")) {
+								openGenericObject(obj, p, DWARVEN_CHEST_OPEN, "You open the chest");
+							} else if (command.equalsIgnoreCase("close")) {
+								closeGenericObject(obj, p, DWARVEN_CHEST_CLOSED, "You close the chest");
+							} else {
+								//kosher: could not "drop trick" easy, had to re-enter the door for another piece
+								if (!hasItem(p, ItemId.MAP_PIECE_3.id(), 1) && p.getQuestStage(Quests.DRAGON_SLAYER) == 2
+									&& p.getCache().hasKey("dwarven_unlocked")) {
+									addItem(p, ItemId.MAP_PIECE_3.id(), 1);
+									p.message("You find a piece of map in the chest");
+									p.getCache().remove("dwarven_unlocked");
+								} else {
+									p.message("You find nothing in the chest");
+								}
+							}
+							break;
+						case MELZAR_CHEST_OPEN:
+						case MELZAR_CHEST_CLOSED:
+							if (command.equalsIgnoreCase("open")) {
+								openGenericObject(obj, p, MELZAR_CHEST_OPEN, "You open the chest");
+							} else if (command.equalsIgnoreCase("close")) {
+								closeGenericObject(obj, p, MELZAR_CHEST_CLOSED, "You close the chest");
+							} else {
+								//kosher: could not "drop trick" easy, had to re-enter the door for another piece
+								if (!hasItem(p, ItemId.MAP_PIECE_2.id(), 1) && p.getQuestStage(Quests.DRAGON_SLAYER) == 2
+									&& p.getCache().hasKey("melzar_unlocked")) {
+									addItem(p, ItemId.MAP_PIECE_2.id(), 1);
+									p.message("You find a piece of map in the chest");
+									p.getCache().remove("melzar_unlocked");
+								} else {
+									p.message("You find nothing in the chest");
+								}
+							}
+							break;
+						//clicking boat triggers klarense if available
+						case LUMBRIDGE_LADY_SARIM1:
+						case LUMBRIDGE_LADY_SARIM2:
+							if (p.getCache().hasKey("owns_ship")) {
+								//cases: a) ship not repaired and ned not hired -> teleport 259,3472 (first case when bought)
+								//or player has enabled the crandor shortcut
+								//b)ship repaired and ned not hired -> teleport 259,3493
+								//c)ned hired and ship not repaired -> teleport 281,3472 (case when player is getting back)
+								//location in c shared by location of arrival to crandor
+								//d)ned hired and ship repaired -> teleport 281,3493
+								p.getCache().set("lumb_lady", PORT_SARIM);
+								if ((!p.getCache().hasKey("ship_fixed") && !p.getCache().hasKey("ned_hired")) || p.getCache().hasKey("crandor_shortcut")) {
+									p.teleport(259, 3472, false);
+								} else if (p.getCache().hasKey("ship_fixed") && !p.getCache().hasKey("ned_hired")) {
+									p.teleport(259, 3493, false);
+								} else if (!p.getCache().hasKey("ship_fixed") && p.getCache().hasKey("ned_hired")) {
+									p.teleport(281, 3472, false);
+								} else if (p.getCache().hasKey("ship_fixed") && p.getCache().hasKey("ned_hired")) {
+									p.teleport(281, 3493, false);
+								}
+							} else {
+								Npc klarense = getNearestNpc(p, NpcId.KLARENSE.id(), 15);
+								if (klarense != null) {
+									klarense.initializeTalkScript(p);
+								} else {
+									p.message("You must talk to the owner about this.");
+								}
+							}
+							break;
+						case BOATS_LADDER:
+							if (p.getCache().hasKey("lumb_lady") && p.getCache().getInt("lumb_lady") == CRANDOR) {
+								p.teleport(409, 638, false);
+							} else {
+								p.teleport(259, 641, false);
+							}
+							p.message("You leave the ship");
+							break;
+						case LUMBRIDGE_LADY_CRANDOR1:
+						case LUMBRIDGE_LADY_CRANDOR2:
+							p.getCache().set("lumb_lady", CRANDOR);
+							if (p.getCache().hasKey("crandor_shortcut")) {
+								p.teleport(259, 3472, false);
+							} else {
+								p.teleport(281, 3472, false);
+							}
+							break;
 					}
-				}
-				break;
-			case MELZAR_CHEST_OPEN:
-			case MELZAR_CHEST_CLOSED:
-				if (command.equalsIgnoreCase("open")) {
-					openGenericObject(obj, p, MELZAR_CHEST_OPEN, "You open the chest");
-				} else if (command.equalsIgnoreCase("close")) {
-					closeGenericObject(obj, p, MELZAR_CHEST_CLOSED, "You close the chest");
-				} else {
-					//kosher: could not "drop trick" easy, had to re-enter the door for another piece
-					if (!hasItem(p, ItemId.MAP_PIECE_2.id(), 1) && p.getQuestStage(Quests.DRAGON_SLAYER) == 2
-						&& p.getCache().hasKey("melzar_unlocked")) {
-						addItem(p, ItemId.MAP_PIECE_2.id(), 1);
-						p.message("You find a piece of map in the chest");
-						p.getCache().remove("melzar_unlocked");
-					} else {
-						p.message("You find nothing in the chest");
-					}
-				}
-				break;
-			//clicking boat triggers klarense if available
-			case LUMBRIDGE_LADY_SARIM1:
-			case LUMBRIDGE_LADY_SARIM2:
-				if (p.getCache().hasKey("owns_ship")) {
-					//cases: a) ship not repaired and ned not hired -> teleport 259,3472 (first case when bought)
-					//or player has enabled the crandor shortcut
-					//b)ship repaired and ned not hired -> teleport 259,3493
-					//c)ned hired and ship not repaired -> teleport 281,3472 (case when player is getting back)
-					//location in c shared by location of arrival to crandor
-					//d)ned hired and ship repaired -> teleport 281,3493
-					p.getCache().set("lumb_lady", PORT_SARIM);
-					if ((!p.getCache().hasKey("ship_fixed") && !p.getCache().hasKey("ned_hired")) || p.getCache().hasKey("crandor_shortcut")) {
-						p.teleport(259, 3472, false);
-					} else if (p.getCache().hasKey("ship_fixed") && !p.getCache().hasKey("ned_hired")) {
-						p.teleport(259, 3493, false);
-					} else if (!p.getCache().hasKey("ship_fixed") && p.getCache().hasKey("ned_hired")) {
-						p.teleport(281, 3472, false);
-					} else if (p.getCache().hasKey("ship_fixed") && p.getCache().hasKey("ned_hired")) {
-						p.teleport(281, 3493, false);
-					}
-				} else {
-					Npc klarense = getNearestNpc(p, NpcId.KLARENSE.id(), 15);
-					if (klarense != null) {
-						klarense.initializeTalkScript(p);
-					} else {
-						p.message("You must talk to the owner about this.");
-					}
-				}
-				break;
-			case BOATS_LADDER:
-				if (p.getCache().hasKey("lumb_lady") && p.getCache().getInt("lumb_lady") == CRANDOR) {
-					p.teleport(409, 638, false);
-				} else {
-					p.teleport(259, 641, false);
-				}
-				p.message("You leave the ship");
-				break;
-			case LUMBRIDGE_LADY_CRANDOR1:
-			case LUMBRIDGE_LADY_CRANDOR2:
-				p.getCache().set("lumb_lady", CRANDOR);
-				if (p.getCache().hasKey("crandor_shortcut")) {
-					p.teleport(259, 3472, false);
-				} else {
-					p.teleport(281, 3472, false);
-				}
-				break;
-		}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.OZIACH.id()) {
-			oziachDialogue(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.OZIACH.id()) {
+						oziachDialogue(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -424,53 +441,62 @@ public class DragonSlayer implements QuestInterface, InvUseOnObjectListener,
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		if (obj.getID() == 57) {
-			//special door dwarven mine
-			if (p.getX() >= 259 && hasItem(p, ItemId.WIZARDS_MIND_BOMB.id(), 1) && hasItem(p, ItemId.SILK.id(), 1)
-					&& hasItem(p, ItemId.LOBSTER_POT.id(), 1) && hasItem(p, ItemId.UNFIRED_BOWL.id())) {
-				Point location = Point.location(p.getX(), p.getY());
-				doDoor(obj, p);
-				if (!p.getLocation().equals(location)) {
-					removeItem(p, ItemId.WIZARDS_MIND_BOMB.id(), 1);
-					removeItem(p, ItemId.SILK.id(), 1);
-					removeItem(p, ItemId.LOBSTER_POT.id(), 1);
-					removeItem(p, ItemId.UNFIRED_BOWL.id(), 1);
-					p.getCache().store("dwarven_unlocked", true);
-				}
-			} else if (p.getX() <= 258) {
-				doDoor(obj, p);
-			} else {
-				p.message("the door is locked");
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 57) {
+						//special door dwarven mine
+						if (p.getX() >= 259 && hasItem(p, ItemId.WIZARDS_MIND_BOMB.id(), 1) && hasItem(p, ItemId.SILK.id(), 1)
+							&& hasItem(p, ItemId.LOBSTER_POT.id(), 1) && hasItem(p, ItemId.UNFIRED_BOWL.id())) {
+							Point location = Point.location(p.getX(), p.getY());
+							doDoor(obj, p);
+							if (!p.getLocation().equals(location)) {
+								removeItem(p, ItemId.WIZARDS_MIND_BOMB.id(), 1);
+								removeItem(p, ItemId.SILK.id(), 1);
+								removeItem(p, ItemId.LOBSTER_POT.id(), 1);
+								removeItem(p, ItemId.UNFIRED_BOWL.id(), 1);
+								p.getCache().store("dwarven_unlocked", true);
+							}
+						} else if (p.getX() <= 258) {
+							doDoor(obj, p);
+						} else {
+							p.message("the door is locked");
+						}
+					} else if (obj.getID() == 58) {
+						//from side of crandor
+						if (p.getY() <= 3517) {
+							p.message("You just went through a secret door");
+							if (!p.getCache().hasKey("crandor_shortcut")) {
+								p.message("You remember where the door is for future use");
+								p.getCache().store("crandor_shortcut", true);
+							}
+							doDoor(obj, p, 11);
+						} else {
+							if (p.getCache().hasKey("crandor_shortcut")) {
+								p.message("You just went through a secret door");
+								doDoor(obj, p, 11);
+							} else {
+								p.message("nothing interesting happens");
+							}
+						}
+					}
+					//Door of Elvarg chamber
+					else if (obj.getID() == 59) {
+						if (p.getQuestStage(quest) == 3 || p.getX() >= 414) {
+							doDoor(obj, p);
+						} else {
+							p.playerServerMessage(MessageType.QUEST, "the door is locked");
+						}
+					} else if (obj.getID() == 60) {
+						p.message("Nothing interesting happens");
+					}
+
+					return null;
+				});
 			}
-		} else if (obj.getID() == 58) {
-			//from side of crandor
-			if (p.getY() <= 3517) {
-				p.message("You just went through a secret door");
-				if (!p.getCache().hasKey("crandor_shortcut")) {
-					p.message("You remember where the door is for future use");
-					p.getCache().store("crandor_shortcut", true);
-				}
-				doDoor(obj, p, 11);
-			} else {
-				if (p.getCache().hasKey("crandor_shortcut")) {
-					p.message("You just went through a secret door");
-					doDoor(obj, p, 11);
-				} else {
-					p.message("nothing interesting happens");
-				}
-			}
-		}
-		//Door of Elvarg chamber
-		else if (obj.getID() == 59) {
-			if (p.getQuestStage(this) == 3 || p.getX() >= 414) {
-				doDoor(obj, p);
-			} else {
-				p.playerServerMessage(MessageType.QUEST, "the door is locked");
-			}
-		} else if (obj.getID() == 60) {
-			p.message("Nothing interesting happens");
-		}
+		};
 	}
 
 	@Override
@@ -480,16 +506,24 @@ public class DragonSlayer implements QuestInterface, InvUseOnObjectListener,
 	}
 
 	@Override
-	public void onInvUseOnItem(Player p, Item item1, Item item2) {
-		if (DataConversions.inArray(new int[] {ItemId.MAP_PIECE_1.id(), ItemId.MAP_PIECE_2.id(), ItemId.MAP_PIECE_3.id()}, item1.getID())
-				&& DataConversions.inArray(new int[] {ItemId.MAP_PIECE_1.id(), ItemId.MAP_PIECE_2.id(), ItemId.MAP_PIECE_3.id()}, item2.getID())) {
-			if (hasItem(p, ItemId.MAP_PIECE_1.id(), 1) && hasItem(p, ItemId.MAP_PIECE_2.id(), 1) && hasItem(p, ItemId.MAP_PIECE_3.id(), 1)) {
-				removeItem(p, ItemId.MAP_PIECE_1.id(), 1);
-				removeItem(p, ItemId.MAP_PIECE_2.id(), 1);
-				removeItem(p, ItemId.MAP_PIECE_3.id(), 1);
-				addItem(p, ItemId.MAP.id(), 1);
+	public GameStateEvent onInvUseOnItem(Player p, Item item1, Item item2) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (DataConversions.inArray(new int[] {ItemId.MAP_PIECE_1.id(), ItemId.MAP_PIECE_2.id(), ItemId.MAP_PIECE_3.id()}, item1.getID())
+						&& DataConversions.inArray(new int[] {ItemId.MAP_PIECE_1.id(), ItemId.MAP_PIECE_2.id(), ItemId.MAP_PIECE_3.id()}, item2.getID())) {
+						if (hasItem(p, ItemId.MAP_PIECE_1.id(), 1) && hasItem(p, ItemId.MAP_PIECE_2.id(), 1) && hasItem(p, ItemId.MAP_PIECE_3.id(), 1)) {
+							removeItem(p, ItemId.MAP_PIECE_1.id(), 1);
+							removeItem(p, ItemId.MAP_PIECE_2.id(), 1);
+							removeItem(p, ItemId.MAP_PIECE_3.id(), 1);
+							addItem(p, ItemId.MAP.id(), 1);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -499,48 +533,56 @@ public class DragonSlayer implements QuestInterface, InvUseOnObjectListener,
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		if ((obj.getID() == 226 || obj.getID() == 232) && item.getID() == ItemId.PLANK.id()) {
-			if (p.getCache().hasKey("lumb_lady") && p.getCache().getInt("lumb_lady") == CRANDOR) {
-				p.message("The ship doesn't seem easily repairable at the moment");
-			} else {
-				if (p.getCache().hasKey("crandor_shortcut")) {
-					p.message("You don't need to mess about with broken ships");
-					p.message("Now you have found that secret passage from Karamja");
-				} else if (!p.getCache().hasKey("ship_repair") && hasItem(p, ItemId.NAILS.id(), 4)
-					&& hasItem(p, ItemId.PLANK.id(), 1)) {
-					p.message("You hammer the plank over the hole");
-					p.message("You still need more planks to close the hole completely");
-					p.getInventory().remove(ItemId.NAILS.id(), 4);
-					p.getInventory().remove(ItemId.PLANK.id(), 1);
-					p.getCache().set("ship_repair", 1);
-				} else if (hasItem(p, ItemId.NAILS.id(), 4) && hasItem(p, ItemId.PLANK.id(), 1)) {
-					int planks_added = p.getCache().getInt("ship_repair");
-					p.message("You hammer the plank over the hole");
-					p.getInventory().remove(ItemId.NAILS.id(), 4);
-					p.getInventory().remove(ItemId.PLANK.id(), 1);
-					if (planks_added + 1 == 3) {
-						p.getCache().remove("ship_repair");
-						p.getCache().store("ship_fixed", true);
-						p.message("You board up the hole in the ship");
-						p.teleport(281, 3493, false);
-					} else {
-						p.getCache().set("ship_repair", planks_added + 1);
-						p.message("You still need more planks to close the hole completely");
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if ((obj.getID() == 226 || obj.getID() == 232) && item.getID() == ItemId.PLANK.id()) {
+						if (p.getCache().hasKey("lumb_lady") && p.getCache().getInt("lumb_lady") == CRANDOR) {
+							p.message("The ship doesn't seem easily repairable at the moment");
+						} else {
+							if (p.getCache().hasKey("crandor_shortcut")) {
+								p.message("You don't need to mess about with broken ships");
+								p.message("Now you have found that secret passage from Karamja");
+							} else if (!p.getCache().hasKey("ship_repair") && hasItem(p, ItemId.NAILS.id(), 4)
+								&& hasItem(p, ItemId.PLANK.id(), 1)) {
+								p.message("You hammer the plank over the hole");
+								p.message("You still need more planks to close the hole completely");
+								p.getInventory().remove(ItemId.NAILS.id(), 4);
+								p.getInventory().remove(ItemId.PLANK.id(), 1);
+								p.getCache().set("ship_repair", 1);
+							} else if (hasItem(p, ItemId.NAILS.id(), 4) && hasItem(p, ItemId.PLANK.id(), 1)) {
+								int planks_added = p.getCache().getInt("ship_repair");
+								p.message("You hammer the plank over the hole");
+								p.getInventory().remove(ItemId.NAILS.id(), 4);
+								p.getInventory().remove(ItemId.PLANK.id(), 1);
+								if (planks_added + 1 == 3) {
+									p.getCache().remove("ship_repair");
+									p.getCache().store("ship_fixed", true);
+									p.message("You board up the hole in the ship");
+									p.teleport(281, 3493, false);
+								} else {
+									p.getCache().set("ship_repair", planks_added + 1);
+									p.message("You still need more planks to close the hole completely");
+								}
+							} else if (!hasItem(p, ItemId.NAILS.id(), 4)) {
+								p.message("You need 4 steel nails to attach the plank with");
+							} else if (!hasItem(p, ItemId.HAMMER.id(), 1)) {
+								p.message("You need a hammer to hammer the nails in with");
+							} else {
+								p.message("Nothing interesting happens");
+							}
+						}
 					}
-				} else if (!hasItem(p, ItemId.NAILS.id(), 4)) {
-					p.message("You need 4 steel nails to attach the plank with");
-				} else if (!hasItem(p, ItemId.HAMMER.id(), 1)) {
-					p.message("You need a hammer to hammer the nails in with");
-				} else {
-					p.message("Nothing interesting happens");
-				}
+					//only accept planks used
+					else if (obj.getID() == 226 || obj.getID() == 232) {
+						p.message("Nothing interesting happens");
+					}
+
+					return null;
+				});
 			}
-		}
-		//only accept planks used
-		else if (obj.getID() == 226 || obj.getID() == 232) {
-			p.message("Nothing interesting happens");
-		}
+		};
 	}
 
 	class Oziach {

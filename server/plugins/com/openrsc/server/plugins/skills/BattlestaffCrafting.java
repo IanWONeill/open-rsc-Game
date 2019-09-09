@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.skills;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.InvUseOnItemListener;
@@ -24,29 +25,37 @@ public class BattlestaffCrafting implements InvUseOnItemListener,
 	}
 
 	@Override
-	public void onInvUseOnItem(Player p, Item item1, Item item2) {
-		Battlestaff combine = null;
-		for (Battlestaff c : Battlestaff.values()) {
-			if (c.isValid(item1.getID(), item2.getID())) {
-				combine = c;
+	public GameStateEvent onInvUseOnItem(Player p, Item item1, Item item2) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					Battlestaff combine = null;
+					for (Battlestaff c : Battlestaff.values()) {
+						if (c.isValid(item1.getID(), item2.getID())) {
+							combine = c;
+						}
+					}
+					if (p.getSkills().getLevel(Skills.CRAFTING) < combine.requiredLevel) {
+						p.message("You need a crafting level of " + combine.requiredLevel + " to make " + resultItemString(combine));
+						return null;
+					}
+					if (removeItem(p, combine.itemID, 1) && removeItem(p, combine.itemIDOther, 1)) {
+						if (combine.messages.length > 1)
+							message(p, combine.messages[0]);
+						else
+							p.message(combine.messages[0]);
+
+						addItem(p, combine.resultItem, 1);
+						p.incExp(Skills.CRAFTING, combine.experience, true);
+
+						if (combine.messages.length > 1)
+							p.message(combine.messages[1]);
+					}
+
+					return null;
+				});
 			}
-		}
-		if (p.getSkills().getLevel(Skills.CRAFTING) < combine.requiredLevel) {
-			p.message("You need a crafting level of " + combine.requiredLevel + " to make " + resultItemString(combine));
-			return;
-		}
-		if (removeItem(p, combine.itemID, 1) && removeItem(p, combine.itemIDOther, 1)) {
-			if (combine.messages.length > 1)
-				message(p, combine.messages[0]);
-			else
-				p.message(combine.messages[0]);
-
-			addItem(p, combine.resultItem, 1);
-			p.incExp(Skills.CRAFTING, combine.experience, true);
-
-			if (combine.messages.length > 1)
-				p.message(combine.messages[1]);
-		}
+		};
 	}
 
 	@Override

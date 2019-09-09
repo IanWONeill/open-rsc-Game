@@ -6,8 +6,6 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.ObjectActionListener;
 import com.openrsc.server.plugins.listeners.executive.ObjectActionExecutiveListener;
 
-import static com.openrsc.server.plugins.Functions.message;
-
 public class ExitBarrel implements ObjectActionListener, ObjectActionExecutiveListener {
 
 	@Override
@@ -16,8 +14,8 @@ public class ExitBarrel implements ObjectActionListener, ObjectActionExecutiveLi
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0, "Exit Barrel") {
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					getPlayerOwner().message("you climb onto the floating barrel");
@@ -37,7 +35,7 @@ public class ExitBarrel implements ObjectActionListener, ObjectActionExecutiveLi
 					return null;
 				});
 			}
-		});
+		};
 	}
 
 }

@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.skills;
 import com.openrsc.server.event.custom.BatchEvent;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.InvUseOnItemListener;
@@ -20,93 +21,101 @@ import static com.openrsc.server.plugins.Functions.*;
 public class InvCooking implements InvUseOnItemListener, InvUseOnItemExecutiveListener {
 
 	@Override
-	public void onInvUseOnItem(Player player, Item item1, Item item2) {
-		if (item1.getID() == ItemId.CAKE_TIN.id() || item2.getID() == ItemId.CAKE_TIN.id()) {
-			if (player.getInventory().remove(new Item(ItemId.EGG.id())) > -1
-				&& player.getInventory().remove(new Item(ItemId.MILK.id())) > -1
-				&& player.getInventory().remove(new Item(ItemId.POT_OF_FLOUR.id())) > -1
-				&& player.getInventory().remove(new Item(ItemId.CAKE_TIN.id())) > -1) {
-				player.getInventory().add(new Item(ItemId.POT.id()));
-				player.getInventory().add(new Item(ItemId.UNCOOKED_CAKE.id()));
-				player.message("You mix some milk, flour, and egg together into a cake mixture");
-				return;
-			} else {
-				if (!player.getInventory().hasItemId(ItemId.EGG.id()))  // Egg
-					player.message("I also need an egg to make a cake");
-				else if (!player.getInventory().hasItemId(ItemId.MILK.id()))  // Milk
-					player.message("I also need some milk to make a cake");
-				else if (!player.getInventory().hasItemId(ItemId.POT_OF_FLOUR.id())) // Flour
-					player.message("I also need some flour to make a cake");
-				return;
-			}
-		}
-		if (item1.getID() == ItemId.GRAPES.id() && item2.getID() == ItemId.JUG_OF_WATER.id()
-			|| item1.getID() == ItemId.JUG_OF_WATER.id() && item2.getID() == ItemId.GRAPES.id()) {
-			if (player.getSkills().getLevel(Skills.COOKING) < 35) {
-				player.message("You need level 35 cooking to do this");
-				return;
-			}
-			if (player.getInventory().contains(item1)
-				&& player.getInventory().contains(item2)) {
-				player.message("You squeeze the grapes into the jug");
-				player.getInventory().remove(ItemId.JUG_OF_WATER.id(), 1);
-				player.getInventory().remove(ItemId.GRAPES.id(), 1);
-
-				player.setBatchEvent(new BatchEvent(player.getWorld(), player, 3000, "Cook Wine", 1, false) {
-					@Override
-					public void action() {
-						if (getOwner().getSkills().getLevel(Skills.COOKING) < 35) {
-							getOwner().message("You need level 35 cooking to do this");
-							interrupt();
-							return;
-						}
-						if (Formulae.goodWine(getOwner().getSkills().getLevel(Skills.COOKING))) {
-							getOwner().message("You make some nice wine");
-							getOwner().getInventory().add(new Item(ItemId.WINE.id()));
-							getOwner().incExp(Skills.COOKING, 440, true);
+	public GameStateEvent onInvUseOnItem(Player player, Item item1, Item item2) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item1.getID() == ItemId.CAKE_TIN.id() || item2.getID() == ItemId.CAKE_TIN.id()) {
+						if (player.getInventory().remove(new Item(ItemId.EGG.id())) > -1
+							&& player.getInventory().remove(new Item(ItemId.MILK.id())) > -1
+							&& player.getInventory().remove(new Item(ItemId.POT_OF_FLOUR.id())) > -1
+							&& player.getInventory().remove(new Item(ItemId.CAKE_TIN.id())) > -1) {
+							player.getInventory().add(new Item(ItemId.POT.id()));
+							player.getInventory().add(new Item(ItemId.UNCOOKED_CAKE.id()));
+							player.message("You mix some milk, flour, and egg together into a cake mixture");
+							return null;
 						} else {
-							getOwner().message("You accidentally make some bad wine");
-							getOwner().getInventory().add(new Item(ItemId.BAD_WINE.id()));
+							if (!player.getInventory().hasItemId(ItemId.EGG.id()))  // Egg
+								player.message("I also need an egg to make a cake");
+							else if (!player.getInventory().hasItemId(ItemId.MILK.id()))  // Milk
+								player.message("I also need some milk to make a cake");
+							else if (!player.getInventory().hasItemId(ItemId.POT_OF_FLOUR.id())) // Flour
+								player.message("I also need some flour to make a cake");
+							return null;
 						}
 					}
+					if (item1.getID() == ItemId.GRAPES.id() && item2.getID() == ItemId.JUG_OF_WATER.id()
+						|| item1.getID() == ItemId.JUG_OF_WATER.id() && item2.getID() == ItemId.GRAPES.id()) {
+						if (player.getSkills().getLevel(Skills.COOKING) < 35) {
+							player.message("You need level 35 cooking to do this");
+							return null;
+						}
+						if (player.getInventory().contains(item1)
+							&& player.getInventory().contains(item2)) {
+							player.message("You squeeze the grapes into the jug");
+							player.getInventory().remove(ItemId.JUG_OF_WATER.id(), 1);
+							player.getInventory().remove(ItemId.GRAPES.id(), 1);
+
+							player.setBatchEvent(new BatchEvent(player.getWorld(), player, 3000, "Cook Wine", 1, false) {
+								@Override
+								public void action() {
+									if (getOwner().getSkills().getLevel(Skills.COOKING) < 35) {
+										getOwner().message("You need level 35 cooking to do this");
+										interrupt();
+										return;
+									}
+									if (Formulae.goodWine(getOwner().getSkills().getLevel(Skills.COOKING))) {
+										getOwner().message("You make some nice wine");
+										getOwner().getInventory().add(new Item(ItemId.WINE.id()));
+										getOwner().incExp(Skills.COOKING, 440, true);
+									} else {
+										getOwner().message("You accidentally make some bad wine");
+										getOwner().getInventory().add(new Item(ItemId.BAD_WINE.id()));
+									}
+								}
+							});
+						}
+					} else if (isWaterItem(item1) && item2.getID() == ItemId.POT_OF_FLOUR.id()
+						|| item1.getID() == ItemId.POT_OF_FLOUR.id() && isWaterItem(item2)) {
+						int waterContainer = isWaterItem(item1) ? item1.getID() : item2.getID();
+
+						player.message("What would you like to make?");
+						int option = showMenu(player, "Bread dough", "Pastry dough", "Pizza dough", "Pitta dough");
+						if (player.isBusy() || option < 0 || option > 3) {
+							return null;
+						}
+						int productID = -1;
+						if (option == 0) {
+							productID = ItemId.BREAD_DOUGH.id();
+						} else if (option == 1) {
+							productID = ItemId.PASTRY_DOUGH.id();
+						} else if (option == 2) {
+							productID = ItemId.PIZZA_BASE.id();
+						} else if (option == 3) {
+							productID = ItemId.UNCOOKED_PITTA_BREAD.id();
+						}
+						if (removeItem(player, new Item(waterContainer), new Item(ItemId.POT_OF_FLOUR.id())) && productID > -1) {
+							int emptyContainer = 0;
+
+							if (waterContainer == ItemId.BUCKET_OF_WATER.id())
+								emptyContainer = ItemId.BUCKET.id();
+							else if (waterContainer == ItemId.JUG_OF_WATER.id())
+								emptyContainer = ItemId.JUG.id();
+
+							addItem(player, ItemId.POT.id(), 1);
+							addItem(player, emptyContainer, 1);
+							addItem(player, productID, 1);
+
+							player.message("You mix the water and flour to make some " + new Item(productID, 1).getDef(player.getWorld()).getName().toLowerCase());
+						}
+					} else if (isValidCooking(item1, item2)) {
+						handleCombineCooking(player, item1, item2);
+					}
+
+					return null;
 				});
 			}
-		} else if (isWaterItem(item1) && item2.getID() == ItemId.POT_OF_FLOUR.id()
-				|| item1.getID() == ItemId.POT_OF_FLOUR.id() && isWaterItem(item2)) {
-			int waterContainer = isWaterItem(item1) ? item1.getID() : item2.getID();
-
-			player.message("What would you like to make?");
-			int option = showMenu(player, "Bread dough", "Pastry dough", "Pizza dough", "Pitta dough");
-			if (player.isBusy() || option < 0 || option > 3) {
-				return;
-			}
-			int productID = -1;
-			if (option == 0) {
-				productID = ItemId.BREAD_DOUGH.id();
-			} else if (option == 1) {
-				productID = ItemId.PASTRY_DOUGH.id();
-			} else if (option == 2) {
-				productID = ItemId.PIZZA_BASE.id();
-			} else if (option == 3) {
-				productID = ItemId.UNCOOKED_PITTA_BREAD.id();
-			}
-			if (removeItem(player, new Item(waterContainer), new Item(ItemId.POT_OF_FLOUR.id())) && productID > -1) {
-				int emptyContainer = 0;
-
-				if (waterContainer == ItemId.BUCKET_OF_WATER.id())
-					emptyContainer = ItemId.BUCKET.id();
-				else if (waterContainer == ItemId.JUG_OF_WATER.id())
-					emptyContainer = ItemId.JUG.id();
-
-				addItem(player, ItemId.POT.id(), 1);
-				addItem(player, emptyContainer, 1);
-				addItem(player, productID, 1);
-
-				player.message("You mix the water and flour to make some " + new Item(productID, 1).getDef(player.getWorld()).getName().toLowerCase());
-			}
-		} else if (isValidCooking(item1, item2)) {
-			handleCombineCooking(player, item1, item2);
-		}
+		};
 	}
 
 	private void handleCombineCooking(Player p, Item itemOne, Item itemTwo) {

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.minigames.mage_arena;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -22,31 +23,39 @@ public final class Lundail implements ShopInterface,
 		100), new Item(ItemId.MIND_RUNE.id(), 100), new Item(ItemId.BODY_RUNE.id(), 100));
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		playerTalk(p, n, "well hello sir");
-		npcTalk(p, n, "hello brave adventurer",
-			"how can i help you?");
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					playerTalk(p, n, "well hello sir");
+					npcTalk(p, n, "hello brave adventurer",
+						"how can i help you?");
 
-		int option = showMenu(p, n, "what are you selling?",
-			"what's that big old building behind us?");
-		switch (option) {
-			case 0:
-				npcTalk(p, n, "why, i sell rune stones",
-					"i've got some good stuff, real powerful little rocks",
-					"take a look");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-				break;
+					int option = showMenu(p, n, "what are you selling?",
+						"what's that big old building behind us?");
+					switch (option) {
+						case 0:
+							npcTalk(p, n, "why, i sell rune stones",
+								"i've got some good stuff, real powerful little rocks",
+								"take a look");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+							break;
 
-			case 1:
-				npcTalk(p, n, "why that my friend...",
-					"...is the mage battle arena",
-					"top mages come from all over to compete in the arena",
-					"few return back, most get fried...hence the smell");
-				npcTalk(p, n, "hmmm.. i did notice");
-				break;
+						case 1:
+							npcTalk(p, n, "why that my friend...",
+								"...is the mage battle arena",
+								"top mages come from all over to compete in the arena",
+								"few return back, most get fried...hence the smell");
+							npcTalk(p, n, "hmmm.. i did notice");
+							break;
 
-		}
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.ardougne.east;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -18,25 +19,33 @@ public final class CaptainBarnaby implements ObjectActionListener,
 	ObjectActionExecutiveListener, TalkToNpcExecutiveListener, TalkToNpcListener {
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Do you want to go on a trip to Karamja?",
-			"The trip will cost you 30 gold");
-		String[] menu = new String[]{
-			"I'd rather go to Crandor Isle",
-			"Yes please", "No thankyou"
-		};
-		if (p.getQuestStage(Quests.DRAGON_SLAYER) == -1 || p.getCache().hasKey("ned_hired")) {
-			menu = new String[]{ // Crandor option is not needed.
-				"Yes please", "No thankyou"
-			};
-			int choice = showMenu(p, n, menu);
-			if (choice >= 0) {
-				travel(p, n, choice + 1);
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+	return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Do you want to go on a trip to Karamja?",
+						"The trip will cost you 30 gold");
+					String[] menu = new String[]{
+						"I'd rather go to Crandor Isle",
+						"Yes please", "No thankyou"
+					};
+					if (p.getQuestStage(Quests.DRAGON_SLAYER) == -1 || p.getCache().hasKey("ned_hired")) {
+						menu = new String[]{ // Crandor option is not needed.
+							"Yes please", "No thankyou"
+						};
+						int choice = showMenu(p, n, menu);
+						if (choice >= 0) {
+							travel(p, n, choice + 1);
+						}
+					} else {
+						int choice = showMenu(p, n, menu);
+						travel(p, n, choice);
+					}
+
+					return null;
+				});
 			}
-		} else {
-			int choice = showMenu(p, n, menu);
-			travel(p, n, choice);
-		}
+		};
 	}
 
 	public void travel(final Player p, final Npc n, int option) {
@@ -62,21 +71,29 @@ public final class CaptainBarnaby implements ObjectActionListener,
 
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == 157) {
-			if (command.equals("board")) {
-				if (p.getY() != 616) {
-					return;
-				}
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 157) {
+						if (command.equals("board")) {
+							if (p.getY() != 616) {
+								return null;
+							}
 
-				Npc captain = getNearestNpc(p, NpcId.CAPTAIN_BARNABY.id(), 5);
-				if (captain != null) {
-					captain.initializeTalkScript(p);
-				} else {
-					p.message("I need to speak to the captain before boarding the ship.");
-				}
+							Npc captain = getNearestNpc(p, NpcId.CAPTAIN_BARNABY.id(), 5);
+							if (captain != null) {
+								captain.initializeTalkScript(p);
+							} else {
+								p.message("I need to speak to the captain before boarding the ship.");
+							}
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.gutanoth;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -34,18 +35,26 @@ public class OgreTrader implements ShopInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		npcTalk(p, n, "What the human be wantin'");
-		int menu = showMenu(p, n,
-			"Can I see what you are selling ?",
-			"I don't need anything");
-		if (menu == 0) {
-			npcTalk(p, n, "I suppose so...");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		} else if (menu == 1) {
-			npcTalk(p, n, "As you wish");
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "What the human be wantin'");
+					int menu = showMenu(p, n,
+						"Can I see what you are selling ?",
+						"I don't need anything");
+					if (menu == 0) {
+						npcTalk(p, n, "I suppose so...");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					} else if (menu == 1) {
+						npcTalk(p, n, "As you wish");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

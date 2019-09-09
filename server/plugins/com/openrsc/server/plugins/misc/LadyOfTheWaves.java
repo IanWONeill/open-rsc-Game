@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.misc;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.ObjectActionListener;
@@ -19,24 +20,32 @@ public class LadyOfTheWaves implements ObjectActionListener, ObjectActionExecuti
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == SHIP_LADY_OF_THE_WAVES_FRONT || obj.getID() == SHIP_LADY_OF_THE_WAVES_BACK) {
-			p.message("This ship looks like it might take you somewhere.");
-			p.message("The captain shouts down,");
-			p.message("@yel@Captain: Where would you like to go?");
-			int menu = showMenu(p,
-				"Khazard Port",
-				"Port Sarim",
-				"No where thanks!");
-			if (menu == 0) {
-				sail(p, menu);
-			} else if (menu == 1) {
-				sail(p, menu);
-			} else if (menu == 2) {
-				playerTalk(p, null, "No where thanks!");
-				p.message("@yel@Captain: Ok, come back if you change your mind.");
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == SHIP_LADY_OF_THE_WAVES_FRONT || obj.getID() == SHIP_LADY_OF_THE_WAVES_BACK) {
+						p.message("This ship looks like it might take you somewhere.");
+						p.message("The captain shouts down,");
+						p.message("@yel@Captain: Where would you like to go?");
+						int menu = showMenu(p,
+							"Khazard Port",
+							"Port Sarim",
+							"No where thanks!");
+						if (menu == 0) {
+							sail(p, menu);
+						} else if (menu == 1) {
+							sail(p, menu);
+						} else if (menu == 2) {
+							playerTalk(p, null, "No where thanks!");
+							p.message("@yel@Captain: Ok, come back if you change your mind.");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void sail(Player p, int option) {

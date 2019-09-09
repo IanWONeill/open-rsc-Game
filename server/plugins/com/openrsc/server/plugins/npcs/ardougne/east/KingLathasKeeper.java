@@ -1,5 +1,8 @@
 package com.openrsc.server.plugins.npcs.ardougne.east;
 
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -11,9 +14,6 @@ import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
 
 import static com.openrsc.server.plugins.Functions.*;
-
-import com.openrsc.server.constants.ItemId;
-import com.openrsc.server.constants.NpcId;
 
 public final class KingLathasKeeper implements ShopInterface,
 	TalkToNpcExecutiveListener, TalkToNpcListener {
@@ -29,19 +29,27 @@ public final class KingLathasKeeper implements ShopInterface,
 		new Item(ItemId.ADAMANTITE_2_HANDED_SWORD.id(), 1));
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		playerTalk(p, n, "hello");
-		npcTalk(p, n, "so are you looking to buy some weapons",
-			"king lathas keeps us very well stocked");
-		int option = showMenu(p, n, "what do you have?", "no thanks");
-		switch (option) {
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					playerTalk(p, n, "hello");
+					npcTalk(p, n, "so are you looking to buy some weapons",
+						"king lathas keeps us very well stocked");
+					int option = showMenu(p, n, "what do you have?", "no thanks");
+					switch (option) {
 
-			case 0:
-				npcTalk(p, n, "take a look");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-				break;
-		}
+						case 0:
+							npcTalk(p, n, "take a look");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+							break;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

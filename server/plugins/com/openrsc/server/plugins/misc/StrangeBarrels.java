@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.SingleEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -106,74 +107,82 @@ public class StrangeBarrels implements ObjectActionListener, ObjectActionExecuti
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == STRANGE_BARREL) {
-			p.setBusyTimer(1);
-			int action = DataConversions.random(0, 4);
-			if (action != 0) {
-				p.message("You smash the barrel open.");
-				removeObject(obj);
-				p.getWorld().getServer().getGameEventHandler().add(new SingleEvent(p.getWorld(), null, 40000, "Smash Strange Barrel") { // 40 seconds
-					public void action() {
-						int newObjectX = DataConversions.random(467, 476);
-						int newObjectY = DataConversions.random(3699, 3714);
-						if (p.getWorld().getRegionManager().getRegion(Point.location(newObjectX, newObjectY)).getGameObject(Point.location(newObjectX, newObjectY)) != null) {
-							registerObject(new GameObject(obj.getWorld(), obj.getLoc()));
-						} else {
-							registerObject(new GameObject(obj.getWorld(), Point.location(newObjectX, newObjectY), 1178, 0, 0));
-						}
-					}
-				});
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == STRANGE_BARREL) {
+						p.setBusyTimer(1);
+						int action = DataConversions.random(0, 4);
+						if (action != 0) {
+							p.message("You smash the barrel open.");
+							removeObject(obj);
+							p.getWorld().getServer().getGameEventHandler().add(new SingleEvent(p.getWorld(), null, 40000, "Smash Strange Barrel") { // 40 seconds
+								public void action() {
+									int newObjectX = DataConversions.random(467, 476);
+									int newObjectY = DataConversions.random(3699, 3714);
+									if (p.getWorld().getRegionManager().getRegion(Point.location(newObjectX, newObjectY)).getGameObject(Point.location(newObjectX, newObjectY)) != null) {
+										registerObject(new GameObject(obj.getWorld(), obj.getLoc()));
+									} else {
+										registerObject(new GameObject(obj.getWorld(), Point.location(newObjectX, newObjectY), 1178, 0, 0));
+									}
+								}
+							});
 				/*
 				  Out comes a NPC only.
 				 */
-				if (action == 1) {
-					spawnMonster(p, obj.getX(), obj.getY());
-				}
+							if (action == 1) {
+								spawnMonster(p, obj.getX(), obj.getY());
+							}
 				/*
 				  Out comes an item only.
 				 */
-				else if (action == 2) {
-					spawnItem(p, obj.getX(), obj.getY());
-				}
+							else if (action == 2) {
+								spawnItem(p, obj.getX(), obj.getY());
+							}
 				/*
 				  Out comes both a NPC and an ITEM.
 				 */
-				else if (action == 3) {
-					spawnItem(p, obj.getX(), obj.getY());
-					spawnMonster(p, obj.getX(), obj.getY());
-				}
+							else if (action == 3) {
+								spawnItem(p, obj.getX(), obj.getY());
+								spawnMonster(p, obj.getX(), obj.getY());
+							}
 				/*
 				  Smash the barrel and get randomly hit from 0-14 damage.
 				 */
-				else if (action == 4) {
-					p.message("The barrel explodes...");
-					p.message("...you take some damage...");
-					displayTeleportBubble(p, obj.getX(), obj.getY(), true);
-					p.damage(DataConversions.random(0, 14));
-				}
-			} else {
+							else if (action == 4) {
+								p.message("The barrel explodes...");
+								p.message("...you take some damage...");
+								displayTeleportBubble(p, obj.getX(), obj.getY(), true);
+								p.damage(DataConversions.random(0, 14));
+							}
+						} else {
 				/*
 				  Smash the barrel open but nothing happens.
 				 */
-				if (DataConversions.random(0, 1) != 1) {
-					p.message("You smash the barrel open.");
-					removeObject(obj);
-					delayedSpawnObject(obj.getWorld(), obj.getLoc(), 40000); // 40 seconds
-				} else {
-					if (DataConversions.random(0, 1) != 0) {
-						p.message("You were unable to smash this barrel open.");
-						message(p, 1300, "You hit the barrel at the wrong angle.",
-							"You're heavily jarred from the vibrations of the blow.");
-						int reduceAttack = DataConversions.random(1, 3);
-						p.message("Your attack is reduced by " + reduceAttack + ".");
-						p.getSkills().setLevel(Skills.ATTACK, p.getSkills().getLevel(Skills.ATTACK) - reduceAttack);
-					} else {
-						p.message("You were unable to smash this barrel open.");
+							if (DataConversions.random(0, 1) != 1) {
+								p.message("You smash the barrel open.");
+								removeObject(obj);
+								delayedSpawnObject(obj.getWorld(), obj.getLoc(), 40000); // 40 seconds
+							} else {
+								if (DataConversions.random(0, 1) != 0) {
+									p.message("You were unable to smash this barrel open.");
+									message(p, 1300, "You hit the barrel at the wrong angle.",
+										"You're heavily jarred from the vibrations of the blow.");
+									int reduceAttack = DataConversions.random(1, 3);
+									p.message("Your attack is reduced by " + reduceAttack + ".");
+									p.getSkills().setLevel(Skills.ATTACK, p.getSkills().getLevel(Skills.ATTACK) - reduceAttack);
+								} else {
+									p.message("You were unable to smash this barrel open.");
+								}
+							}
+						}
 					}
-				}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void spawnMonster(Player p, int x, int y) {

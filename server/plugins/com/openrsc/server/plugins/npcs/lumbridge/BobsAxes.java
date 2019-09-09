@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.lumbridge;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -38,19 +39,27 @@ public final class BobsAxes implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Hello. How can I help you?");
-		int option = showMenu(p, n, "Give me a quest!",
-			"Have you anything to sell?");
-		switch (option) {
-			case 0:
-				npcTalk(p, n, "Get yer own!");
-				break;
-			case 1:
-				npcTalk(p, n, "Yes, I buy and sell axes, take your pick! (or axe)");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-				break;
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Hello. How can I help you?");
+					int option = showMenu(p, n, "Give me a quest!",
+						"Have you anything to sell?");
+					switch (option) {
+						case 0:
+							npcTalk(p, n, "Get yer own!");
+							break;
+						case 1:
+							npcTalk(p, n, "Yes, I buy and sell axes, take your pick! (or axe)");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+							break;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 }

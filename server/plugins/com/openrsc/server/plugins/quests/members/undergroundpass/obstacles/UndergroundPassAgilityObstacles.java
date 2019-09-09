@@ -4,6 +4,7 @@ import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.custom.UndergroundPassMessages;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -29,91 +30,99 @@ public class UndergroundPassAgilityObstacles implements ObjectActionListener, Ob
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (inArray(obj.getID(), LEDGES)) {
-			message(p, "you climb the ledge");
-			if (succeed(p, 1)) {
-				switch (obj.getID()) {
-					case 862:
-						p.teleport(730, 3494);
-						break;
-					case 864:
-						p.teleport((p.getQuestStage(Quests.UNDERGROUND_PASS) >= 4) || (p.getQuestStage(Quests.UNDERGROUND_PASS) == -1) ? 751 : 734, 3496);
-						break;
-					case 863:
-						p.teleport(763, 3442);
-						break;
-					case 872:
-						p.teleport((p.getQuestStage(Quests.UNDERGROUND_PASS) >= 4) || (p.getQuestStage(Quests.UNDERGROUND_PASS) == -1) ? 765 : 748, 3497);
-						break;
-					case 865:
-						p.teleport(728, 3499);
-						break;
-					case 866:
-						p.teleport((p.getQuestStage(Quests.UNDERGROUND_PASS) >= 4) || (p.getQuestStage(Quests.UNDERGROUND_PASS) == -1) ? 755 : 738, 3501);
-						break;
-				}
-				p.message("you drop down to the cave floor");
-			} else {
-				p.message("but you loose your footing");
-				p.damage(2);
-				playerTalk(p, null, "aargh");
-			}
-		}
-		else if (obj.getID() == NORTH_STONE_STEP) {
-			if (p.getQuestStage(Quests.UNDERGROUND_PASS) == 4) {
-				failBlackAreaObstacle(p, obj); // fail directly, to get stage 5.
-			} else {
-				message(p, "you walk down the stone steps");
-				p.teleport(766, 585);
-
-			}
-		}
-		else if (obj.getID() == SOUTH_STONE_STEP) {
-			message(p, "you walk down the steps",
-				"they lead to a ladder, you climb down");
-			p.teleport(739, 667);
-		}
-		else if (obj.getID() == FIRST_REMAINING_BRIDGE) {
-			message(p, "you attempt to walk over the remaining bridge..");
-			if (p.getQuestStage(Quests.UNDERGROUND_PASS) == 4) {
-				failBlackAreaObstacle(p, obj); // fail directly, to get stage 5.
-			} else {
-				if (succeed(p, 1)) {
-					if (obj.getX() == p.getX() + 1) {
-						p.teleport(776, obj.getY());
-					} else {
-						p.teleport(773, obj.getY());
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (inArray(obj.getID(), LEDGES)) {
+						message(p, "you climb the ledge");
+						if (succeed(p, 1)) {
+							switch (obj.getID()) {
+								case 862:
+									p.teleport(730, 3494);
+									break;
+								case 864:
+									p.teleport((p.getQuestStage(Quests.UNDERGROUND_PASS) >= 4) || (p.getQuestStage(Quests.UNDERGROUND_PASS) == -1) ? 751 : 734, 3496);
+									break;
+								case 863:
+									p.teleport(763, 3442);
+									break;
+								case 872:
+									p.teleport((p.getQuestStage(Quests.UNDERGROUND_PASS) >= 4) || (p.getQuestStage(Quests.UNDERGROUND_PASS) == -1) ? 765 : 748, 3497);
+									break;
+								case 865:
+									p.teleport(728, 3499);
+									break;
+								case 866:
+									p.teleport((p.getQuestStage(Quests.UNDERGROUND_PASS) >= 4) || (p.getQuestStage(Quests.UNDERGROUND_PASS) == -1) ? 755 : 738, 3501);
+									break;
+							}
+							p.message("you drop down to the cave floor");
+						} else {
+							p.message("but you loose your footing");
+							p.damage(2);
+							playerTalk(p, null, "aargh");
+						}
 					}
-					p.message("..you manage to cross safley");
-				} else {
-					failBlackAreaObstacle(p, obj);
-				}
+					else if (obj.getID() == NORTH_STONE_STEP) {
+						if (p.getQuestStage(Quests.UNDERGROUND_PASS) == 4) {
+							failBlackAreaObstacle(p, obj); // fail directly, to get stage 5.
+						} else {
+							message(p, "you walk down the stone steps");
+							p.teleport(766, 585);
+
+						}
+					}
+					else if (obj.getID() == SOUTH_STONE_STEP) {
+						message(p, "you walk down the steps",
+							"they lead to a ladder, you climb down");
+						p.teleport(739, 667);
+					}
+					else if (obj.getID() == FIRST_REMAINING_BRIDGE) {
+						message(p, "you attempt to walk over the remaining bridge..");
+						if (p.getQuestStage(Quests.UNDERGROUND_PASS) == 4) {
+							failBlackAreaObstacle(p, obj); // fail directly, to get stage 5.
+						} else {
+							if (succeed(p, 1)) {
+								if (obj.getX() == p.getX() + 1) {
+									p.teleport(776, obj.getY());
+								} else {
+									p.teleport(773, obj.getY());
+								}
+								p.message("..you manage to cross safley");
+							} else {
+								failBlackAreaObstacle(p, obj);
+							}
+						}
+					}
+					else if (inArray(obj.getID(), STONE_REMAINING_BRIDGES) || inArray(obj.getID(), STONE_JUMP_BRIDGES)) {
+						if (inArray(obj.getID(), STONE_JUMP_BRIDGES)) {
+							message(p, "you attempt to jump across the gap..");
+						} else {
+							message(p, "you attempt to walk over the remaining bridge..");
+						}
+						if (succeed(p, 1)) {
+							if (obj.getX() == p.getX() + 1) {
+								p.teleport(obj.getX() + 3, obj.getY());
+							} else if (obj.getX() == p.getX() - 3) {
+								p.teleport(obj.getX() - 1, obj.getY());
+							} else if (obj.getY() == p.getY() + 1) {
+								p.teleport(obj.getX(), obj.getY() + 3);
+							} else if (obj.getY() == p.getY() - 3) {
+								p.teleport(obj.getX(), obj.getY() - 1);
+							}
+							p.message("..you manage to cross safley");
+						} else {
+							failBlackAreaObstacle(p, obj);
+						}
+						p.getWorld().getServer().getGameEventHandler()
+							.add(new UndergroundPassMessages(p.getWorld(), p, DataConversions.random(3000, 15000)));
+					}
+
+					return null;
+				});
 			}
-		}
-		else if (inArray(obj.getID(), STONE_REMAINING_BRIDGES) || inArray(obj.getID(), STONE_JUMP_BRIDGES)) {
-			if (inArray(obj.getID(), STONE_JUMP_BRIDGES)) {
-				message(p, "you attempt to jump across the gap..");
-			} else {
-				message(p, "you attempt to walk over the remaining bridge..");
-			}
-			if (succeed(p, 1)) {
-				if (obj.getX() == p.getX() + 1) {
-					p.teleport(obj.getX() + 3, obj.getY());
-				} else if (obj.getX() == p.getX() - 3) {
-					p.teleport(obj.getX() - 1, obj.getY());
-				} else if (obj.getY() == p.getY() + 1) {
-					p.teleport(obj.getX(), obj.getY() + 3);
-				} else if (obj.getY() == p.getY() - 3) {
-					p.teleport(obj.getX(), obj.getY() - 1);
-				}
-				p.message("..you manage to cross safley");
-			} else {
-				failBlackAreaObstacle(p, obj);
-			}
-			p.getWorld().getServer().getGameEventHandler()
-				.add(new UndergroundPassMessages(p.getWorld(), p, DataConversions.random(3000, 15000)));
-		}
+		};
 	}
 
 	boolean succeed(Player player, int req) {

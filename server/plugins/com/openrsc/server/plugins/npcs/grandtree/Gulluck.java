@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.grandtree;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -27,24 +28,32 @@ public final class Gulluck implements ShopInterface,
 		new Item(ItemId.BLACK_2_HANDED_SWORD.id(), 1), new Item(ItemId.MITHRIL_2_HANDED_SWORD.id(), 1), new Item(ItemId.ADAMANTITE_2_HANDED_SWORD.id(), 1));
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		if (n.getID() == NpcId.GULLUCK.id()) {
-			playerTalk(p, n, "hello");
-			npcTalk(p, n, "good day brave adventurer",
-				"could i interest you in my fine selection of weapons?");
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.GULLUCK.id()) {
+						playerTalk(p, n, "hello");
+						npcTalk(p, n, "good day brave adventurer",
+							"could i interest you in my fine selection of weapons?");
 
-			int option = showMenu(p, n, "i'll take a look", "no thanks");
-			switch (option) {
-				case 0:
-					p.setAccessingShop(shop);
-					ActionSender.showShop(p, shop);
-					break;
-				case 1:
-					npcTalk(p, n, "grrrr");
-					break;
+						int option = showMenu(p, n, "i'll take a look", "no thanks");
+						switch (option) {
+							case 0:
+								p.setAccessingShop(shop);
+								ActionSender.showShop(p, shop);
+								break;
+							case 1:
+								npcTalk(p, n, "grrrr");
+								break;
 
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

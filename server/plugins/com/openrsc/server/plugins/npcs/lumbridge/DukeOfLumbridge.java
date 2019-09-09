@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.lumbridge;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -16,28 +17,36 @@ public final class DukeOfLumbridge implements TalkToNpcExecutiveListener,
 	TalkToNpcListener {
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Greetings welcome to my castle");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Greetings welcome to my castle");
 
-		ArrayList<String> menu = new ArrayList<String>();
-		menu.add("Have you any quests for me?");
-		menu.add("Where can I find money?");
-		if (p.getWorld().getServer().getConfig().WANT_RUNECRAFTING)
-			if (p.getQuestStage(Quests.RUNE_MYSTERIES) > 0)
-				menu.add("Rune mysteries");
+					ArrayList<String> menu = new ArrayList<String>();
+					menu.add("Have you any quests for me?");
+					menu.add("Where can I find money?");
+					if (p.getWorld().getServer().getConfig().WANT_RUNECRAFTING)
+						if (p.getQuestStage(Quests.RUNE_MYSTERIES) > 0)
+							menu.add("Rune mysteries");
 
-		if (p.getQuestStage(Quests.DRAGON_SLAYER) >= 2 || p.getQuestStage(Quests.DRAGON_SLAYER) < 0
-				&& !hasItem(p, ItemId.ANTI_DRAGON_BREATH_SHIELD.id())) {
-			menu.add(0,"I seek a shield that will protect me from dragon breath");
+					if (p.getQuestStage(Quests.DRAGON_SLAYER) >= 2 || p.getQuestStage(Quests.DRAGON_SLAYER) < 0
+						&& !hasItem(p, ItemId.ANTI_DRAGON_BREATH_SHIELD.id())) {
+						menu.add(0,"I seek a shield that will protect me from dragon breath");
 
-			int choice = showMenu(p, n, false, menu.toArray(new String[menu.size()]));
-			if (choice > -1)
-				handleResponse(p, n, choice);
-		} else {
-			int choice = showMenu(p, n, false, menu.toArray(new String[menu.size()]));
-			if (choice > -1)
-				handleResponse(p, n, choice + 1);
-		}
+						int choice = showMenu(p, n, false, menu.toArray(new String[menu.size()]));
+						if (choice > -1)
+							handleResponse(p, n, choice);
+					} else {
+						int choice = showMenu(p, n, false, menu.toArray(new String[menu.size()]));
+						if (choice > -1)
+							handleResponse(p, n, choice + 1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	public void handleResponse(Player p, Npc n, int option) {

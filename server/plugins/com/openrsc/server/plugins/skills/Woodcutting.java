@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.skills;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.custom.BatchEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.ObjectWoodcuttingDef;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -128,11 +129,19 @@ public class Woodcutting implements ObjectActionListener,
 	}
 
 	@Override
-	public void onObjectAction(final GameObject object, final String command, final Player player) {
-		final ObjectWoodcuttingDef def = player.getWorld().getServer().getEntityHandler().getObjectWoodcuttingDef(object.getID());
-		if (command.equals("chop") && def != null && object.getID() != 245 && object.getID() != 204) {
-			handleWoodcutting(object, player, player.click);
-		}
+	public GameStateEvent onObjectAction(final GameObject object, final String command, final Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					final ObjectWoodcuttingDef def = player.getWorld().getServer().getEntityHandler().getObjectWoodcuttingDef(object.getID());
+					if (command.equals("chop") && def != null && object.getID() != 245 && object.getID() != 204) {
+						handleWoodcutting(object, player, player.click);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	/**

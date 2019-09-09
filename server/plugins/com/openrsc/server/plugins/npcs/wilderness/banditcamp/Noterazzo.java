@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.wilderness.banditcamp;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -28,23 +29,31 @@ public class Noterazzo implements ShopInterface, TalkToNpcListener, TalkToNpcExe
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.NOTERAZZO.id()) {
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.NOTERAZZO.id()) {
 
-			npcTalk(p, n, "Hey wanna trade?, I'll give the best deals you can find");
-			int menu = showMenu(p, n, "Yes please", "No thankyou", "How can you afford to give such good deals?");
-			if (menu == 0) {
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-			} else if (menu == 1) {
-				//NOTHING
-			} else if (menu == 2) {
-				npcTalk(p, n, "The general stores in Asgarnia and Misthalin are heavily taxed",
-					"It really makes it hard for them to run an effective buisness",
-					"For some reason taxmen don't visit my store");
-				p.message("Noterazzo winks at you");
+						npcTalk(p, n, "Hey wanna trade?, I'll give the best deals you can find");
+						int menu = showMenu(p, n, "Yes please", "No thankyou", "How can you afford to give such good deals?");
+						if (menu == 0) {
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						} else if (menu == 1) {
+							//NOTHING
+						} else if (menu == 2) {
+							npcTalk(p, n, "The general stores in Asgarnia and Misthalin are heavily taxed",
+								"It really makes it hard for them to run an effective buisness",
+								"For some reason taxmen don't visit my store");
+							p.message("Noterazzo winks at you");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

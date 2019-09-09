@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.SingleEvent;
 import com.openrsc.server.event.custom.BatchEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.FiremakingDef;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
@@ -38,26 +39,34 @@ public class Firemaking implements InvUseOnGroundItemListener, InvUseOnGroundIte
 	}
 
 	@Override
-	public void onInvUseOnGroundItem(Item myItem, GroundItem item, Player player) {
-		if (player.getWorld().getServer().getConfig().CUSTOM_FIREMAKING) {
-			switch (ItemId.getById(item.getID())) {
-				case LOGS:
-				case OAK_LOGS:
-				case WILLOW_LOGS:
-				case MAPLE_LOGS:
-				case YEW_LOGS:
-				case MAGIC_LOGS:
-					handleCustomFiremaking(item, player);
-					break;
-				default:
-					player.message("Nothing interesting happens");
+	public GameStateEvent onInvUseOnGroundItem(Item myItem, GroundItem item, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (player.getWorld().getServer().getConfig().CUSTOM_FIREMAKING) {
+						switch (ItemId.getById(item.getID())) {
+							case LOGS:
+							case OAK_LOGS:
+							case WILLOW_LOGS:
+							case MAPLE_LOGS:
+							case YEW_LOGS:
+							case MAGIC_LOGS:
+								handleCustomFiremaking(item, player);
+								break;
+							default:
+								player.message("Nothing interesting happens");
+						}
+					} else {
+						if (item.getID() == ItemId.LOGS.id()) {
+							handleFiremaking(item, player);
+						} else
+							player.message("Nothing interesting happens");
+					}
+
+					return null;
+				});
 			}
-		} else {
-			if (item.getID() == ItemId.LOGS.id()) {
-				handleFiremaking(item, player);
-			} else
-				player.message("Nothing interesting happens");
-		}
+		};
 	}
 
 	private void handleFiremaking(final GroundItem gItem, Player player) {
@@ -212,10 +221,18 @@ public class Firemaking implements InvUseOnGroundItemListener, InvUseOnGroundIte
 	}
 
 	@Override
-	public void onInvUseOnItem(Player player, Item item1, Item item2) {
-		if (item1.getID() == TINDERBOX && inArray(item2.getID(), LOGS) || item2.getID() == TINDERBOX && inArray(item1.getID(), LOGS)) {
-			player.message("I think you should put the logs down before you light them!");
-		}
+	public GameStateEvent onInvUseOnItem(Player player, Item item1, Item item2) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item1.getID() == TINDERBOX && inArray(item2.getID(), LOGS) || item2.getID() == TINDERBOX && inArray(item1.getID(), LOGS)) {
+						player.message("I think you should put the logs down before you light them!");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	public int getExp(int level, int baseExp) {

@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.misc;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.InvUseOnPlayerListener;
@@ -37,36 +38,44 @@ public class ChristmasCracker implements InvUseOnPlayerListener, InvUseOnPlayerE
 	};
 
 	@Override
-	public void onInvUseOnPlayer(Player player, Player otherPlayer, Item item) {
-		if (item.getID() == ItemId.CHRISTMAS_CRACKER.id()) {
-			if (otherPlayer.isIronMan(1) || otherPlayer.isIronMan(2) || otherPlayer.isIronMan(3)) {
-				player.message(otherPlayer.getUsername() + " is an Iron Man. He stands alone.");
-				return;
+	public GameStateEvent onInvUseOnPlayer(Player player, Player otherPlayer, Item item) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.CHRISTMAS_CRACKER.id()) {
+						if (otherPlayer.isIronMan(1) || otherPlayer.isIronMan(2) || otherPlayer.isIronMan(3)) {
+							player.message(otherPlayer.getUsername() + " is an Iron Man. He stands alone.");
+							return null;
+						}
+
+						showBubble(player, item);
+						player.message("You pull a christmas cracker");
+						otherPlayer.message("You pull a christmas cracker");
+
+						int phatId = Formulae.weightedRandomChoice(phatIds, phatWeights);
+						int prizeId = Formulae.weightedRandomChoice(prizeIds, prizeWeights);
+						Item phat = new Item(phatId);
+						Item prize = new Item(prizeId);
+
+						if (DataConversions.random(0, 1) == 1) {
+							otherPlayer.message("The person you pull the cracker with gets the prize");
+							player.message("You get the prize from the cracker");
+							player.getInventory().add(phat);
+							player.getInventory().add(prize);
+						} else {
+							player.message("The person you pull the cracker with gets the prize");
+							otherPlayer.message("You get the prize from the cracker");
+							otherPlayer.getInventory().add(phat);
+							otherPlayer.getInventory().add(prize);
+						}
+
+						player.getInventory().remove(item);
+					}
+
+					return null;
+				});
 			}
-
-			showBubble(player, item);
-			player.message("You pull a christmas cracker");
-			otherPlayer.message("You pull a christmas cracker");
-
-			int phatId = Formulae.weightedRandomChoice(phatIds, phatWeights);
-			int prizeId = Formulae.weightedRandomChoice(prizeIds, prizeWeights);
-			Item phat = new Item(phatId);
-			Item prize = new Item(prizeId);
-
-			if (DataConversions.random(0, 1) == 1) {
-				otherPlayer.message("The person you pull the cracker with gets the prize");
-				player.message("You get the prize from the cracker");
-				player.getInventory().add(phat);
-				player.getInventory().add(prize);
-			} else {
-				player.message("The person you pull the cracker with gets the prize");
-				otherPlayer.message("You get the prize from the cracker");
-				otherPlayer.getInventory().add(phat);
-				otherPlayer.getInventory().add(prize);
-			}
-
-			player.getInventory().remove(item);
-		}
+		};
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.misc;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -18,15 +19,23 @@ import static com.openrsc.server.plugins.Functions.*;
 public class Zamorak implements TalkToNpcListener, TalkToNpcExecutiveListener, PickupListener, PickupExecutiveListener, PlayerAttackNpcExecutiveListener, PlayerAttackNpcListener, PlayerRangeNpcExecutiveListener, PlayerRangeNpcListener, PlayerMageNpcExecutiveListener, PlayerMageNpcListener {
 
 	@Override
-	public void onPickup(Player owner, GroundItem item) {
-		if (item.getID() == ItemId.WINE_OF_ZAMORAK.id() && item.getX() == 333 && item.getY() == 434) {
-			Npc zam = getMultipleNpcsInArea(owner, 7, NpcId.MONK_OF_ZAMORAK.id(), NpcId.MONK_OF_ZAMORAK_MACE.id());
-			if (zam != null && !zam.inCombat()) {
-				owner.face(zam);
-				zam.face(owner);
-				applyCurse(owner, zam);
+	public GameStateEvent onPickup(Player owner, GroundItem item) {
+		return new GameStateEvent(owner.getWorld(), owner, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.WINE_OF_ZAMORAK.id() && item.getX() == 333 && item.getY() == 434) {
+						Npc zam = getMultipleNpcsInArea(owner, 7, NpcId.MONK_OF_ZAMORAK.id(), NpcId.MONK_OF_ZAMORAK_MACE.id());
+						if (zam != null && !zam.inCombat()) {
+							owner.face(zam);
+							zam.face(owner);
+							applyCurse(owner, zam);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -44,10 +53,18 @@ public class Zamorak implements TalkToNpcListener, TalkToNpcExecutiveListener, P
 	}
 
 	@Override
-	public void onPlayerAttackNpc(Player p, Npc zamorak) {
-		if (zamorak.getID() == NpcId.MONK_OF_ZAMORAK.id() || zamorak.getID() == NpcId.MONK_OF_ZAMORAK_MACE.id()) {
-			applyCurse(p, zamorak);
-		}
+	public GameStateEvent onPlayerAttackNpc(Player p, Npc zamorak) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (zamorak.getID() == NpcId.MONK_OF_ZAMORAK.id() || zamorak.getID() == NpcId.MONK_OF_ZAMORAK_MACE.id()) {
+						applyCurse(p, zamorak);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -56,10 +73,18 @@ public class Zamorak implements TalkToNpcListener, TalkToNpcExecutiveListener, P
 	}
 
 	@Override
-	public void onPlayerMageNpc(Player p, Npc zamorak) {
-		if (zamorak.getID() == NpcId.MONK_OF_ZAMORAK.id() || zamorak.getID() == NpcId.MONK_OF_ZAMORAK_MACE.id()) {
-			applyCurse(p, zamorak);
-		}
+	public GameStateEvent onPlayerMageNpc(Player p, Npc zamorak) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (zamorak.getID() == NpcId.MONK_OF_ZAMORAK.id() || zamorak.getID() == NpcId.MONK_OF_ZAMORAK_MACE.id()) {
+						applyCurse(p, zamorak);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -68,10 +93,18 @@ public class Zamorak implements TalkToNpcListener, TalkToNpcExecutiveListener, P
 	}
 
 	@Override
-	public void onPlayerRangeNpc(Player p, Npc zamorak) {
-		if (zamorak.getID() == NpcId.MONK_OF_ZAMORAK.id() || zamorak.getID() == NpcId.MONK_OF_ZAMORAK_MACE.id()) {
-			applyCurse(p, zamorak);
-		}
+	public GameStateEvent onPlayerRangeNpc(Player p, Npc zamorak) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (zamorak.getID() == NpcId.MONK_OF_ZAMORAK.id() || zamorak.getID() == NpcId.MONK_OF_ZAMORAK_MACE.id()) {
+						applyCurse(p, zamorak);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void applyCurse(Player owner, Npc zam) {
@@ -100,14 +133,22 @@ public class Zamorak implements TalkToNpcListener, TalkToNpcExecutiveListener, P
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.MONK_OF_ZAMORAK.id() || n.getID() == NpcId.MONK_OF_ZAMORAK_MACE.id()) {
-			if (n.getID() == NpcId.MONK_OF_ZAMORAK.id()) {
-				npcTalk(p, n, "Save your speech for the altar");
-			} else {
-				npcTalk(p, n, "Who are you to dare speak to the servants of Zamorak ?");
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.MONK_OF_ZAMORAK.id() || n.getID() == NpcId.MONK_OF_ZAMORAK_MACE.id()) {
+						if (n.getID() == NpcId.MONK_OF_ZAMORAK.id()) {
+							npcTalk(p, n, "Save your speech for the altar");
+						} else {
+							npcTalk(p, n, "Who are you to dare speak to the servants of Zamorak ?");
+						}
+						n.setChasing(p);
+					}
+
+					return null;
+				});
 			}
-			n.setChasing(p);
-		}
+		};
 	}
 }

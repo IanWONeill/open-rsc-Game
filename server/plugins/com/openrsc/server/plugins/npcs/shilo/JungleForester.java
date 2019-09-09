@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.shilo;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -25,28 +26,36 @@ public class JungleForester implements TalkToNpcListener, TalkToNpcExecutiveList
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.JUNGLE_FORESTER.id()) {
-			switch (p.getQuestStage(Quests.LEGENDS_QUEST)) {
-				case 0:
-					defaultJungleForesterDialogue(p, n, -1);
-					break;
-				case 1:
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
-				case 9:
-				case 10:
-				case 11:
-				case -1:
-					LegendsQuest_jungleForesterDialogue(p, n, -1);
-					break;
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.JUNGLE_FORESTER.id()) {
+						switch (p.getQuestStage(Quests.LEGENDS_QUEST)) {
+							case 0:
+								defaultJungleForesterDialogue(p, n, -1);
+								break;
+							case 1:
+							case 2:
+							case 3:
+							case 4:
+							case 5:
+							case 6:
+							case 7:
+							case 8:
+							case 9:
+							case 10:
+							case 11:
+							case -1:
+								LegendsQuest_jungleForesterDialogue(p, n, -1);
+								break;
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void LegendsQuest_jungleForesterDialogue(Player p, Npc n, int cID) {
@@ -291,47 +300,55 @@ public class JungleForester implements TalkToNpcListener, TalkToNpcExecutiveList
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player p, Npc n, Item item) {
-		if (n.getID() == NpcId.JUNGLE_FORESTER.id() && item.getID() == ItemId.RADIMUS_SCROLLS_COMPLETE.id()) { // the complete map.
-			p.message("You show the completed map of Kharazi Jungle to the Forester.");
-			if (hasItem(p, ItemId.BULL_ROARER.id())) { // if already have the bull roarer
-				npcTalk(p, n, "It's a great map, thanks for letting me take a copy!",
-					"It has helped me out a number of times now.");
-				return;
+	public GameStateEvent onInvUseOnNpc(Player p, Npc n, Item item) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.JUNGLE_FORESTER.id() && item.getID() == ItemId.RADIMUS_SCROLLS_COMPLETE.id()) { // the complete map.
+						p.message("You show the completed map of Kharazi Jungle to the Forester.");
+						if (hasItem(p, ItemId.BULL_ROARER.id())) { // if already have the bull roarer
+							npcTalk(p, n, "It's a great map, thanks for letting me take a copy!",
+								"It has helped me out a number of times now.");
+							return null;
+						}
+						npcTalk(p, n, "*Gasp*");
+						p.message("The jungle forester looks speechless.");
+						npcTalk(p, n, "This is very impressive!",
+							"I'm amazed, it's just great!",
+							"Do you mind if I make a copy of it, and I'll give you an item in return.");
+						int menu = showMenu(p, n,
+							"Yes, go ahead make a copy!",
+							"What will you give me in return?",
+							"Sorry, I must complete my quest.");
+						if (menu == 0) {
+							LegendsQuest_jungleForesterDialogue(p, n, JungleForesterNPC_LegendsQuest.MAKE_A_COPY);
+						} else if (menu == 1) {
+							npcTalk(p, n, "Well, I can offer you this?");
+							message(p, 1200, "The Jungle Forester takes out a strange looking object.",
+								"It looks like a wooden pole, with string attached to one end.");
+							p.message("And at the other end of the string is shaped piece of wood.");
+							npcTalk(p, n, "If you swing this above your head, it makes a strange sound.",
+								"I noticed that it attracts the attention of the natives.",
+								"Is it a deal? Can I make a copy of your map?");
+							int opt = showMenu(p, n,
+								"Yes, go ahead make a copy!",
+								"Sorry, I must complete my quest.");
+							if (opt == 0) {
+								LegendsQuest_jungleForesterDialogue(p, n, JungleForesterNPC_LegendsQuest.MAKE_A_COPY);
+							} else if (opt == 1) {
+								npcTalk(p, n, "Very well friend, I understand, I must be on my way as well.");
+								p.message("The Jungle Forester seems a bit annoyed...and wanders off.");
+							}
+						} else if (menu == 2) {
+							npcTalk(p, n, "Very well friend, I understand, I must be on my way as well.");
+							p.message("The Jungle Forester seems a bit annoyed...and wanders off.");
+						}
+					}
+
+					return null;
+				});
 			}
-			npcTalk(p, n, "*Gasp*");
-			p.message("The jungle forester looks speechless.");
-			npcTalk(p, n, "This is very impressive!",
-				"I'm amazed, it's just great!",
-				"Do you mind if I make a copy of it, and I'll give you an item in return.");
-			int menu = showMenu(p, n,
-				"Yes, go ahead make a copy!",
-				"What will you give me in return?",
-				"Sorry, I must complete my quest.");
-			if (menu == 0) {
-				LegendsQuest_jungleForesterDialogue(p, n, JungleForesterNPC_LegendsQuest.MAKE_A_COPY);
-			} else if (menu == 1) {
-				npcTalk(p, n, "Well, I can offer you this?");
-				message(p, 1200, "The Jungle Forester takes out a strange looking object.",
-					"It looks like a wooden pole, with string attached to one end.");
-				p.message("And at the other end of the string is shaped piece of wood.");
-				npcTalk(p, n, "If you swing this above your head, it makes a strange sound.",
-					"I noticed that it attracts the attention of the natives.",
-					"Is it a deal? Can I make a copy of your map?");
-				int opt = showMenu(p, n,
-					"Yes, go ahead make a copy!",
-					"Sorry, I must complete my quest.");
-				if (opt == 0) {
-					LegendsQuest_jungleForesterDialogue(p, n, JungleForesterNPC_LegendsQuest.MAKE_A_COPY);
-				} else if (opt == 1) {
-					npcTalk(p, n, "Very well friend, I understand, I must be on my way as well.");
-					p.message("The Jungle Forester seems a bit annoyed...and wanders off.");
-				}
-			} else if (menu == 2) {
-				npcTalk(p, n, "Very well friend, I understand, I must be on my way as well.");
-				p.message("The Jungle Forester seems a bit annoyed...and wanders off.");
-			}
-		}
+		};
 	}
 
 	class JungleForesterNPC {

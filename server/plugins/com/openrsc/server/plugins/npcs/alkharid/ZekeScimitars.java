@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.alkharid;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -42,34 +43,41 @@ public final class ZekeScimitars implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		final String[] options;
-		npcTalk(p, n, "A thousand greetings " + ((p.isMale()) ? "sir" : "madam"));
-		if (p.getQuestStage(Quests.FAMILY_CREST) <= 2 || p.getQuestStage(Quests.FAMILY_CREST) >= 5) {
-			options = new String[]{
-				"Do you want to trade?",
-				"Nice cloak"
-			};
-		} else {
-			options = new String[]{
-				"Do you want to trade?",
-				"Nice cloak",
-				"I'm in search of a man named adam fitzharmon"
-			};
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					final String[] options;
+					npcTalk(p, n, "A thousand greetings " + ((p.isMale()) ? "sir" : "madam"));
+					if (p.getQuestStage(Quests.FAMILY_CREST) <= 2 || p.getQuestStage(Quests.FAMILY_CREST) >= 5) {
+						options = new String[]{
+							"Do you want to trade?",
+							"Nice cloak"
+						};
+					} else {
+						options = new String[]{
+							"Do you want to trade?",
+							"Nice cloak",
+							"I'm in search of a man named adam fitzharmon"
+						};
+					}
 
-		int option = showMenu(p, n, options);
-		if (option == 0) {
-			npcTalk(p, n, "Yes, certainly", "I deal in scimitars");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		} else if (option == 1) {
-			npcTalk(p, n, "Thank you");
-		} else if (option == 2) {
-			npcTalk(p, n, "I haven't seen him",
-					"I'm sure if he's been to Al Kharid recently",
-					"Someone around here will have seen him though");
-		}
+					int option = showMenu(p, n, options);
+					if (option == 0) {
+						npcTalk(p, n, "Yes, certainly", "I deal in scimitars");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					} else if (option == 1) {
+						npcTalk(p, n, "Thank you");
+					} else if (option == 2) {
+						npcTalk(p, n, "I haven't seen him",
+							"I'm sure if he's been to Al Kharid recently",
+							"Someone around here will have seen him though");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
-
 }

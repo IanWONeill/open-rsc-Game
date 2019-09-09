@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.misc;
 
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -9,14 +10,22 @@ import com.openrsc.server.plugins.listeners.executive.ObjectActionExecutiveListe
 public class Bed implements ObjectActionExecutiveListener, ObjectActionListener {
 
 	@Override
-	public void onObjectAction(final GameObject object, String command, Player owner) {
-		if ((command.equalsIgnoreCase("rest") || command.equalsIgnoreCase("sleep")) && !owner.isSleeping() || command.equalsIgnoreCase("lie in")) {
-			ActionSender.sendEnterSleep(owner);
-			if (object.getID() == 1035 || object.getID() == 1162) // Crude Bed is like Sleeping Bag.
-				owner.startSleepEvent(false);
-			else
-				owner.startSleepEvent(true);
-		}
+	public GameStateEvent onObjectAction(final GameObject object, String command, Player owner) {
+		return new GameStateEvent(owner.getWorld(), owner, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if ((command.equalsIgnoreCase("rest") || command.equalsIgnoreCase("sleep")) && !owner.isSleeping() || command.equalsIgnoreCase("lie in")) {
+						ActionSender.sendEnterSleep(owner);
+						if (object.getID() == 1035 || object.getID() == 1162) // Crude Bed is like Sleeping Bag.
+							owner.startSleepEvent(false);
+						else
+							owner.startSleepEvent(true);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

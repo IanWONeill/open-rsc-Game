@@ -432,62 +432,70 @@ public class Thieving extends Functions
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		String formattedName = obj.getGameObjectDef().getName().toUpperCase().replaceAll(" ", "_");
-		if (formattedName.contains("STALL")) {
-			if (obj.getGameObjectDef().getName().equalsIgnoreCase("empty stall")) {
-				return;
-			}
-			Stall stall = Stall.valueOf(formattedName);
-			if (stall != null) {
-				stallThieving(player, obj, stall);
-			}
-		} else if (obj.getID() >= 334 && obj.getID() <= 339) {
-			if (command.contains("trap")) {
-				handleChestThieving(player, obj);
-			} else {
-				player.message("You have activated a trap on the chest");
-				player.damage(DataConversions.random(0, 8));
-			}
-		} else if (obj.getID() == 379) { // HEMENSTER CHEST HARDCODE
-			if (command.equalsIgnoreCase("Open")) {
-				player.message("This chest is locked");
-			} else {
-				player.setBusyTimer(5);
-				player.message("you attempt to pick the lock");
-				if (player.getWorld().getServer().getConfig().WANT_FATIGUE) {
-					if (player.getFatigue() >= player.MAX_FATIGUE) {
-						player.message("You are too tired to thieve here");
-						player.setBusyTimer(0);
-						return;
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					String formattedName = obj.getGameObjectDef().getName().toUpperCase().replaceAll(" ", "_");
+					if (formattedName.contains("STALL")) {
+						if (obj.getGameObjectDef().getName().equalsIgnoreCase("empty stall")) {
+							return null;
+						}
+						Stall stall = Stall.valueOf(formattedName);
+						if (stall != null) {
+							stallThieving(player, obj, stall);
+						}
+					} else if (obj.getID() >= 334 && obj.getID() <= 339) {
+						if (command.contains("trap")) {
+							handleChestThieving(player, obj);
+						} else {
+							player.message("You have activated a trap on the chest");
+							player.damage(DataConversions.random(0, 8));
+						}
+					} else if (obj.getID() == 379) { // HEMENSTER CHEST HARDCODE
+						if (command.equalsIgnoreCase("Open")) {
+							player.message("This chest is locked");
+						} else {
+							player.setBusyTimer(5);
+							player.message("you attempt to pick the lock");
+							if (player.getWorld().getServer().getConfig().WANT_FATIGUE) {
+								if (player.getFatigue() >= player.MAX_FATIGUE) {
+									player.message("You are too tired to thieve here");
+									player.setBusyTimer(0);
+									return null;
+								}
+							}
+							if (player.getSkills().getLevel(Skills.THIEVING) < 47) {
+								player.message("You are not a high enough level to pick this lock");
+								player.setBusyTimer(0);
+								return null;
+							}
+							if (!hasItem(player, ItemId.LOCKPICK.id())) {
+								player.message("You need a lockpick for this lock");
+								player.setBusyTimer(0);
+								return null;
+							}
+							message(player, "You manage to pick the lock");
+
+							openChest(obj);
+							message(player, "You open the chest");
+
+							message(player, "You find a treasure inside!");
+
+							player.incExp(Skills.THIEVING, 600, true);
+							addItem(player, ItemId.COINS.id(), 20);
+							addItem(player, ItemId.STEEL_ARROW_HEADS.id(), 5);
+
+							player.getWorld().replaceGameObject(obj,
+								new GameObject(player.getWorld(), obj.getLocation(), 340, obj.getDirection(), obj.getType()));
+							player.getWorld().delayedSpawnObject(obj.getLoc(), 150000);
+						}
 					}
-				}
-				if (player.getSkills().getLevel(Skills.THIEVING) < 47) {
-					player.message("You are not a high enough level to pick this lock");
-					player.setBusyTimer(0);
-					return;
-				}
-				if (!hasItem(player, ItemId.LOCKPICK.id())) {
-					player.message("You need a lockpick for this lock");
-					player.setBusyTimer(0);
-					return;
-				}
-				message(player, "You manage to pick the lock");
 
-				openChest(obj);
-				message(player, "You open the chest");
-
-				message(player, "You find a treasure inside!");
-
-				player.incExp(Skills.THIEVING, 600, true);
-				addItem(player, ItemId.COINS.id(), 20);
-				addItem(player, ItemId.STEEL_ARROW_HEADS.id(), 5);
-
-				player.getWorld().replaceGameObject(obj,
-					new GameObject(player.getWorld(), obj.getLocation(), 340, obj.getDirection(), obj.getType()));
-				player.getWorld().delayedSpawnObject(obj.getLoc(), 150000);
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private boolean canBeSeen(World world, int fromX, int fromY, int targetX, int targetY) {
@@ -659,20 +667,36 @@ public class Thieving extends Functions
 	}
 
 	@Override
-	public void onNpcCommand(Npc n, String command, Player p) {
-		if (command.equalsIgnoreCase("pickpocket")) {
-			Pickpocket pickpocket = Pickpocket.valueOf(n.getDef().getName().toUpperCase().replace(" ", "_"));
-			if (pickpocket != null) {
-				doPickpocket(p, n, pickpocket);
-			} else {
-				p.message("ERROR: Pickpocket handler not found.");
+	public GameStateEvent onNpcCommand(Npc n, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (command.equalsIgnoreCase("pickpocket")) {
+						Pickpocket pickpocket = Pickpocket.valueOf(n.getDef().getName().toUpperCase().replace(" ", "_"));
+						if (pickpocket != null) {
+							doPickpocket(p, n, pickpocket);
+						} else {
+							p.message("ERROR: Pickpocket handler not found.");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		handlePicklock(obj, p, click);
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					handlePicklock(obj, p, click);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	enum Pickpocket {

@@ -1,5 +1,7 @@
 package com.openrsc.server.plugins.npcs.tutorial;
 
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -8,24 +10,30 @@ import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener
 import static com.openrsc.server.plugins.Functions.npcTalk;
 import static com.openrsc.server.plugins.Functions.showMenu;
 
-import com.openrsc.server.constants.NpcId;
-
 public class CommunityInstructor implements TalkToNpcExecutiveListener, TalkToNpcListener {
 	/**
 	 * @author Davve
 	 * Tutorial island community instructor
 	 */
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		npcTalk(p, n, "You're almost ready to go out into the main game area",
-			"When you get out there",
-			"You will be able to interact with thousands of other players");
-		int menu = showMenu(p, n, "How can I communicate with other players?", "Are there rules on ingame behaviour?");
-		if (menu == 0) {
-			communicateDialogue(p, n);
-		} else if (menu == 1) {
-			behaviourDialogue(p, n);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "You're almost ready to go out into the main game area",
+						"When you get out there",
+						"You will be able to interact with thousands of other players");
+					int menu = showMenu(p, n, "How can I communicate with other players?", "Are there rules on ingame behaviour?");
+					if (menu == 0) {
+						communicateDialogue(p, n);
+					} else if (menu == 1) {
+						behaviourDialogue(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void communicateDialogue(Player p, Npc n) {

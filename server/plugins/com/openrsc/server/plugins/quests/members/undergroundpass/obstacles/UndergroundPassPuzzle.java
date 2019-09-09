@@ -30,8 +30,8 @@ public class UndergroundPassPuzzle implements ObjectActionListener, ObjectAction
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Underground Pass Puzzle") {
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					if (inArray(obj.getID(), WORKING_GRILLS)) {
@@ -96,6 +96,6 @@ public class UndergroundPassPuzzle implements ObjectActionListener, ObjectAction
 					return null;
 				});
 			}
-		});
+		};
 	}
 }

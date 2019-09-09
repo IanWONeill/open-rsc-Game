@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -66,54 +67,63 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.BOY.id()) {
-			switch (p.getQuestStage(this)) {
-				case 0:
-					playerTalk(p, n, "Hello young man");
-					message(p, "The boy sobs");
-					int first = showMenu(p, n, "What's the matter?",
-						"Well if you're not going to answer, I'll go");
-					if (first == 0) {
-						npcTalk(p, n,
-							"I've kicked my ball over that wall, into that garden",
-							"The old lady who lives there is scary",
-							"She's locked the ball in her wooden shed",
-							"Can you get my ball back for me please");
-						int second = showMenu(p, n, "Ok, I'll see what I can do",
-							"Get it back yourself");
-						if (second == 0) {
-							npcTalk(p, n, "Thankyou");
-							p.updateQuestStage(getQuestId(), 1);
-						} else if (second == 1) {
-							// NOTHING
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.BOY.id()) {
+						switch (p.getQuestStage(quest)) {
+							case 0:
+								playerTalk(p, n, "Hello young man");
+								message(p, "The boy sobs");
+								int first = showMenu(p, n, "What's the matter?",
+									"Well if you're not going to answer, I'll go");
+								if (first == 0) {
+									npcTalk(p, n,
+										"I've kicked my ball over that wall, into that garden",
+										"The old lady who lives there is scary",
+										"She's locked the ball in her wooden shed",
+										"Can you get my ball back for me please");
+									int second = showMenu(p, n, "Ok, I'll see what I can do",
+										"Get it back yourself");
+									if (second == 0) {
+										npcTalk(p, n, "Thankyou");
+										p.updateQuestStage(getQuestId(), 1);
+									} else if (second == 1) {
+										// NOTHING
+									}
+								} else if (first == 1) {
+									message(p, "The boy sniffs slightly");
+								}
+								break;
+							case 1:
+							case 2:
+							case 3:
+								if (hasItem(p, ItemId.BALL.id())) {
+									playerTalk(p, n, "Hi I have got your ball back",
+										"It was harder than I thought it would be");
+									npcTalk(p, n, "Thankyou very much");
+									removeItem(p, ItemId.BALL.id(), 1);
+									if (p.getQuestStage(Quests.WITCHS_HOUSE) == 3) {
+										p.sendQuestComplete(Quests.WITCHS_HOUSE);
+									}
+								} else {
+									npcTalk(p, n, "Have you got my ball back yet?");
+									playerTalk(p, n, "Not yet");
+									npcTalk(p, n, "Well it's in the shed in that garden");
+								}
+								break;
+							case -1:
+								npcTalk(p, n, "Thankyou for getting my ball back");
+								break;
 						}
-					} else if (first == 1) {
-						message(p, "The boy sniffs slightly");
 					}
-					break;
-				case 1:
-				case 2:
-				case 3:
-					if (hasItem(p, ItemId.BALL.id())) {
-						playerTalk(p, n, "Hi I have got your ball back",
-							"It was harder than I thought it would be");
-						npcTalk(p, n, "Thankyou very much");
-						removeItem(p, ItemId.BALL.id(), 1);
-						if (p.getQuestStage(Quests.WITCHS_HOUSE) == 3) {
-							p.sendQuestComplete(Quests.WITCHS_HOUSE);
-						}
-					} else {
-						npcTalk(p, n, "Have you got my ball back yet?");
-						playerTalk(p, n, "Not yet");
-						npcTalk(p, n, "Well it's in the shed in that garden");
-					}
-					break;
-				case -1:
-					npcTalk(p, n, "Thankyou for getting my ball back");
-					break;
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -124,96 +134,105 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		if (obj.getID() == 69) {
-			p.message("The door is locked");
-		}
-		else if (obj.getID() == 70 && obj.getX() == 358) {
-			doDoor(obj, p);
-		}
-		else if (obj.getID() == 71 && obj.getY() == 495) {
-			if (p.getCache().hasKey("witch_spawned") && p.getQuestStage(getQuestId()) == 2) {
-				Npc witch = p.getWorld().getNpcById(NpcId.NORA_T_HAG.id());
-				if (witch != null) {
-					witch.teleport(355, 494);
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 69) {
+						p.message("The door is locked");
+					}
+					else if (obj.getID() == 70 && obj.getX() == 358) {
+						doDoor(obj, p);
+					}
+					else if (obj.getID() == 71 && obj.getY() == 495) {
+						if (p.getCache().hasKey("witch_spawned") && p.getQuestStage(getQuestId()) == 2) {
+							Npc witch = p.getWorld().getNpcById(NpcId.NORA_T_HAG.id());
+							if (witch != null) {
+								witch.teleport(355, 494);
 
-					npcTalk(p, witch, "Oi what are you doing in my garden?");
-					npcTalk(p, witch, "Get out you pesky intruder");
-					message(p, "Nora begins to cast a spell");
+								npcTalk(p, witch, "Oi what are you doing in my garden?");
+								npcTalk(p, witch, "Get out you pesky intruder");
+								message(p, "Nora begins to cast a spell");
 
-					p.teleport(347, 616, true);
-					removeNpc(witch);
+								p.teleport(347, 616, true);
+								removeNpc(witch);
 
-					p.getCache().remove("witch_spawned");
-					p.updateQuestStage(this, 1);
-					p.getCache().remove("found_magnet");
-				}
-				return;
+								p.getCache().remove("witch_spawned");
+								p.updateQuestStage(quest, 1);
+								p.getCache().remove("found_magnet");
+							}
+							return null;
+						}
+						if (p.getQuestStage(quest) == 2 || p.getQuestStage(getQuestId()) == -1 || p.getX() == 355) {
+							doDoor(obj, p);
+						} else {
+							p.message("The door won't open");
+						}
+					}
+
+					else if (obj.getID() == 73 && obj.getX() == 351) {
+						Npc witch =p. getWorld().getNpcById(NpcId.NORA_T_HAG.id());
+						if (p.getQuestStage(quest) == 3 || p.getQuestStage(getQuestId()) == -1) {
+							doDoor(obj, p);
+							return null;
+						}
+						if (!p.getCache().hasKey("witch_spawned")) {
+							message(p, "As you reach out to open the door you hear footsteps inside the house", "The footsteps approach the back door");
+							spawnNpc(p.getWorld(), NpcId.NORA_T_HAG.id(), 356, 494, 60000);
+							p.getCache().store("witch_spawned", true);
+						} else {
+							message(p, "The shed door is locked");
+							if (witch == null) {
+								return null;
+							}
+							witch.teleport(355, 494);
+							npcTalk(p, witch, "Oi what are you doing in my garden?");
+							npcTalk(p, witch, "Get out you pesky intruder");
+							message(p, "Nora begins to cast a spell");
+
+							p.teleport(347, 616, true);
+							removeNpc(witch);
+							p.updateQuestStage(quest, 1);
+							p.getCache().remove("found_magnet");
+						}
+					}
+					else if (obj.getID() == 72 && obj.getX() == 356) {
+						if (p.getX() <= 355) {
+							doDoor(obj, p);
+							if (p.getCache().hasKey("witch_spawned")) {
+								Npc witch = p.getWorld().getNpcById(NpcId.NORA_T_HAG.id());
+								witch.setBusy(true);
+								sleep(2000);
+								p.message("Through a crack in the door, you see a witch enter the garden");
+								witch.teleport(353, 492);
+								sleep(2500);
+								witch.teleport(351, 491);
+								p.message("The witch disappears into the shed");
+								npcTalk(p, witch, "How are you tonight my pretty?",
+									"Would you like some food?",
+									"Just wait there while I get some");
+								witch.teleport(353, 492);
+								witch.setLocation(Point.location(353, 492), true);
+								message(p,
+									"The witch passes  back through the garden again",
+									"Leaving the shed door unlocked");
+								sleep(2500);
+
+								removeNpc(witch);
+								p.getCache().remove("witch_spawned");
+
+								p.updateQuestStage(quest, 3);
+							}
+						} else {
+							p.teleport(355, 492, false);
+						}
+					}
+
+					return null;
+				});
 			}
-			if (p.getQuestStage(this) == 2 || p.getQuestStage(getQuestId()) == -1 || p.getX() == 355) {
-				doDoor(obj, p);
-			} else {
-				p.message("The door won't open");
-			}
-		}
-
-		else if (obj.getID() == 73 && obj.getX() == 351) {
-			Npc witch =p. getWorld().getNpcById(NpcId.NORA_T_HAG.id());
-			if (p.getQuestStage(this) == 3 || p.getQuestStage(getQuestId()) == -1) {
-				doDoor(obj, p);
-				return;
-			}
-			if (!p.getCache().hasKey("witch_spawned")) {
-				message(p, "As you reach out to open the door you hear footsteps inside the house", "The footsteps approach the back door");
-				spawnNpc(p.getWorld(), NpcId.NORA_T_HAG.id(), 356, 494, 60000);
-				p.getCache().store("witch_spawned", true);
-			} else {
-				message(p, "The shed door is locked");
-				if (witch == null) {
-					return;
-				}
-				witch.teleport(355, 494);
-				npcTalk(p, witch, "Oi what are you doing in my garden?");
-				npcTalk(p, witch, "Get out you pesky intruder");
-				message(p, "Nora begins to cast a spell");
-
-				p.teleport(347, 616, true);
-				removeNpc(witch);
-				p.updateQuestStage(this, 1);
-				p.getCache().remove("found_magnet");
-			}
-		}
-		else if (obj.getID() == 72 && obj.getX() == 356) {
-			if (p.getX() <= 355) {
-				doDoor(obj, p);
-				if (p.getCache().hasKey("witch_spawned")) {
-					Npc witch = p.getWorld().getNpcById(NpcId.NORA_T_HAG.id());
-					witch.setBusy(true);
-					sleep(2000);
-					p.message("Through a crack in the door, you see a witch enter the garden");
-					witch.teleport(353, 492);
-					sleep(2500);
-					witch.teleport(351, 491);
-					p.message("The witch disappears into the shed");
-					npcTalk(p, witch, "How are you tonight my pretty?",
-						"Would you like some food?",
-						"Just wait there while I get some");
-					witch.teleport(353, 492);
-					witch.setLocation(Point.location(353, 492), true);
-					message(p,
-						"The witch passes  back through the garden again",
-						"Leaving the shed door unlocked");
-					sleep(2500);
-
-					removeNpc(witch);
-					p.getCache().remove("witch_spawned");
-
-					p.updateQuestStage(this, 3);
-				}
-			} else {
-				p.teleport(355, 492, false);
-			}
-		}
+		};
 	}
 
 	@Override
@@ -224,54 +243,62 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == 255) {
-			if (!hasItem(p, ItemId.FRONT_DOOR_KEY.id())) {
-				p.message("You find a key under the mat");
-				addItem(p, ItemId.FRONT_DOOR_KEY.id(), 1);
-			} else {
-				p.message("You find nothing interesting");
-			}
-		}
-		else if (obj.getID() == 256 && obj.getX() == 363) {
-			boolean shouldShock = false;
-			if (wearingMetalArmour(p)) {
-				p.message("As your metal armour touches the gate you feel a shock");
-				shouldShock = true;
-			} else if (!wearingInsulatingGloves(p)) {
-				p.message("As your bare hands touch the gate you feel a shock");
-				shouldShock = true;
-			}
-			if (shouldShock) {
-				int damage;
-				if (p.getSkills().getLevel(Skills.HITS) < 20) {
-					damage = p.getRandom().nextInt(9) + 1;
-				} else {
-					damage = p.getRandom().nextInt(14) + 1;
-				}
-				p.damage(damage);
-			} else {
-				doGate(p, obj);
-			}
-		}
-		else if ((obj.getID() == WITCHES_HOUSE_CUPBOARD_OPEN || obj.getID() == WITCHES_HOUSE_CUPBOARD_CLOSED) && obj.getY() == 3328) {
-			if (command.equalsIgnoreCase("open")) {
-				openCupboard(obj, p, WITCHES_HOUSE_CUPBOARD_OPEN);
-			} else if (command.equalsIgnoreCase("close")) {
-				closeCupboard(obj, p, WITCHES_HOUSE_CUPBOARD_CLOSED);
-			} else {
-				if (!hasItem(p, ItemId.MAGNET.id())) {
-					p.message("You find a magnet in the cupboard");
-					addItem(p, ItemId.MAGNET.id(), 1);
-					if (p.getQuestStage(this) > 0) {
-						p.getCache().store("found_magnet", true);
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 255) {
+						if (!hasItem(p, ItemId.FRONT_DOOR_KEY.id())) {
+							p.message("You find a key under the mat");
+							addItem(p, ItemId.FRONT_DOOR_KEY.id(), 1);
+						} else {
+							p.message("You find nothing interesting");
+						}
 					}
-				} else {
-					p.message("You search the cupboard, but find nothing");
-				}
-			}
-		}
+					else if (obj.getID() == 256 && obj.getX() == 363) {
+						boolean shouldShock = false;
+						if (wearingMetalArmour(p)) {
+							p.message("As your metal armour touches the gate you feel a shock");
+							shouldShock = true;
+						} else if (!wearingInsulatingGloves(p)) {
+							p.message("As your bare hands touch the gate you feel a shock");
+							shouldShock = true;
+						}
+						if (shouldShock) {
+							int damage;
+							if (p.getSkills().getLevel(Skills.HITS) < 20) {
+								damage = p.getRandom().nextInt(9) + 1;
+							} else {
+								damage = p.getRandom().nextInt(14) + 1;
+							}
+							p.damage(damage);
+						} else {
+							doGate(p, obj);
+						}
+					}
+					else if ((obj.getID() == WITCHES_HOUSE_CUPBOARD_OPEN || obj.getID() == WITCHES_HOUSE_CUPBOARD_CLOSED) && obj.getY() == 3328) {
+						if (command.equalsIgnoreCase("open")) {
+							openCupboard(obj, p, WITCHES_HOUSE_CUPBOARD_OPEN);
+						} else if (command.equalsIgnoreCase("close")) {
+							closeCupboard(obj, p, WITCHES_HOUSE_CUPBOARD_CLOSED);
+						} else {
+							if (!hasItem(p, ItemId.MAGNET.id())) {
+								p.message("You find a magnet in the cupboard");
+								addItem(p, ItemId.MAGNET.id(), 1);
+								if (p.getQuestStage(quest) > 0) {
+									p.getCache().store("found_magnet", true);
+								}
+							} else {
+								p.message("You search the cupboard, but find nothing");
+							}
+						}
+					}
 
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -281,15 +308,24 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 
 	// room inbounds : MIN X: 356 MAX X: 357 MIN Y: 494 MAX Y: 496
 	@Override
-	public void onDrop(Player p, Item i) {
-		if (i.getID() == ItemId.CHEESE.id() && p.getLocation().inBounds(356, 357, 494, 496)) {
-			if (p.getQuestStage(this) == -1) {
-				playerTalk(p, null, "I would rather eat it to be honest");
-				return;
+	public GameStateEvent onDrop(Player p, Item i) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (i.getID() == ItemId.CHEESE.id() && p.getLocation().inBounds(356, 357, 494, 496)) {
+						if (p.getQuestStage(quest) == -1) {
+							playerTalk(p, null, "I would rather eat it to be honest");
+							return null;
+						}
+						message(p, "A rat appears from a hole and eats the cheese");
+						spawnNpc(p.getWorld(), NpcId.RAT_WITCHES_HOUSE.id(), 356, 494, 60000);
+					}
+
+					return null;
+				});
 			}
-			message(p, "A rat appears from a hole and eats the cheese");
-			spawnNpc(p.getWorld(), NpcId.RAT_WITCHES_HOUSE.id(), 356, 494, 60000);
-		}
+		};
 	}
 
 	@Override
@@ -298,24 +334,32 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player p, Npc npc, Item item) {
-		if (item.getID() == ItemId.MAGNET.id() && npc.getID() == NpcId.RAT_WITCHES_HOUSE.id()) {
-			if (p.getQuestStage(this) == -1) {
-				return;
-			}
-			if (!p.getCache().hasKey("found_magnet")) {
-				p.message("You need to get the magnet yourself to do this quest");
-			} else {
-				p.message("You put the magnet on the rat");
-				Npc rat = p.getWorld().getNpcById(NpcId.RAT_WITCHES_HOUSE.id());
-				removeNpc(rat);
-				message(p, "The rat runs back into his hole",
-					"You hear a click and whirr");
-				p.getInventory().remove(ItemId.MAGNET.id(), 1);
-				p.updateQuestStage(getQuestId(), 2);
-			}
-		}
+	public GameStateEvent onInvUseOnNpc(Player p, Npc npc, Item item) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.MAGNET.id() && npc.getID() == NpcId.RAT_WITCHES_HOUSE.id()) {
+						if (p.getQuestStage(quest) == -1) {
+							return null;
+						}
+						if (!p.getCache().hasKey("found_magnet")) {
+							p.message("You need to get the magnet yourself to do this quest");
+						} else {
+							p.message("You put the magnet on the rat");
+							Npc rat = p.getWorld().getNpcById(NpcId.RAT_WITCHES_HOUSE.id());
+							removeNpc(rat);
+							message(p, "The rat runs back into his hole",
+								"You hear a click and whirr");
+							p.getInventory().remove(ItemId.MAGNET.id(), 1);
+							p.updateQuestStage(getQuestId(), 2);
+						}
+					}
 
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -325,22 +369,30 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPlayerKilledNpc(Player p, Npc n) {
-		n.resetCombatEvent();
-		if (n.getID() >= NpcId.SHAPESHIFTER_WOLF.id()) {
-			n.killedBy(p);
-			p.message("You finally kill the shapeshifter once and for all");
-			if (!p.getCache().hasKey("shapeshifter")) {
-				p.getCache().store("shapeshifter", true);
-			}
-			return;
-		}
-		n.killedBy(p);
-		Npc nextShape = spawnNpc(p.getWorld(), n.getID() + 1, n.getX(), n.getY(), 300000);
+	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					n.resetCombatEvent();
+					if (n.getID() >= NpcId.SHAPESHIFTER_WOLF.id()) {
+						n.killedBy(p);
+						p.message("You finally kill the shapeshifter once and for all");
+						if (!p.getCache().hasKey("shapeshifter")) {
+							p.getCache().store("shapeshifter", true);
+						}
+						return null;
+					}
+					n.killedBy(p);
+					Npc nextShape = spawnNpc(p.getWorld(), n.getID() + 1, n.getX(), n.getY(), 300000);
 
-		p.message("The shapeshifer turns into a "
-			+ npcMessage(nextShape.getID()) + "!");
-		nextShape.startCombat(p);
+					p.message("The shapeshifer turns into a "
+						+ npcMessage(nextShape.getID()) + "!");
+					nextShape.startCombat(p);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private String npcMessage(int id) {
@@ -377,16 +429,23 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPickup(Player p, GroundItem i) {
-		if (!p.getCache().hasKey("shapeshifter")) {
-			Npc shapeshifter = getNearestNpc(p, NpcId.SHAPESHIFTER_HUMAN.id(), 20);
-			if (shapeshifter != null) {
-				shapeshifter.startCombat(p);
-			}
-		} else if (p.getQuestStage(getQuestId()) == -1) {
-			playerTalk(p, null, "I'd better not take it, its not mine");
-		}
+	public GameStateEvent onPickup(Player p, GroundItem i) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (!p.getCache().hasKey("shapeshifter")) {
+						Npc shapeshifter = getNearestNpc(p, NpcId.SHAPESHIFTER_HUMAN.id(), 20);
+						if (shapeshifter != null) {
+							shapeshifter.startCombat(p);
+						}
+					} else if (p.getQuestStage(getQuestId()) == -1) {
+						playerTalk(p, null, "I'd better not take it, its not mine");
+					}
 
+					return null;
+				});
+			}
+		};
 	}
 
 	private boolean wearingInsulatingGloves(Player p) {

@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.custom.BatchEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.ItemCookingDef;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -20,19 +21,26 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public class ObjectCooking implements InvUseOnObjectListener, InvUseOnObjectExecutiveListener {
 	@Override
-	public void onInvUseOnObject(GameObject object, Item item, Player owner) {
-		Npc cook = getNearestNpc(owner, 7, 20);
-		if (cook != null && owner.getQuestStage(Quests.COOKS_ASSISTANT) != -1
-			&& object.getID() == 119) {
-			cook.face(owner);
-			owner.face(cook);
-			npcTalk(owner, cook, "Hey! Who said you could use that?");
-		} else
-			handleCooking(item, owner, object);
+	public GameStateEvent onInvUseOnObject(GameObject object, Item item, Player owner) {
+		return new GameStateEvent(owner.getWorld(), owner, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					Npc cook = getNearestNpc(owner, 7, 20);
+					if (cook != null && owner.getQuestStage(Quests.COOKS_ASSISTANT) != -1
+						&& object.getID() == 119) {
+						cook.face(owner);
+						owner.face(cook);
+						npcTalk(owner, cook, "Hey! Who said you could use that?");
+					} else
+						handleCooking(item, owner, object);
+
+					return null;
+				});
+			}
+		};
 	}
 
-	private void handleCooking(final Item item, Player p,
-							   final GameObject object) {
+	private void handleCooking(final Item item, Player p, final GameObject object) {
 
 		// Tutorial Meat
 		if(object.getID() == 491) {

@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.members.legendsquest.npcs.shop;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -23,25 +24,33 @@ public final class SiegfriedErkel implements ShopInterface, TalkToNpcExecutiveLi
 		new Item(ItemId.MAZE_KEY.id(), 3), new Item(ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id(), 1), new Item(ItemId.CAPE_OF_LEGENDS.id(), 3));
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		if (p.getQuestStage(Quests.LEGENDS_QUEST) != -1) {
-			npcTalk(p, n, "I'm sorry but the services of this shop are only for ",
-				"the pleasure of those who are rightfull members of the ",
-				"Legends Guild. I would get into serious trouble if I sold ",
-				"a non-member an item from this store.");
-		} else {
-			npcTalk(p, n, "Hello there and welcome to the shop of useful items.",
-				"Can I help you at all?");
-			int option = showMenu(p, n, "Yes please. What are you selling?",
-				"No thanks");
-			if (option == 0) {
-				npcTalk(p, n, "Take a look");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-			} else if (option == 1) {
-				npcTalk(p, n, "Ok, well, if you change your mind, do pop back.");
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (p.getQuestStage(Quests.LEGENDS_QUEST) != -1) {
+						npcTalk(p, n, "I'm sorry but the services of this shop are only for ",
+							"the pleasure of those who are rightfull members of the ",
+							"Legends Guild. I would get into serious trouble if I sold ",
+							"a non-member an item from this store.");
+					} else {
+						npcTalk(p, n, "Hello there and welcome to the shop of useful items.",
+							"Can I help you at all?");
+						int option = showMenu(p, n, "Yes please. What are you selling?",
+							"No thanks");
+						if (option == 0) {
+							npcTalk(p, n, "Take a look");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						} else if (option == 1) {
+							npcTalk(p, n, "Ok, well, if you change your mind, do pop back.");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

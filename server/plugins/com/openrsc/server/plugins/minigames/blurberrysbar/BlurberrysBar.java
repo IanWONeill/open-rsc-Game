@@ -1,6 +1,10 @@
 package com.openrsc.server.plugins.minigames.blurberrysbar;
 
-import com.openrsc.server.constants.*;
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.Minigames;
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -13,14 +17,7 @@ import com.openrsc.server.plugins.listeners.executive.InvActionExecutiveListener
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
 import com.openrsc.server.util.rsc.DataConversions;
 
-import static com.openrsc.server.plugins.Functions.addItem;
-import static com.openrsc.server.plugins.Functions.checkAndRemoveBlurberry;
-import static com.openrsc.server.plugins.Functions.hasItem;
-import static com.openrsc.server.plugins.Functions.message;
-import static com.openrsc.server.plugins.Functions.npcTalk;
-import static com.openrsc.server.plugins.Functions.playerTalk;
-import static com.openrsc.server.plugins.Functions.removeItem;
-import static com.openrsc.server.plugins.Functions.showMenu;
+import static com.openrsc.server.plugins.Functions.*;
 
 public class BlurberrysBar implements MiniGameInterface, TalkToNpcListener, TalkToNpcExecutiveListener, InvActionListener, InvActionExecutiveListener, DropExecutiveListener {
 
@@ -50,99 +47,107 @@ public class BlurberrysBar implements MiniGameInterface, TalkToNpcListener, Talk
 	}
 
 	@Override
-	public void onTalkToNpc(Player player, Npc npc) {
-		if (npc.getID() == NpcId.BLURBERRY.id()) {
-			if (!player.getCache().hasKey("blurberrys_bar")) {
-				startBlurberrysBar(player, npc);
-			} else {
-				int stage = player.getCache().getInt("blurberrys_bar");
-				switch (stage) {
-
-					// Assigns Fruit Blast
-					case 1:
-						assignFruitBlast(player, npc);
-						break;
-
-					// Returns Fruit Blast, Assigns Drunk Dragon
-					case 2:
-						npcTalk(player, npc, "so where's my fruit blast");
-						if (hasItem(player, ItemId.FRUIT_BLAST.id())) {
-							assignDrunkDragon(player, npc);
+	public GameStateEvent onTalkToNpc(Player player, Npc npc) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (npc.getID() == NpcId.BLURBERRY.id()) {
+						if (!player.getCache().hasKey("blurberrys_bar")) {
+							startBlurberrysBar(player, npc);
 						} else {
-							npcTalk(player, npc, "i don't know what you have there but it's no fruit blast");
-						}
-						break;
+							int stage = player.getCache().getInt("blurberrys_bar");
+							switch (stage) {
 
-					// Returns Drunk Dragon, Assigns SGG
-					case 3:
-						playerTalk(player, npc, "hello blurberry");
-						npcTalk(player, npc, "hello again traveller",
-							"how did you do?");
-						if (hasItem(player, ItemId.DRUNK_DRAGON.id())) {
-							assignSGG(player, npc);
-						} else {
-							npcTalk(player, npc, "i dont know what that is but it's no drunk dragon");
-						}
-						break;
+								// Assigns Fruit Blast
+								case 1:
+									assignFruitBlast(player, npc);
+									break;
 
-					// Returns SGG, Assigns Chocolate Saturday
-					case 4:
-						playerTalk(player, npc, "hi blurberry");
-						npcTalk(player, npc, "so have you got my s g g?");
-						if (hasItem(player, ItemId.SGG.id())) {
-							assignChocolateSaturday(player, npc);
-						} else {
-							npcTalk(player, npc, "i dont know what that is but it's no s g g");
-						}
-						break;
+								// Returns Fruit Blast, Assigns Drunk Dragon
+								case 2:
+									npcTalk(player, npc, "so where's my fruit blast");
+									if (hasItem(player, ItemId.FRUIT_BLAST.id())) {
+										assignDrunkDragon(player, npc);
+									} else {
+										npcTalk(player, npc, "i don't know what you have there but it's no fruit blast");
+									}
+									break;
 
-					// Returns Chocolate Saturday, Assigns Blurberry Special
-					case 5:
-						playerTalk(player, npc, "hello blurberry");
-						npcTalk(player, npc, "hello, how did it go with the choc saturday");
-						if (hasItem(player, ItemId.CHOCOLATE_SATURDAY.id())) {
-							assignBlurberrySpecial(player, npc);
-						} else {
-							playerTalk(player, npc, "i haven't managed to make it yet");
-							npcTalk(player, npc, "ok, it's one choc saturday i need",
-								"well let me know when you're done");
-						}
-						break;
+								// Returns Drunk Dragon, Assigns SGG
+								case 3:
+									playerTalk(player, npc, "hello blurberry");
+									npcTalk(player, npc, "hello again traveller",
+										"how did you do?");
+									if (hasItem(player, ItemId.DRUNK_DRAGON.id())) {
+										assignSGG(player, npc);
+									} else {
+										npcTalk(player, npc, "i dont know what that is but it's no drunk dragon");
+									}
+									break;
 
-					// Returns Blurberry Special
-					case 6:
-						playerTalk(player, npc, "hi again");
-						npcTalk(player, npc, "so how did you do");
-						if (hasItem(player, ItemId.BLURBERRY_SPECIAL.id())) {
-							completeBlurberrysBar(player, npc);
-						} else {
-							playerTalk(player, npc, "I haven't managed to make it yet");
-							npcTalk(player, npc, "I need one blurberry special",
-								"well let me know when you're done");
-						}
-						break;
+								// Returns SGG, Assigns Chocolate Saturday
+								case 4:
+									playerTalk(player, npc, "hi blurberry");
+									npcTalk(player, npc, "so have you got my s g g?");
+									if (hasItem(player, ItemId.SGG.id())) {
+										assignChocolateSaturday(player, npc);
+									} else {
+										npcTalk(player, npc, "i dont know what that is but it's no s g g");
+									}
+									break;
 
-					// Current Job
-					case 7:
-						if (player.getCache().hasKey("blurberry_job")) {
-							myCurrentJob(player, npc);
-						} else {
-							playerTalk(player, npc, "hello again blurberry");
-							npcTalk(player, npc, "well hello traveller",
-								"i'm quite busy as usual, any chance you could help");
-							int menu = showMenu(player, npc,
-								"I'm quite busy myself, sorry",
-								"ok then, what do you need");
-							if (menu == 0) {
-								npcTalk(player, npc, "that's ok, come back when you're free");
-							} else if (menu == 1) {
-								randomizeJob(player, npc);
+								// Returns Chocolate Saturday, Assigns Blurberry Special
+								case 5:
+									playerTalk(player, npc, "hello blurberry");
+									npcTalk(player, npc, "hello, how did it go with the choc saturday");
+									if (hasItem(player, ItemId.CHOCOLATE_SATURDAY.id())) {
+										assignBlurberrySpecial(player, npc);
+									} else {
+										playerTalk(player, npc, "i haven't managed to make it yet");
+										npcTalk(player, npc, "ok, it's one choc saturday i need",
+											"well let me know when you're done");
+									}
+									break;
+
+								// Returns Blurberry Special
+								case 6:
+									playerTalk(player, npc, "hi again");
+									npcTalk(player, npc, "so how did you do");
+									if (hasItem(player, ItemId.BLURBERRY_SPECIAL.id())) {
+										completeBlurberrysBar(player, npc);
+									} else {
+										playerTalk(player, npc, "I haven't managed to make it yet");
+										npcTalk(player, npc, "I need one blurberry special",
+											"well let me know when you're done");
+									}
+									break;
+
+								// Current Job
+								case 7:
+									if (player.getCache().hasKey("blurberry_job")) {
+										myCurrentJob(player, npc);
+									} else {
+										playerTalk(player, npc, "hello again blurberry");
+										npcTalk(player, npc, "well hello traveller",
+											"i'm quite busy as usual, any chance you could help");
+										int menu = showMenu(player, npc,
+											"I'm quite busy myself, sorry",
+											"ok then, what do you need");
+										if (menu == 0) {
+											npcTalk(player, npc, "that's ok, come back when you're free");
+										} else if (menu == 1) {
+											randomizeJob(player, npc);
+										}
+									}
+									break;
 							}
 						}
-						break;
-				}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void randomizeJob(Player p, Npc n) {
@@ -295,42 +300,50 @@ public class BlurberrysBar implements MiniGameInterface, TalkToNpcListener, Talk
 	}
 
 	@Override
-	public void onInvAction(Item item, Player p, String command) {
-		if (item.getID() == ItemId.GNOME_COCKTAIL_GUIDE.id()) {
-			p.message("you open blurberry's cocktail book");
-			p.message("inside are a list of cocktails");
-			int menu = showMenu(p,
-				"non alcoholic",
-				"alcoholic");
-			if (menu == 0) {
-				int non_alcoholic = showMenu(p,
-					"fruit blast",
-					"pineapple punch");
-				if (non_alcoholic == 0) {
-					ActionSender.sendBox(p, "@yel@Fruit blast% %Mix the juice of one lemon, one orange and one pineapple in the shaker% %Pour into glass and top with slices of lemon.", true);
-				} else if (non_alcoholic == 1) {
-					ActionSender.sendBox(p, "@yel@Pineapple Punch% %mix the juice of two pineapples with the juice of one lemon and one orange% %pour the mix into a glass and add diced pineapple followed by diced lime% %top drink with one slice of lime", true);
-				}
-			} else if (menu == 1) {
-				int alcoholic = showMenu(p,
-					"drunkdragon",
-					"sgg",
-					"choc saturday",
-					"blurberry special",
-					"wizard blizzard");
-				if (alcoholic == 0) {
-					ActionSender.sendBox(p, "@yel@Drunk Dragon% %Mix vodka with gin and dwellberry juice% %Pour the mixture into a glass and add a diced pineapple.Next add a generous portion of cream% %Heat the drink briefly in a warm oven.. yum.", true);
-				} else if (alcoholic == 1) {
-					ActionSender.sendBox(p, "@yel@s g g - short green guy% %Mix vodka with the juice of three limes and pour into a glass% %sprinkle equa leaves over the top of the drink% %Finally add a slice of lime to finish the drink", true);
-				} else if (alcoholic == 2) {
-					ActionSender.sendBox(p, "@yel@Choc Saturday% %Mix together whiskey, milk, equa leaves% %Pour mixture into a glass add some chocolate and briefly heat in the oven% %Then add a generous helping of cream% %Finish of the drink with sprinkled chocolate dust", true);
-				} else if (alcoholic == 3) {
-					ActionSender.sendBox(p, "@yel@Blurberry Special% %Mix together vodka, gin and brandy% %Add to this the juice of two lemons and one orange and pour into the glass% %next add to the glass orange chunks and then lemon chunks% %Finish of with one lime slice and then add a sprinkling of equa leaves", true);
-				} else if (alcoholic == 4) {
-					ActionSender.sendBox(p, "@yel@Wizard Blizzard% %thoroughly mix together the juice of one pinapple, one orange, one lemon and one lime% %Add to this two measures of vodka and one measure of gin% %Pour the mixture into a glass, top with pineapple chunks and then add slices of lime", true);
-				}
+	public GameStateEvent onInvAction(Item item, Player p, String command) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.GNOME_COCKTAIL_GUIDE.id()) {
+						p.message("you open blurberry's cocktail book");
+						p.message("inside are a list of cocktails");
+						int menu = showMenu(p,
+							"non alcoholic",
+							"alcoholic");
+						if (menu == 0) {
+							int non_alcoholic = showMenu(p,
+								"fruit blast",
+								"pineapple punch");
+							if (non_alcoholic == 0) {
+								ActionSender.sendBox(p, "@yel@Fruit blast% %Mix the juice of one lemon, one orange and one pineapple in the shaker% %Pour into glass and top with slices of lemon.", true);
+							} else if (non_alcoholic == 1) {
+								ActionSender.sendBox(p, "@yel@Pineapple Punch% %mix the juice of two pineapples with the juice of one lemon and one orange% %pour the mix into a glass and add diced pineapple followed by diced lime% %top drink with one slice of lime", true);
+							}
+						} else if (menu == 1) {
+							int alcoholic = showMenu(p,
+								"drunkdragon",
+								"sgg",
+								"choc saturday",
+								"blurberry special",
+								"wizard blizzard");
+							if (alcoholic == 0) {
+								ActionSender.sendBox(p, "@yel@Drunk Dragon% %Mix vodka with gin and dwellberry juice% %Pour the mixture into a glass and add a diced pineapple.Next add a generous portion of cream% %Heat the drink briefly in a warm oven.. yum.", true);
+							} else if (alcoholic == 1) {
+								ActionSender.sendBox(p, "@yel@s g g - short green guy% %Mix vodka with the juice of three limes and pour into a glass% %sprinkle equa leaves over the top of the drink% %Finally add a slice of lime to finish the drink", true);
+							} else if (alcoholic == 2) {
+								ActionSender.sendBox(p, "@yel@Choc Saturday% %Mix together whiskey, milk, equa leaves% %Pour mixture into a glass add some chocolate and briefly heat in the oven% %Then add a generous helping of cream% %Finish of the drink with sprinkled chocolate dust", true);
+							} else if (alcoholic == 3) {
+								ActionSender.sendBox(p, "@yel@Blurberry Special% %Mix together vodka, gin and brandy% %Add to this the juice of two lemons and one orange and pour into the glass% %next add to the glass orange chunks and then lemon chunks% %Finish of with one lime slice and then add a sprinkling of equa leaves", true);
+							} else if (alcoholic == 4) {
+								ActionSender.sendBox(p, "@yel@Wizard Blizzard% %thoroughly mix together the juice of one pinapple, one orange, one lemon and one lime% %Add to this two measures of vodka and one measure of gin% %Pour the mixture into a glass, top with pineapple chunks and then add slices of lime", true);
+							}
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

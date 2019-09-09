@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.minigames.gnomerestaurant;
 
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
@@ -11,9 +12,6 @@ import com.openrsc.server.plugins.listeners.executive.PickupExecutiveListener;
 import com.openrsc.server.util.rsc.DataConversions;
 
 import static com.openrsc.server.plugins.Functions.addItem;
-import static com.openrsc.server.plugins.Functions.message;
-
-import com.openrsc.server.constants.ItemId;
 
 public class SwampToads implements PickupListener, PickupExecutiveListener, InvActionListener, InvActionExecutiveListener {
 
@@ -23,8 +21,8 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 	}
 
 	@Override
-	public void onInvAction(Item item, Player p, String command) {
-		p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Process Swamp Toad") {
+	public GameStateEvent onInvAction(Item item, Player p, String command) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.SWAMP_TOAD.id()) {
@@ -40,7 +38,7 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 				});
 
 			}
-		});
+		};
 	}
 
 	@Override
@@ -49,9 +47,9 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 	}
 
 	@Override
-	public void onPickup(Player p, GroundItem i) {
+	public GameStateEvent onPickup(Player p, GroundItem i) {
 		if (i.getID() == ItemId.SWAMP_TOAD.id()) {
-			p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Pickup Swamp Toad") {
+			return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 				public void init() {
 					addState(0, () -> {
 						getPlayerOwner().message("you pick up the swamp toad");
@@ -70,7 +68,9 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 						return null;
 					});
 				}
-			});
+			};
 		}
+
+		return null;
 	}
 }

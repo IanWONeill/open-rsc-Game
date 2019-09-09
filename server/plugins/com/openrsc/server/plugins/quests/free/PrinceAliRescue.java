@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.free;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -906,93 +907,125 @@ public class PrinceAliRescue implements QuestInterface, WallObjectActionListener
 	}
 
 	@Override
-	public void onInvUseOnNpc(final Player p, final Npc npc, final Item item) {
-		if (npc.getID() == NpcId.LADY_KELI.id() && item.getID() == ItemId.ROPE.id()) {
-			if (p.getCache().hasKey("joe_is_drunk") && p.getQuestStage(this) == 2) {
-				npc.remove();
-				p.message("You overpower Keli, tie her up, and put her in a cupboard");
-			}
-			else if (p.getCache().hasKey("joe_is_drunk")) {
-				p.message("You have rescued the prince already, you cannot use the same plan again");
-			}
-			else {
-				p.message("You cannot tie Keli up until you have all equipment and disabled the guard");
-			}
-		}
-	}
-
-	@Override
-	public void onInvUseOnWallObject(final GameObject obj, final Item item,
-								 final Player player) {
-		if (obj.getID() == 45 && item.getID() == ItemId.BRONZE_KEY.id()) {
-			if (obj.getY() == 640) {
-				final Npc keli = getNearestNpc(player, NpcId.LADY_KELI.id(), 20);
-				if (player.getX() <= 198) {
-					if (keli != null) {
-						player.message("You'd better get rid of Lady Keli before trying to go through there");
-						return;
-					}
-					else {
-						if (player.getQuestStage(this) == 2) {
-							player.message("You unlock the door");
-							player.message("You go through the door");
-							doDoor(obj, player);
+	public GameStateEvent onInvUseOnNpc(final Player p, final Npc npc, final Item item) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (npc.getID() == NpcId.LADY_KELI.id() && item.getID() == ItemId.ROPE.id()) {
+						if (p.getCache().hasKey("joe_is_drunk") && p.getQuestStage(quest) == 2) {
+							npc.remove();
+							p.message("You overpower Keli, tie her up, and put her in a cupboard");
+						}
+						else if (p.getCache().hasKey("joe_is_drunk")) {
+							p.message("You have rescued the prince already, you cannot use the same plan again");
 						}
 						else {
-							player.message("I have no reason to do this");
+							p.message("You cannot tie Keli up until you have all equipment and disabled the guard");
 						}
 					}
-				}
-				else {
-					player.message("You go through the door");
-					doDoor(obj, player);
-				}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		//border guard in separate file
-		if (n.getID() == NpcId.LADY_KELI.id()) {
-			keliDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.HASSAN.id()) {
-			hassanDialogue(p, n);
-		} else if (n.getID() == NpcId.OSMAN.id()) {
-			osmanDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.JOE.id()) {
-			joeDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.LEELA.id()) {
-			leelaDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.PRINCE_ALI.id()) {
-			princeAliDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.JAILGUARD.id()) {
-			jailGuardDialogue(p, n);
-		}
+	public GameStateEvent onInvUseOnWallObject(final GameObject obj, final Item item, final Player player) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 45 && item.getID() == ItemId.BRONZE_KEY.id()) {
+						if (obj.getY() == 640) {
+							final Npc keli = getNearestNpc(player, NpcId.LADY_KELI.id(), 20);
+							if (player.getX() <= 198) {
+								if (keli != null) {
+									player.message("You'd better get rid of Lady Keli before trying to go through there");
+									return null;
+								}
+								else {
+									if (player.getQuestStage(quest) == 2) {
+										player.message("You unlock the door");
+										player.message("You go through the door");
+										doDoor(obj, player);
+									}
+									else {
+										player.message("I have no reason to do this");
+									}
+								}
+							}
+							else {
+								player.message("You go through the door");
+								doDoor(obj, player);
+							}
+						}
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
-	public void onWallObjectAction(final GameObject obj, final Integer click,
-								   final Player p) {
-		if (obj.getID() == 45) {
-			if (obj.getY() == 640) {
-				final Npc keli = getNearestNpc(p, NpcId.LADY_KELI.id(), 20);
-				if (p.getX() <= 198) {
-					if (keli != null) {
-						p.message("You'd better get rid of Lady Keli before trying to go through there");
-						return;
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					//border guard in separate file
+					if (n.getID() == NpcId.LADY_KELI.id()) {
+						keliDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.HASSAN.id()) {
+						hassanDialogue(p, n);
+					} else if (n.getID() == NpcId.OSMAN.id()) {
+						osmanDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.JOE.id()) {
+						joeDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.LEELA.id()) {
+						leelaDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.PRINCE_ALI.id()) {
+						princeAliDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.JAILGUARD.id()) {
+						jailGuardDialogue(p, n);
 					}
-					p.message("The door is locked");
-					if (hasItem(p, ItemId.BRONZE_KEY.id())) {
-						p.message("Maybe you should try using your key on it");
-					}
-				}
-				else {
-					p.message("You go through the door");
-					doDoor(obj, p);
-				}
+
+					return null;
+				});
 			}
-		}
+		};
+	}
+
+	@Override
+	public GameStateEvent onWallObjectAction(final GameObject obj, final Integer click, final Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 45) {
+						if (obj.getY() == 640) {
+							final Npc keli = getNearestNpc(p, NpcId.LADY_KELI.id(), 20);
+							if (p.getX() <= 198) {
+								if (keli != null) {
+									p.message("You'd better get rid of Lady Keli before trying to go through there");
+									return null;
+								}
+								p.message("The door is locked");
+								if (hasItem(p, ItemId.BRONZE_KEY.id())) {
+									p.message("Maybe you should try using your key on it");
+								}
+							}
+							else {
+								p.message("You go through the door");
+								doDoor(obj, p);
+							}
+						}
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void osmanDialogue(final Player p, final Npc n, final int cID) {

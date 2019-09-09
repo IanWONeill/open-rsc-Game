@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.catherby;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -39,33 +40,41 @@ public class ArheinGeneralShop implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Hello would you like to trade");
-		int option = showMenu(p, n, "Yes ok",
-			"No thankyou",
-			"Is that your ship?");
-		if (option == 0) {
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		} else if (option == 2) {
-			npcTalk(p, n,
-				"Yes I use it to make deliver my goods up and down the coast",
-				"These crates here are all ready for my next trip");
-			
-			String[] menuOptions = new String[] {"Where do you deliver too?", "Are you rich then?"};
-			if (p.getQuestStage(Quests.MERLINS_CRYSTAL) == 2) {
-				menuOptions = new String[] {"Do you deliver to the fort just down the coast?",
-						"Where do you deliver too?",
-						"Are you rich then?"};
-				
-				option = showMenu(p, n, false, menuOptions);
-				shipBranchDialogue(p, n, option);
-			} else {
-				option = showMenu(p, n, false, menuOptions);
-				if (option >= 0)
-					shipBranchDialogue(p, n, option + 1);
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Hello would you like to trade");
+					int option = showMenu(p, n, "Yes ok",
+						"No thankyou",
+						"Is that your ship?");
+					if (option == 0) {
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					} else if (option == 2) {
+						npcTalk(p, n,
+							"Yes I use it to make deliver my goods up and down the coast",
+							"These crates here are all ready for my next trip");
+
+						String[] menuOptions = new String[] {"Where do you deliver too?", "Are you rich then?"};
+						if (p.getQuestStage(Quests.MERLINS_CRYSTAL) == 2) {
+							menuOptions = new String[] {"Do you deliver to the fort just down the coast?",
+								"Where do you deliver too?",
+								"Are you rich then?"};
+
+							option = showMenu(p, n, false, menuOptions);
+							shipBranchDialogue(p, n, option);
+						} else {
+							option = showMenu(p, n, false, menuOptions);
+							if (option >= 0)
+								shipBranchDialogue(p, n, option + 1);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 	
 	public void shipBranchDialogue(final Player p, final Npc n, int option) {

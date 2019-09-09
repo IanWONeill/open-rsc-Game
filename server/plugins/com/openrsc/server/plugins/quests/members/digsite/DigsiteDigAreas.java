@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.quests.members.digsite;
 
 import com.openrsc.server.constants.*;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -337,31 +338,39 @@ public class DigsiteDigAreas implements ObjectActionListener, ObjectActionExecut
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		if (inArray(obj.getID(), SOIL)) {
-			switch (ItemId.getById(item.getID())) {
-				case TROWEL:
-					trowelOnSite(p, item, obj);
-					break;
-				case SPADE:
-					doSpade(p, item, obj);
-					break;
-				case ROCK_PICK:
-					rockPickOnSite(p, item, obj);
-					break;
-				case PANNING_TRAY:
-					playerTalk(p, null, "No I'd better not - it may damage the tray...");
-					break;
-				default:
-					p.message("Nothing interesting happens");
-					break;
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (inArray(obj.getID(), SOIL)) {
+						switch (ItemId.getById(item.getID())) {
+							case TROWEL:
+								trowelOnSite(p, item, obj);
+								break;
+							case SPADE:
+								doSpade(p, item, obj);
+								break;
+							case ROCK_PICK:
+								rockPickOnSite(p, item, obj);
+								break;
+							case PANNING_TRAY:
+								playerTalk(p, null, "No I'd better not - it may damage the tray...");
+								break;
+							default:
+								p.message("Nothing interesting happens");
+								break;
+						}
+					}
+					if (obj.getID() == ROCK && item.getID() == ItemId.ROCK_PICK.id()) {
+						p.message("You chip at the rock with the rockpick");
+						p.message("You take the pieces of cracked rock");
+						addItem(p, ItemId.CRACKED_ROCK_SAMPLE.id(), 1);
+					}
+
+					return null;
+				});
 			}
-		}
-		if (obj.getID() == ROCK && item.getID() == ItemId.ROCK_PICK.id()) {
-			p.message("You chip at the rock with the rockpick");
-			p.message("You take the pieces of cracked rock");
-			addItem(p, ItemId.CRACKED_ROCK_SAMPLE.id(), 1);
-		}
+		};
 	}
 
 	@Override
@@ -370,12 +379,20 @@ public class DigsiteDigAreas implements ObjectActionListener, ObjectActionExecut
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (inArray(obj.getID(), SOIL)) {
-			p.playerServerMessage(MessageType.QUEST, "You examine the patch of soil");
-			p.message("You see nothing on the surface");
-			playerTalk(p, null, "I think I need something to dig with");
-		}
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (inArray(obj.getID(), SOIL)) {
+						p.playerServerMessage(MessageType.QUEST, "You examine the patch of soil");
+						p.message("You see nothing on the surface");
+						playerTalk(p, null, "I think I need something to dig with");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -384,9 +401,17 @@ public class DigsiteDigAreas implements ObjectActionListener, ObjectActionExecut
 	}
 
 	@Override
-	public void onInvAction(Item item, Player p, String command) {
-		if (item.getID() == ItemId.SPADE.id() && getDigsite(p)) {
-			doSpade(p, item, null);
-		}
+	public GameStateEvent onInvAction(Item item, Player p, String command) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.SPADE.id() && getDigsite(p)) {
+						doSpade(p, item, null);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 }

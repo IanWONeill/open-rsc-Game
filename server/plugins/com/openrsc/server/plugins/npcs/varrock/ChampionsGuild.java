@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.varrock;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -41,31 +42,39 @@ public final class ChampionsGuild implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		switch (NpcId.getById(n.getID())) {
-			case SCAVVO:
-				npcTalk(p, n, "Ello matey", "Want to buy some exciting new toys?");
-				int options = showMenu(p, n, "No, toys are for kids", "Lets have a look then", "Ooh goody goody toys");
-				if (options == 1 || options == 2) {
-					p.setAccessingShop(scavvosShop);
-					ActionSender.showShop(p, scavvosShop);
-				}
-				break;
-			case VALAINE:
-				npcTalk(p, n, "Hello there.",
-					"Want to have a look at what we're selling today?");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					switch (NpcId.getById(n.getID())) {
+						case SCAVVO:
+							npcTalk(p, n, "Ello matey", "Want to buy some exciting new toys?");
+							int options = showMenu(p, n, "No, toys are for kids", "Lets have a look then", "Ooh goody goody toys");
+							if (options == 1 || options == 2) {
+								p.setAccessingShop(scavvosShop);
+								ActionSender.showShop(p, scavvosShop);
+							}
+							break;
+						case VALAINE:
+							npcTalk(p, n, "Hello there.",
+								"Want to have a look at what we're selling today?");
 
-				int opt = showMenu(p, n, false, //do not send over
-						"Yes please", "No thank you");
-				if (opt == 0) {
-					playerTalk(p, n, "Yes please.");
-					p.setAccessingShop(valsShop);
-					ActionSender.showShop(p, valsShop);
-				}
-				break;
-			default:
-				break;
-		}
+							int opt = showMenu(p, n, false, //do not send over
+								"Yes please", "No thank you");
+							if (opt == 0) {
+								playerTalk(p, n, "Yes please.");
+								p.setAccessingShop(valsShop);
+								ActionSender.showShop(p, valsShop);
+							}
+							break;
+						default:
+							break;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 }

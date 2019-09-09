@@ -1,6 +1,8 @@
 package com.openrsc.server.plugins.minigames.gnomerestaurant;
 
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
@@ -11,8 +13,6 @@ import com.openrsc.server.plugins.listeners.executive.InvUseOnObjectExecutiveLis
 import com.openrsc.server.util.rsc.DataConversions;
 
 import static com.openrsc.server.plugins.Functions.*;
-
-import com.openrsc.server.constants.ItemId;
 
 public class GnomeCooking implements InvActionListener, InvActionExecutiveListener, InvUseOnObjectListener, InvUseOnObjectExecutiveListener {
 
@@ -173,10 +173,18 @@ public class GnomeCooking implements InvActionListener, InvActionExecutiveListen
 	}
 
 	@Override
-	public void onInvAction(Item item, Player p, String command) {
-		if (item.getID() == ItemId.GIANNE_DOUGH.id()) {
-			mouldDough(item, p);
-		}
+	public GameStateEvent onInvAction(Item item, Player p, String command) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.GIANNE_DOUGH.id()) {
+						mouldDough(item, p);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -190,8 +198,15 @@ public class GnomeCooking implements InvActionListener, InvActionExecutiveListen
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		handleGnomeCooking(item, p, obj);
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					handleGnomeCooking(item, p, obj);
+					return null;
+				});
+			}
+		};
 	}
 
 	private boolean burnFood(Player p, int reqLvl, int myCookingLvl) {

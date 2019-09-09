@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.free;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -144,29 +145,46 @@ public class WitchesPotion implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		if (n.getID() == NpcId.HETTY.id()) {
-			hettyDialogue(p, n, -1);
-		} /*else if (n.getID() == NpcId.RAT_WITCHES_POTION.id()) { // This is not proven to be authentic, the earliest reference for this is Moparscape Classic Punkrocker's quest version from July 2009
-			if (p.getQuestStage(this) >= -1) {
-				p.message("Rats can't talk!");
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.HETTY.id()) {
+						hettyDialogue(p, n, -1);
+					} /*else if (n.getID() == NpcId.RAT_WITCHES_POTION.id()) { // This is not proven to be authentic, the earliest reference for this is Moparscape Classic Punkrocker's quest version from July 2009
+						if (p.getQuestStage(this) >= -1) {
+							p.message("Rats can't talk!");
+						}
+					}*/
+
+					return null;
+				});
 			}
-		}*/
+		};
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		if (command.equals("drink from") && obj.getID() == 147
-			&& obj.getX() == 316 && obj.getY() == 666) {
-			if (player.getQuestStage(this) != 2) {
-				playerTalk(player, null, "I'd rather not",
-					"It doesn't look very tasty");
-			} else {
-				message(player, "You drink from the cauldron",
-					"You feel yourself imbued with power");
-				player.sendQuestComplete(Quests.WITCHS_POTION);
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (command.equals("drink from") && obj.getID() == 147
+						&& obj.getX() == 316 && obj.getY() == 666) {
+						if (player.getQuestStage(quest) != 2) {
+							playerTalk(player, null, "I'd rather not",
+								"It doesn't look very tasty");
+						} else {
+							message(player, "You drink from the cauldron",
+								"You feel yourself imbued with power");
+							player.sendQuestComplete(Quests.WITCHS_POTION);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -186,13 +204,22 @@ public class WitchesPotion implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPlayerKilledNpc(Player p, Npc n) {
-		if (p.getQuestStage(this) >= 1) {
-			p.getWorld().registerItem(new GroundItem(p.getWorld(), ItemId.RATS_TAIL.id(), n.getX(), n.getY(), 1, p));
-			n.killedBy(p);
-		} else {
-			n.killedBy(p);
-		}
+	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (p.getQuestStage(quest) >= 1) {
+						p.getWorld().registerItem(new GroundItem(p.getWorld(), ItemId.RATS_TAIL.id(), n.getX(), n.getY(), 1, p));
+						n.killedBy(p);
+					} else {
+						n.killedBy(p);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	class Hetty {

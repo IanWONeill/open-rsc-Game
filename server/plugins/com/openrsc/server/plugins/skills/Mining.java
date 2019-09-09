@@ -41,71 +41,78 @@ public final class Mining implements ObjectActionListener,
 	}
 
 	@Override
-	public void onObjectAction(final GameObject object, String command,
-							   Player player) {
-		if (object.getID() == 269) {
-			if (command.equalsIgnoreCase("mine")) {
-				if (hasItem(player, getAxe(player))) {
-					if (getCurrentLevel(player, com.openrsc.server.constants.Skills.MINING) >= 50) {
-						player.message("you manage to dig a way through the rockslide");
-						if (player.getX() <= 425) {
-							player.teleport(428, 438);
+	public GameStateEvent onObjectAction(final GameObject object, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (object.getID() == 269) {
+						if (command.equalsIgnoreCase("mine")) {
+							if (hasItem(player, getAxe(player))) {
+								if (getCurrentLevel(player, com.openrsc.server.constants.Skills.MINING) >= 50) {
+									player.message("you manage to dig a way through the rockslide");
+									if (player.getX() <= 425) {
+										player.teleport(428, 438);
+									} else {
+										player.teleport(425, 438);
+									}
+								} else {
+									player.message("You need a mining level of 50 to clear the rockslide");
+								}
+							} else {
+								player.message("you need a pickaxe to clear the rockslide");
+							}
+						} else if (command.equalsIgnoreCase("prospect")) {
+							player.message("these rocks contain nothing interesting");
+							player.message("they are just in the way");
+						}
+					} else if (object.getID() == 770) {
+						if (hasItem(player, getAxe(player))) {
+							player.setBusyTimer(3);
+							message(player, "you mine the rock", "and break of several large chunks");
+							addItem(player, ItemId.ROCKS.id(), 1);
 						} else {
-							player.teleport(425, 438);
+							player.message("you need a pickaxe to mine this rock");
+						}
+					} else if (object.getID() == 1026) { // watchtower - rock of dalgroth
+						if (command.equalsIgnoreCase("mine")) {
+							if (player.getQuestStage(Quests.WATCHTOWER) == 9) {
+								if (!hasItem(player, getAxe(player))) {
+									player.message("You need a pickaxe to mine the rock");
+									return null;
+								}
+								if (getCurrentLevel(player, com.openrsc.server.constants.Skills.MINING) < 40) {
+									player.message("You need a mining level of 40 to mine this crystal out");
+									return null;
+								}
+								if (hasItem(player, ItemId.POWERING_CRYSTAL4.id())) {
+									playerTalk(player, null, "I already have this crystal",
+										"There is no benefit to getting another");
+									return null;
+								}
+								player.playSound("mine");
+								// special bronze pick bubble for rock of dalgroth - see wiki
+								showBubble(player, new Item(ItemId.BRONZE_PICKAXE.id()));
+								player.message("You have a swing at the rock!");
+								message(player, "You swing your pick at the rock...");
+								player.message("A crack appears in the rock and you prize a crystal out");
+								addItem(player, ItemId.POWERING_CRYSTAL4.id(), 1);
+							} else {
+								playerTalk(player, null, "I can't touch it...",
+									"Perhaps it is linked with the shaman some way ?");
+							}
+						} else if (command.equalsIgnoreCase("prospect")) {
+							player.playSound("prospect");
+							message(player, "You examine the rock for ores...");
+							player.message("This rock contains a crystal!");
 						}
 					} else {
-						player.message("You need a mining level of 50 to clear the rockslide");
+						handleMining(object, player, player.click);
 					}
-				} else {
-					player.message("you need a pickaxe to clear the rockslide");
-				}
-			} else if (command.equalsIgnoreCase("prospect")) {
-				player.message("these rocks contain nothing interesting");
-				player.message("they are just in the way");
+
+					return null;
+				});
 			}
-		} else if (object.getID() == 770) {
-			if (hasItem(player, getAxe(player))) {
-				player.setBusyTimer(3);
-				message(player, "you mine the rock", "and break of several large chunks");
-				addItem(player, ItemId.ROCKS.id(), 1);
-			} else {
-				player.message("you need a pickaxe to mine this rock");
-			}
-		} else if (object.getID() == 1026) { // watchtower - rock of dalgroth
-			if (command.equalsIgnoreCase("mine")) {
-				if (player.getQuestStage(Quests.WATCHTOWER) == 9) {
-					if (!hasItem(player, getAxe(player))) {
-						player.message("You need a pickaxe to mine the rock");
-						return;
-					}
-					if (getCurrentLevel(player, com.openrsc.server.constants.Skills.MINING) < 40) {
-						player.message("You need a mining level of 40 to mine this crystal out");
-						return;
-					}
-					if (hasItem(player, ItemId.POWERING_CRYSTAL4.id())) {
-						playerTalk(player, null, "I already have this crystal",
-							"There is no benefit to getting another");
-						return;
-					}
-					player.playSound("mine");
-					// special bronze pick bubble for rock of dalgroth - see wiki
-					showBubble(player, new Item(ItemId.BRONZE_PICKAXE.id()));
-					player.message("You have a swing at the rock!");
-					message(player, "You swing your pick at the rock...");
-					player.message("A crack appears in the rock and you prize a crystal out");
-					addItem(player, ItemId.POWERING_CRYSTAL4.id(), 1);
-				} else {
-					playerTalk(player, null, "I can't touch it...",
-						"Perhaps it is linked with the shaman some way ?");
-				}
-			} else if (command.equalsIgnoreCase("prospect")) {
-				player.playSound("prospect");
-				message(player, "You examine the rock for ores...");
-				player.message("This rock contains a crystal!");
-			}
-		} else {
-			handleMining(object, player, player.click);
-		}
+		};
 	}
 
 	private void handleMining(final GameObject object, Player player, int click) {

@@ -12,8 +12,8 @@ import static com.openrsc.server.plugins.Functions.*;
 public class FillHole implements ObjectActionExecutiveListener, ObjectActionListener {
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0, "Fishing Trawler Fill Hole") {
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					getPlayerOwner().setBusy(true);
@@ -30,7 +30,7 @@ public class FillHole implements ObjectActionExecutiveListener, ObjectActionList
 					return null;
 				});
 			}
-		});
+		};
 	}
 
 	@Override

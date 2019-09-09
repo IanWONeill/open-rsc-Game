@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.shilo;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -29,20 +30,28 @@ public class Obli implements ShopInterface,
 		new Item(ItemId.MACHETTE.id(), 50));
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.OBLI.id()) {
-			npcTalk(p, n, "Welcome to Obli's General Store Bwana!",
-				"Would you like to see my items?");
-			int menu = showMenu(p, n,
-				"Yes please!",
-				"No, but thanks for the offer.");
-			if (menu == 0) {
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-			} else if (menu == 1) {
-				npcTalk(p, n, "That's fine and thanks for your interest.");
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.OBLI.id()) {
+						npcTalk(p, n, "Welcome to Obli's General Store Bwana!",
+							"Would you like to see my items?");
+						int menu = showMenu(p, n,
+							"Yes please!",
+							"No, but thanks for the offer.");
+						if (menu == 0) {
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						} else if (menu == 1) {
+							npcTalk(p, n, "That's fine and thanks for your interest.");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

@@ -1,5 +1,8 @@
 package com.openrsc.server.plugins.npcs.shilo;
 
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -9,9 +12,6 @@ import com.openrsc.server.plugins.listeners.executive.ObjectActionExecutiveListe
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
 
 import static com.openrsc.server.plugins.Functions.*;
-
-import com.openrsc.server.constants.ItemId;
-import com.openrsc.server.constants.NpcId;
 
 public class CartDriver implements TalkToNpcListener, TalkToNpcExecutiveListener, ObjectActionListener, ObjectActionExecutiveListener {
 
@@ -50,12 +50,20 @@ public class CartDriver implements TalkToNpcListener, TalkToNpcExecutiveListener
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.CART_DRIVER_SHILO.id()) {
-			playerTalk(p, n, "Hello!");
-			npcTalk(p, n, "Hello Bwana!");
-			cartRide(p, n);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.CART_DRIVER_SHILO.id()) {
+						playerTalk(p, n, "Hello!");
+						npcTalk(p, n, "Hello Bwana!");
+						cartRide(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -64,23 +72,31 @@ public class CartDriver implements TalkToNpcListener, TalkToNpcExecutiveListener
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == TRAVEL_CART) {
-			if (command.equalsIgnoreCase("Board")) {
-				p.message("This looks like a sturdy travelling cart.");
-				Npc driver = getNearestNpc(p, NpcId.CART_DRIVER_SHILO.id(), 10);
-				if (driver != null) {
-					driver.teleport(p.getX(), p.getY());
-					sleep(600); // 1 tick.
-					npcWalkFromPlayer(p, driver);
-					p.message("A nearby man walks over to you.");
-					cartRide(p, driver);
-				} else {
-					p.message("The cart driver is currently busy.");
-				}
-			} else if (command.equalsIgnoreCase("Look")) {
-				p.message("A sturdy travelling cart built for long trips through jungle areas.");
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == TRAVEL_CART) {
+						if (command.equalsIgnoreCase("Board")) {
+							p.message("This looks like a sturdy travelling cart.");
+							Npc driver = getNearestNpc(p, NpcId.CART_DRIVER_SHILO.id(), 10);
+							if (driver != null) {
+								driver.teleport(p.getX(), p.getY());
+								sleep(600); // 1 tick.
+								npcWalkFromPlayer(p, driver);
+								p.message("A nearby man walks over to you.");
+								cartRide(p, driver);
+							} else {
+								p.message("The cart driver is currently busy.");
+							}
+						} else if (command.equalsIgnoreCase("Look")) {
+							p.message("A sturdy travelling cart built for long trips through jungle areas.");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 }

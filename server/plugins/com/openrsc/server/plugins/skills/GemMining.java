@@ -161,10 +161,18 @@ public class GemMining implements ObjectActionListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == GEM_ROCK && (command.equals("mine") || command.equals("prospect"))) {
-			handleGemRockMining(obj, p, p.click);
-		}
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == GEM_ROCK && (command.equals("mine") || command.equals("prospect"))) {
+						handleGemRockMining(obj, p, p.click);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private int getAxe(Player p) {

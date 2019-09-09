@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.npcs;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
@@ -67,52 +68,59 @@ public final class GeneralStore implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		boolean found = false;
-		Shop shp = null;
-		for (final Shop s : shops) {
-			if (s != null) {
-				for (final int i : s.ownerIDs) {
-					if (i == n.getID()) {
-						found = true;
-						shp = s;
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					boolean found = false;
+					Shop shp = null;
+					for (final Shop s : shops) {
+						if (s != null) {
+							for (final int i : s.ownerIDs) {
+								if (i == n.getID()) {
+									found = true;
+									shp = s;
+								}
+							}
+						}
 					}
-				}
+					if (!found) {
+						return null;
+					}
+
+					final Shop shap = shp;
+
+					final Point location = p.getLocation();
+
+					Shop shop = shap;
+
+					if (location.getX() >= 132 && location.getX() <= 137
+						&& location.getY() >= 639 && location.getY() <= 644) {
+						shop = shops[3];
+					} else if (location.getX() >= 317 && location.getX() <= 322
+						&& location.getY() >= 530 && location.getY() <= 536) {
+						shop = shops[2];
+					} else if (location.getX() >= 124 && location.getX() <= 129
+						&& location.getY() >= 513 && location.getY() <= 518) {
+						shop = shops[1];
+					}
+
+					if (found) {
+						if (shop != null) {
+							npcTalk(p, n, "Can I help you at all?");
+							int menu = showMenu(p, n, "Yes please, what are you selling?", "No thanks");
+							if (menu == 0) {
+								npcTalk(p, n, "Take a look");
+
+								p.setAccessingShop(shop);
+								ActionSender.showShop(p, shop);
+							}
+						}
+					}
+
+					return null;
+				});
 			}
-		}
-		if (!found) {
-			return;
-		}
-
-		final Shop shap = shp;
-
-		final Point location = p.getLocation();
-
-		Shop shop = shap;
-
-		if (location.getX() >= 132 && location.getX() <= 137
-			&& location.getY() >= 639 && location.getY() <= 644) {
-			shop = shops[3];
-		} else if (location.getX() >= 317 && location.getX() <= 322
-			&& location.getY() >= 530 && location.getY() <= 536) {
-			shop = shops[2];
-		} else if (location.getX() >= 124 && location.getX() <= 129
-			&& location.getY() >= 513 && location.getY() <= 518) {
-			shop = shops[1];
-		}
-
-		if (found) {
-			if (shop != null) {
-				npcTalk(p, n, "Can I help you at all?");
-				int menu = showMenu(p, n, "Yes please, what are you selling?", "No thanks");
-				if (menu == 0) {
-					npcTalk(p, n, "Take a look");
-
-					p.setAccessingShop(shop);
-					ActionSender.showShop(p, shop);
-				}
-			}
-		}
+		};
 	}
-
 }

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.quests.members;
 
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.QuestInterface;
@@ -12,8 +13,8 @@ import static com.openrsc.server.plugins.Functions.*;
 public class RuneMysteries implements QuestInterface, QuestDecoy {
 
 	@Override
-	public void questDecoy(Player p) {
-
+	public GameStateEvent questDecoy(Player p) {
+		return null;
 	}
 
 	@Override

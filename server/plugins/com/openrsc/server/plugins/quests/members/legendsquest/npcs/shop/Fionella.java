@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.quests.members.legendsquest.npcs.shop;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -22,18 +23,26 @@ public class Fionella implements ShopInterface, TalkToNpcExecutiveListener, Talk
 		new Item(ItemId.FULL_ATTACK_POTION.id(), 3), new Item(ItemId.STEEL_ARROWS.id(), 50));
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.FIONELLA.id()) {
-			npcTalk(p, n, "Can I help you at all?");
-			int menu = showMenu(p, n,
-				"Yes please. What are you selling?",
-				"No thanks");
-			if (menu == 0) {
-				npcTalk(p, n, "Take a look");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.FIONELLA.id()) {
+						npcTalk(p, n, "Can I help you at all?");
+						int menu = showMenu(p, n,
+							"Yes please. What are you selling?",
+							"No thanks");
+						if (menu == 0) {
+							npcTalk(p, n, "Take a look");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

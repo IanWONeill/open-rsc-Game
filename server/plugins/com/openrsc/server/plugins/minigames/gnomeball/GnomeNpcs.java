@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.minigames.gnomeball;
 
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.event.rsc.impl.BallProjectileEvent;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
@@ -54,33 +55,57 @@ TalkToNpcListener, TalkToNpcExecutiveListener, NpcCommandListener, NpcCommandExe
 	}
 	
 	@Override
-	public void onPlayerRangeNpc(Player p, Npc n) {
-		if(DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
-			message(p, 1200, "you can't attack this gnome", "that's cheating");
-		}
+	public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if(DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
+						message(p, 1200, "you can't attack this gnome", "that's cheating");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 	
 	@Override
-	public void onPlayerMageNpc(Player p, Npc n) {
-		if(DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
-			message(p, 1200, "you can't attack this gnome", "that's cheating");
-		}
+	public GameStateEvent onPlayerMageNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if(DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
+						message(p, 1200, "you can't attack this gnome", "that's cheating");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
-	public void onPlayerAttackNpc(Player p, Npc n) {
-		if(DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
-			message(p, 1200, "you can't attack this gnome", "that's cheating");
-		}
+	public GameStateEvent onPlayerAttackNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if(DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
+						message(p, 1200, "you can't attack this gnome", "that's cheating");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -102,112 +127,120 @@ TalkToNpcListener, TalkToNpcExecutiveListener, NpcCommandListener, NpcCommandExe
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == CHEERLEADER) {
-			playerTalk(p, n, "hello");
-			npcTalk(p, n, "hi there, how are you doing?");
-			playerTalk(p, n, "not bad thanks");
-			npcTalk(p, n, "i just love the big games",
-					"all those big muscle bound gnomes running around");
-			playerTalk(p, n, "big?");
-			npcTalk(p, n, "do you play gnome ball?");
-			int option = showMenu(p, n, false, //do not send over
-					"what is it?", "play! i'm a gnome ball master");
-			if (option == 0) {
-				playerTalk(p, n, "what is it?");
-				npcTalk(p, n, "like, only the greatest gnome ball game ever made!");
-				playerTalk(p, n, "are there many gnome ball games");
-				npcTalk(p, n, "no, there's just one",
-						"and it's the best");
-				playerTalk(p, n, "ok, so how do you play?");
-				npcTalk(p, n, "the attacker gets the ball and runs towards the goal net");
-				playerTalk(p, n, "and...?");
-				npcTalk(p, n, "scores of course");
-				playerTalk(p, n, "sounds easy enough");
-				npcTalk(p, n, "you'll be playing against the best defenders in the gnome ball league");
-				playerTalk(p, n, "really, are there many teams in the league?");
-				npcTalk(p, n, "nope, just us!");
-			} else if (option == 1) {
-				playerTalk(p, n, "play! i'm a gnome ball master?");
-				npcTalk(p, n, "really, that's amazing, you're not even a gnome");
-				playerTalk(p, n, "it does give me a height advantage");
-				npcTalk(p, n, "i look forward to cheering you on");
-				playerTalk(p, n, "the first goal's for you");
-				npcTalk(p, n, "wow!, thanks");
-			}
-		}
-		else if (n.getID() == OFFICIAL) {
-			playerTalk(p, n, "hello there");
-			npcTalk(p, n, "well hello adventurer, are you playing?");
-			int option = showMenu(p, n, "not at the moment", "yes, i'm just having a break");
-			if (option == 0) {
-				npcTalk(p, n, "well really you shouldn't be on the pitch",
-						"some of these games get really rough");
-				int sub_option = showMenu(p, n, "how do you play?", "it looks like a silly game anyway");
-				if (sub_option == 0) {
-					npcTalk(p, n, "the gnomes in orange are on your team",
-							"you then charge at the gnome defense and try to throw the ball..",
-							"..through the net to the goal catcher, it's a rough game but fun",
-							"it's also great way to improve your agility");
-				} else if (option == 1) {
-					npcTalk(p, n, "gnome ball silly!, this my friend is the backbone of our community",
-							"it also happens to be a great way to stay fit and agile");
-				}
-			} else if (option == 1) {
-				npcTalk(p, n, "good stuff, there's nothing like chasing a pigs bladder..",
-						"..to remind one that they're alive");
-			}
-		}
-		else if (n.getID() == REFEREE) {
-			if (!p.getCache().hasKey("gnomeball")) {
-				npcTalk(p, n, "hi, welcome to gnome ball");
-				playerTalk(p, n, "gnome ball?, how do you play?");
-				npcTalk(p, n, "it's pretty simple really, you take the ball from me",
-						"charge at the gnome defense and try to throw the ball..",
-						"..through the net to the goal catcher, it's a rough game but great fun",
-						"it's also a great way to improve your agility",
-						"so do you fancy a game?");
-				int option = showMenu(p, n, "looks too dangerous for me", "ok then i'll have a go");
-				if (option == 0) {
-					npcTalk(p, n, "you may be right, we've seen humans die on this field");
-				} else if (option == 1) {
-					npcTalk(p, n, "great stuff",
-							"there are no rules to gnome ball, so it can get a bit rough",
-							"you can pass to the winger gnomes if your behind the start line",
-							"otherwise, if you're feeling brave you, can just charge and dodge");
-					playerTalk(p, n, "sounds easy enough");
-					npcTalk(p, n, "the main aim is to leave with no broken limbs",
-							"i think you should be fine");
-					p.getCache().store("gnomeball", true);
-					npcTalk(p, n, "ready ...  go");
-					message(p, 1200, "the ref throws the ball into the air", "you jump up and catch it");
-					addItem(p, ItemId.GNOME_BALL.id(), 1);
-				}
-			} else {
-				// player does not have ball
-				if (!hasItem(p, ItemId.GNOME_BALL.id())) {
-					loadIfNotMemory(p, "gnomeball_npc");
-					// and neither does a gnome baller
-					if (inArray(p.getSyncAttribute("gnomeball_npc", -1), 0)) {
-						p.setSyncAttribute("throwing_ball_game", false);
-						npcTalk(p, n, "ready ...  go");
-						message(p, 1200, "the ref throws the ball into the air", "you jump up and catch it");
-						addItem(p, ItemId.GNOME_BALL.id(), 1);
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == CHEERLEADER) {
+						playerTalk(p, n, "hello");
+						npcTalk(p, n, "hi there, how are you doing?");
+						playerTalk(p, n, "not bad thanks");
+						npcTalk(p, n, "i just love the big games",
+							"all those big muscle bound gnomes running around");
+						playerTalk(p, n, "big?");
+						npcTalk(p, n, "do you play gnome ball?");
+						int option = showMenu(p, n, false, //do not send over
+							"what is it?", "play! i'm a gnome ball master");
+						if (option == 0) {
+							playerTalk(p, n, "what is it?");
+							npcTalk(p, n, "like, only the greatest gnome ball game ever made!");
+							playerTalk(p, n, "are there many gnome ball games");
+							npcTalk(p, n, "no, there's just one",
+								"and it's the best");
+							playerTalk(p, n, "ok, so how do you play?");
+							npcTalk(p, n, "the attacker gets the ball and runs towards the goal net");
+							playerTalk(p, n, "and...?");
+							npcTalk(p, n, "scores of course");
+							playerTalk(p, n, "sounds easy enough");
+							npcTalk(p, n, "you'll be playing against the best defenders in the gnome ball league");
+							playerTalk(p, n, "really, are there many teams in the league?");
+							npcTalk(p, n, "nope, just us!");
+						} else if (option == 1) {
+							playerTalk(p, n, "play! i'm a gnome ball master?");
+							npcTalk(p, n, "really, that's amazing, you're not even a gnome");
+							playerTalk(p, n, "it does give me a height advantage");
+							npcTalk(p, n, "i look forward to cheering you on");
+							playerTalk(p, n, "the first goal's for you");
+							npcTalk(p, n, "wow!, thanks");
+						}
 					}
-					else {
-						npcTalk(p, n, "the ball's still in play");
+					else if (n.getID() == OFFICIAL) {
+						playerTalk(p, n, "hello there");
+						npcTalk(p, n, "well hello adventurer, are you playing?");
+						int option = showMenu(p, n, "not at the moment", "yes, i'm just having a break");
+						if (option == 0) {
+							npcTalk(p, n, "well really you shouldn't be on the pitch",
+								"some of these games get really rough");
+							int sub_option = showMenu(p, n, "how do you play?", "it looks like a silly game anyway");
+							if (sub_option == 0) {
+								npcTalk(p, n, "the gnomes in orange are on your team",
+									"you then charge at the gnome defense and try to throw the ball..",
+									"..through the net to the goal catcher, it's a rough game but fun",
+									"it's also great way to improve your agility");
+							} else if (option == 1) {
+								npcTalk(p, n, "gnome ball silly!, this my friend is the backbone of our community",
+									"it also happens to be a great way to stay fit and agile");
+							}
+						} else if (option == 1) {
+							npcTalk(p, n, "good stuff, there's nothing like chasing a pigs bladder..",
+								"..to remind one that they're alive");
+						}
 					}
-				} else {
-					npcTalk(p, n, "the ball's still in play");
-				}
+					else if (n.getID() == REFEREE) {
+						if (!p.getCache().hasKey("gnomeball")) {
+							npcTalk(p, n, "hi, welcome to gnome ball");
+							playerTalk(p, n, "gnome ball?, how do you play?");
+							npcTalk(p, n, "it's pretty simple really, you take the ball from me",
+								"charge at the gnome defense and try to throw the ball..",
+								"..through the net to the goal catcher, it's a rough game but great fun",
+								"it's also a great way to improve your agility",
+								"so do you fancy a game?");
+							int option = showMenu(p, n, "looks too dangerous for me", "ok then i'll have a go");
+							if (option == 0) {
+								npcTalk(p, n, "you may be right, we've seen humans die on this field");
+							} else if (option == 1) {
+								npcTalk(p, n, "great stuff",
+									"there are no rules to gnome ball, so it can get a bit rough",
+									"you can pass to the winger gnomes if your behind the start line",
+									"otherwise, if you're feeling brave you, can just charge and dodge");
+								playerTalk(p, n, "sounds easy enough");
+								npcTalk(p, n, "the main aim is to leave with no broken limbs",
+									"i think you should be fine");
+								p.getCache().store("gnomeball", true);
+								npcTalk(p, n, "ready ...  go");
+								message(p, 1200, "the ref throws the ball into the air", "you jump up and catch it");
+								addItem(p, ItemId.GNOME_BALL.id(), 1);
+							}
+						} else {
+							// player does not have ball
+							if (!hasItem(p, ItemId.GNOME_BALL.id())) {
+								loadIfNotMemory(p, "gnomeball_npc");
+								// and neither does a gnome baller
+								if (inArray(p.getSyncAttribute("gnomeball_npc", -1), 0)) {
+									p.setSyncAttribute("throwing_ball_game", false);
+									npcTalk(p, n, "ready ...  go");
+									message(p, 1200, "the ref throws the ball into the air", "you jump up and catch it");
+									addItem(p, ItemId.GNOME_BALL.id(), 1);
+								}
+								else {
+									npcTalk(p, n, "the ball's still in play");
+								}
+							} else {
+								npcTalk(p, n, "the ball's still in play");
+							}
+						}
+					}
+					else if (DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
+						tackleGnomeBaller(p, n);
+					}
+
+					return null;
+				});
 			}
-		}
-		else if (DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
-			tackleGnomeBaller(p, n);
-		}
+		};
 	}
 	
 	private void loadIfNotMemory(Player p, String cacheName) {
@@ -220,45 +253,53 @@ TalkToNpcListener, TalkToNpcExecutiveListener, NpcCommandListener, NpcCommandExe
 	}
 
 	@Override
-	public void onNpcCommand(Npc n, String command, Player p) {
-		if (n.getID() == GNOME_BALLER_NORTH || n.getID() == GNOME_BALLER_SOUTH) {
-			Zone currentZone = GnomeField.getInstance().resolvePositionToZone(p);
-			if (currentZone == GnomeField.Zone.ZONE_NO_PASS) {
-				p.message("you can't make the pass from here");
-			}
-			else if (currentZone == GnomeField.Zone.ZONE_PASS) {
-				if (!hasItem(p, ItemId.GNOME_BALL.id())) {
-					p.message("you need the ball first");
-				}
-				else {
-					p.setSyncAttribute("throwing_ball_game", true);
-					p.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(p.getWorld(), p, n, 3) {
-						@Override
-						public void doSpell() {
+	public GameStateEvent onNpcCommand(Npc n, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == GNOME_BALLER_NORTH || n.getID() == GNOME_BALLER_SOUTH) {
+						Zone currentZone = GnomeField.getInstance().resolvePositionToZone(p);
+						if (currentZone == GnomeField.Zone.ZONE_NO_PASS) {
+							p.message("you can't make the pass from here");
 						}
-					});
-					p.message("you pass the ball to the gnome");
-					removeItem(p, ItemId.GNOME_BALL.id(), 1);
-					npcTalk(p, n, 100, "run long..");
-					sleep(5000);
-					p.message("the gnome throws you a long ball");
-					addItem(p, ItemId.GNOME_BALL.id(), 1);
-					p.setSyncAttribute("throwing_ball_game", false);
-				}
+						else if (currentZone == GnomeField.Zone.ZONE_PASS) {
+							if (!hasItem(p, ItemId.GNOME_BALL.id())) {
+								p.message("you need the ball first");
+							}
+							else {
+								p.setSyncAttribute("throwing_ball_game", true);
+								p.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(p.getWorld(), p, n, 3) {
+									@Override
+									public void doSpell() {
+									}
+								});
+								p.message("you pass the ball to the gnome");
+								removeItem(p, ItemId.GNOME_BALL.id(), 1);
+								npcTalk(p, n, 100, "run long..");
+								sleep(5000);
+								p.message("the gnome throws you a long ball");
+								addItem(p, ItemId.GNOME_BALL.id(), 1);
+								p.setSyncAttribute("throwing_ball_game", false);
+							}
+						}
+						else if (command.equals("pass to")) {
+							if (!hasItem(p, ItemId.GNOME_BALL.id())) {
+								p.message("you need the ball first");
+							} else {
+								p.message("you can't make the pass from here");
+							}
+						}
+					} else if (DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
+						|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
+						tackleGnomeBaller(p, n);
+					}
+
+					return null;
+				});
 			}
-			else if (command.equals("pass to")) {
-				if (!hasItem(p, ItemId.GNOME_BALL.id())) {
-					p.message("you need the ball first");
-				} else {
-					p.message("you can't make the pass from here");
-				}
-			}
-		} else if (DataConversions.inArray(GNOME_BALLERS_ZONE_PASS, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE2XP_OUTER, n.getID())
-				|| DataConversions.inArray(GNOME_BALLERS_ZONE1XP_INNER, n.getID())) {
-			tackleGnomeBaller(p, n);
-		}
+		};
 	}
 	
 	private void tackleGnomeBaller(Player p, Npc n) {
@@ -289,12 +330,20 @@ TalkToNpcListener, TalkToNpcExecutiveListener, NpcCommandListener, NpcCommandExe
 
 	//this should only happens when player passes ball to gnome baller (team)
 	@Override
-	public void onIndirectTalkToNpc(Player p, Npc n) {
-		if (n.getID() == GNOME_BALLER_NORTH || n.getID() == GNOME_BALLER_SOUTH) {
-			//pass to -> direct use of command
-			//pass -> passing via gnome ball's shoot (requires player to be in correct position)
-			this.onNpcCommand(n, "pass", p);
-		}
+	public GameStateEvent onIndirectTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == GNOME_BALLER_NORTH || n.getID() == GNOME_BALLER_SOUTH) {
+						//pass to -> direct use of command
+						//pass -> passing via gnome ball's shoot (requires player to be in correct position)
+						onNpcCommand(n, "pass", p);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	//work around, technically these should be on command but wasnt being triggered

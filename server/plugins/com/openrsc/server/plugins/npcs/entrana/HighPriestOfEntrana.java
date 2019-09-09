@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.entrana;
 
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -104,10 +105,18 @@ public class HighPriestOfEntrana implements TalkToNpcExecutiveListener, TalkToNp
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		if (n.getID() == NpcId.HIGH_PRIEST_OF_ENTRANA.id()) {
-			entranaPriestDialogue(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.HIGH_PRIEST_OF_ENTRANA.id()) {
+						entranaPriestDialogue(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

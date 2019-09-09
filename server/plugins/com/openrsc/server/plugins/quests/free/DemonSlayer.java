@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
@@ -51,30 +52,39 @@ public class DemonSlayer implements QuestInterface,
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player player) {
-		if (obj.getID() == 77) {
-			switch (player.getQuestStage(this)) {
-				case 0:
-				case 1:
-					message(player, "I have no reason to do that.");
-					break;
-				case 2:
-				case 3:
-				case 4:
-				case -1:
-					//even post-quest was the same thing
-					if (item.getID() == ItemId.BUCKET_OF_WATER.id()) {
-						message(player,
-							"You pour the liquid down the drain");
-						message(player, "Ok I think I've washed the key down into the sewer",
-							"I'd better go down and get it before someone else finds it");
-						player.getInventory().replace(ItemId.BUCKET_OF_WATER.id(), ItemId.BUCKET.id());
-						player.getWorld().registerItem(
-							new GroundItem(player.getWorld(), ItemId.SILVERLIGHT_KEY_3.id(), 117, 3294, 1, player));
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 77) {
+						switch (player.getQuestStage(quest)) {
+							case 0:
+							case 1:
+								message(player, "I have no reason to do that.");
+								break;
+							case 2:
+							case 3:
+							case 4:
+							case -1:
+								//even post-quest was the same thing
+								if (item.getID() == ItemId.BUCKET_OF_WATER.id()) {
+									message(player,
+										"You pour the liquid down the drain");
+									message(player, "Ok I think I've washed the key down into the sewer",
+										"I'd better go down and get it before someone else finds it");
+									player.getInventory().replace(ItemId.BUCKET_OF_WATER.id(), ItemId.BUCKET.id());
+									player.getWorld().registerItem(
+										new GroundItem(player.getWorld(), ItemId.SILVERLIGHT_KEY_3.id(), 117, 3294, 1, player));
+								}
+								break;
+						}
 					}
-					break;
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -90,49 +100,66 @@ public class DemonSlayer implements QuestInterface,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		if (obj.getID() == 77 && obj.getY() == 461) {
-			switch (player.getQuestStage(this)) {
-				case 0:
-				case 1:
-					message(player, "I can see a key but can't quite reach it...");
-					break;
-				case 2:
-				case 3:
-				case 4:
-					message(player, "This is the drainpipe",
-						"Running from the kitchen sink to the sewer",
-						"I can see a key just inside the drain",
-						"That must be the key Sir Prysin dropped",
-						"I don't seem to be able to quite reach it",
-						"It's stuck part way down",
-						"I wonder if I can dislodge it somehow",
-						"And knock it down into the sewers");
-					break;
-				case -1:
-					message(player, "This is the drainpipe",
-						"Running from the kitchen sink to the sewer",
-						"I can see a key just inside the drain",
-						"I don't seem to be able to quite reach it",
-						"It's stuck part way down",
-						"I wonder if I can dislodge it somehow",
-						"And knock it down into the sewers");
-					break;
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 77 && obj.getY() == 461) {
+						switch (player.getQuestStage(quest)) {
+							case 0:
+							case 1:
+								message(player, "I can see a key but can't quite reach it...");
+								break;
+							case 2:
+							case 3:
+							case 4:
+								message(player, "This is the drainpipe",
+									"Running from the kitchen sink to the sewer",
+									"I can see a key just inside the drain",
+									"That must be the key Sir Prysin dropped",
+									"I don't seem to be able to quite reach it",
+									"It's stuck part way down",
+									"I wonder if I can dislodge it somehow",
+									"And knock it down into the sewers");
+								break;
+							case -1:
+								message(player, "This is the drainpipe",
+									"Running from the kitchen sink to the sewer",
+									"I can see a key just inside the drain",
+									"I don't seem to be able to quite reach it",
+									"It's stuck part way down",
+									"I wonder if I can dislodge it somehow",
+									"And knock it down into the sewers");
+								break;
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.GYPSY.id()) {
-			gypsyDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.SIR_PRYSIN.id()) {
-			sirPrysinDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.TRAIBORN_THE_WIZARD.id()) {
-			traibornTheWizDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.CAPTAIN_ROVIN.id()) {
-			captainRovinDialogue(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.GYPSY.id()) {
+						gypsyDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.SIR_PRYSIN.id()) {
+						sirPrysinDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.TRAIBORN_THE_WIZARD.id()) {
+						traibornTheWizDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.CAPTAIN_ROVIN.id()) {
+						captainRovinDialogue(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void captainRovinDialogue(Player p, Npc n, int cID) {
@@ -1100,38 +1127,46 @@ public class DemonSlayer implements QuestInterface,
 		return false;
 	}
 
-	public void onPlayerKilledNpc(Player p, Npc n) {
-		n.getSkills().setLevel(Skills.HITS, n.getDef().getHits());
-		if (p.getMenuHandler() == null && !p.getAttribute("delrith", false)) {
-			p.setAttribute("delrith", true);
-			message(p, "As you strike Delrith a vortex opens up");
-			playerTalk(p, n, "Now what was that incantation again");
-			if (p.inCombat()) {
-				int choice = showMenu(p, n,
-					"Carlem Gabindo Purchai Zaree Camerinthum",
-					"Purchai Zaree Gabindo Carlem Camerinthum",
-					"Purchai Camerinthum Aber Gabindo Carlem",
-					"Carlem Aber Camerinthum Purchai Gabindo");
-				if (choice != -1) {
-					if (choice == 3) {
-						message(p, 1300, "Delrith is sucked back into the dark demension from which he came");
-						n.killedBy(p);
-						n.remove();
-						if (p.getQuestStage(Quests.DEMON_SLAYER) != -1) {
-							//remove flags in case they are present with drop trick
-							p.getCache().remove("done_bone_task");
-							p.getCache().remove("traiborn_bones");
-							p.sendQuestComplete(getQuestId());
+	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					n.getSkills().setLevel(Skills.HITS, n.getDef().getHits());
+					if (p.getMenuHandler() == null && !p.getAttribute("delrith", false)) {
+						p.setAttribute("delrith", true);
+						message(p, "As you strike Delrith a vortex opens up");
+						playerTalk(p, n, "Now what was that incantation again");
+						if (p.inCombat()) {
+							int choice = showMenu(p, n,
+								"Carlem Gabindo Purchai Zaree Camerinthum",
+								"Purchai Zaree Gabindo Carlem Camerinthum",
+								"Purchai Camerinthum Aber Gabindo Carlem",
+								"Carlem Aber Camerinthum Purchai Gabindo");
+							if (choice != -1) {
+								if (choice == 3) {
+									message(p, 1300, "Delrith is sucked back into the dark demension from which he came");
+									n.killedBy(p);
+									n.remove();
+									if (p.getQuestStage(Quests.DEMON_SLAYER) != -1) {
+										//remove flags in case they are present with drop trick
+										p.getCache().remove("done_bone_task");
+										p.getCache().remove("traiborn_bones");
+										p.sendQuestComplete(getQuestId());
+									}
+								} else {
+									message(p, 1300, "As you chant, Delrith is sucked towards the vortex", "Suddenly the vortex closes");
+									p.message("And Delrith is still here");
+									p.message("That was the wrong incantation");
+								}
+							}
+							p.setAttribute("delrith", false);
 						}
-					} else {
-						message(p, 1300, "As you chant, Delrith is sucked towards the vortex", "Suddenly the vortex closes");
-						p.message("And Delrith is still here");
-						p.message("That was the wrong incantation");
 					}
-				}
-				p.setAttribute("delrith", false);
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -1145,10 +1180,18 @@ public class DemonSlayer implements QuestInterface,
 	}
 
 	@Override
-	public void onPlayerRangeNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.DELRITH.id()) {
-			p.message("You cannot attack Delrith without the silverlight sword");
-		}
+	public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.DELRITH.id()) {
+						p.message("You cannot attack Delrith without the silverlight sword");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	class GypsyConversation {

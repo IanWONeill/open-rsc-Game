@@ -52,9 +52,9 @@ public class WatchTowerDialogues implements QuestInterface, TalkToNpcListener, T
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
 		final QuestInterface plugin = this;
-		p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Watch Tower Dialogues") {
+		return new GameStateEvent(p.getWorld(), p, 0, "Watch Tower Dialogues") {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.SKAVID_FINALQUIZ.id()) {
@@ -642,7 +642,7 @@ public class WatchTowerDialogues implements QuestInterface, TalkToNpcListener, T
 					return null;
 				});
 			}
-		});
+		};
 	}
 
 	private void watchtowerWizardDialogue(Player p, Npc n, int cID) {

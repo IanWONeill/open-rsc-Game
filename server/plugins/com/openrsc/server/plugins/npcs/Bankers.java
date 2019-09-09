@@ -33,7 +33,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 	}
 
 	@Override
-	public void onTalkToNpc(Player player, final Npc npc) {
+	public GameStateEvent onTalkToNpc(Player player, final Npc npc) {
 		ArrayList<String> messages = new ArrayList<>();
 		messages.add("I'd like to access my bank account please");
 		messages.add("What is this place?");
@@ -41,11 +41,12 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 			messages.add("I'd like to talk about bank pin");
 		if (player.getWorld().getServer().getConfig().SPAWN_AUCTION_NPCS)
 			messages.add("I'd like to collect my items from auction");
-		npc.setBusy(true);
-		player.setBusy(true);
-		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0, "Banker Dialog") {
+
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
+					npc.setBusy(true);
+					player.setBusy(true);
 					npcSpeakLine(getPlayerOwner(), npc, "Good day" + (npc.getID() == 617 ? " Bwana" : "") + ", how may I help you?");
 					return nextState(3);
 				});
@@ -345,18 +346,26 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					return null;
 				});
 			}
-		});
+		};
 	}
 
 	@Override
-	public void onNpcCommand(Npc n, String command, Player p) {
-		if (inArray(n.getID(), BANKERS)) {
-			if (command.equalsIgnoreCase("Bank") && p.getWorld().getServer().getConfig().RIGHT_CLICK_BANK) {
-				quickFeature(n, p, false);
-			} else if (command.equalsIgnoreCase("Collect") && p.getWorld().getServer().getConfig().SPAWN_AUCTION_NPCS) {
-				quickFeature(n, p, true);
+	public GameStateEvent onNpcCommand(Npc n, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (inArray(n.getID(), BANKERS)) {
+						if (command.equalsIgnoreCase("Bank") && p.getWorld().getServer().getConfig().RIGHT_CLICK_BANK) {
+							quickFeature(n, p, false);
+						} else if (command.equalsIgnoreCase("Collect") && p.getWorld().getServer().getConfig().SPAWN_AUCTION_NPCS) {
+							quickFeature(n, p, true);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

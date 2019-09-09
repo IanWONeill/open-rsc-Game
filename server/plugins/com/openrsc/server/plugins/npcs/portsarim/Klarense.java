@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.portsarim;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -13,12 +14,20 @@ import static com.openrsc.server.plugins.Functions.*;
 public class Klarense implements TalkToNpcExecutiveListener, TalkToNpcListener {
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		if (!p.getCache().hasKey("owns_ship")) {
-			defaultDialogue(p, n);
-		} else {
-			ownsShipDialogue(p, n);
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (!p.getCache().hasKey("owns_ship")) {
+						defaultDialogue(p, n);
+					} else {
+						ownsShipDialogue(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void ownsShipDialogue(final Player p, final Npc n) {

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.gutanoth;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -22,18 +23,26 @@ public class GrudsHerblawStall implements ShopInterface,
 		new Item(ItemId.EMPTY_VIAL.id(), 50), new Item(ItemId.PESTLE_AND_MORTAR.id(), 3), new Item(ItemId.EYE_OF_NEWT.id(), 50));
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		npcTalk(p, n, "Does The little creature want to buy sumfin'");
-		int menu = showMenu(p, n,
-			"Yes I do",
-			"No I don't");
-		if (menu == 0) {
-			npcTalk(p, n, "Welcome to Grud's herblaw stall");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		} else if (menu == 1) {
-			npcTalk(p, n, "Suit yourself");
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Does The little creature want to buy sumfin'");
+					int menu = showMenu(p, n,
+						"Yes I do",
+						"No I don't");
+					if (menu == 0) {
+						npcTalk(p, n, "Welcome to Grud's herblaw stall");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					} else if (menu == 1) {
+						npcTalk(p, n, "Suit yourself");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

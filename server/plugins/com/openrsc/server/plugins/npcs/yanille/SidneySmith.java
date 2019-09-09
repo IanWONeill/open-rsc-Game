@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.npcs.yanille;
 
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -39,10 +40,18 @@ public class SidneySmith implements TalkToNpcListener, TalkToNpcExecutiveListene
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == SIDNEY_SMITH) {
-			sidneyCert(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == SIDNEY_SMITH) {
+						sidneyCert(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void sidneyCert(Player p, Npc n, int cID) {
@@ -374,53 +383,61 @@ public class SidneySmith implements TalkToNpcListener, TalkToNpcExecutiveListene
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player player, Npc npc, Item item) {
-		if (npc.getID() == SIDNEY_SMITH && inArray(item.getID(), PRAYER_RESTORE_POT,
-			SUPER_ATTACK_POT, SUPER_STRENGTH_POT, SUPER_DEFENSE_POT, DRAGON_BONES,
-			LIMPWURT_ROOT, PRAYER_CERT, SUPER_ATTACK_CERT, SUPER_DEFENSE_CERT,
-			SUPER_STRENGTH_CERT, DRAGON_BONES_CERT, LIMPWURT_ROOT_CERT)) {
-			switch (item.getID()) {
-				case PRAYER_RESTORE_POT:
-					calculateExchangeMenu(player, npc, false, item, new Item(PRAYER_CERT));
-					break;
-				case SUPER_ATTACK_POT:
-					calculateExchangeMenu(player, npc, false, item, new Item(SUPER_ATTACK_CERT));
-					break;
-				case SUPER_STRENGTH_POT:
-					calculateExchangeMenu(player, npc, false, item, new Item(SUPER_STRENGTH_CERT));
-					break;
-				case SUPER_DEFENSE_POT:
-					calculateExchangeMenu(player, npc, false, item, new Item(SUPER_DEFENSE_CERT));
-					break;
-				case DRAGON_BONES:
-					calculateExchangeMenu(player, npc, false, item, new Item(DRAGON_BONES_CERT));
-					break;
-				case LIMPWURT_ROOT:
-					calculateExchangeMenu(player, npc, false, item, new Item(LIMPWURT_ROOT_CERT));
-					break;
-				case PRAYER_CERT:
-					calculateExchangeMenu(player, npc, true, new Item(PRAYER_RESTORE_POT), item);
-					break;
-				case SUPER_ATTACK_CERT:
-					calculateExchangeMenu(player, npc, true, new Item(SUPER_ATTACK_POT), item);
-					break;
-				case SUPER_STRENGTH_CERT:
-					calculateExchangeMenu(player, npc, true, new Item(SUPER_STRENGTH_POT), item);
-					break;
-				case SUPER_DEFENSE_CERT:
-					calculateExchangeMenu(player, npc, true, new Item(SUPER_DEFENSE_POT), item);
-					break;
-				case DRAGON_BONES_CERT:
-					calculateExchangeMenu(player, npc, true, new Item(DRAGON_BONES), item);
-					break;
-				case LIMPWURT_ROOT_CERT:
-					calculateExchangeMenu(player, npc, true, new Item(LIMPWURT_ROOT), item);
-					break;
-				default:
-					player.message("Nothing interesting happens");
-					break;
+	public GameStateEvent onInvUseOnNpc(Player player, Npc npc, Item item) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (npc.getID() == SIDNEY_SMITH && inArray(item.getID(), PRAYER_RESTORE_POT,
+						SUPER_ATTACK_POT, SUPER_STRENGTH_POT, SUPER_DEFENSE_POT, DRAGON_BONES,
+						LIMPWURT_ROOT, PRAYER_CERT, SUPER_ATTACK_CERT, SUPER_DEFENSE_CERT,
+						SUPER_STRENGTH_CERT, DRAGON_BONES_CERT, LIMPWURT_ROOT_CERT)) {
+						switch (item.getID()) {
+							case PRAYER_RESTORE_POT:
+								calculateExchangeMenu(player, npc, false, item, new Item(PRAYER_CERT));
+								break;
+							case SUPER_ATTACK_POT:
+								calculateExchangeMenu(player, npc, false, item, new Item(SUPER_ATTACK_CERT));
+								break;
+							case SUPER_STRENGTH_POT:
+								calculateExchangeMenu(player, npc, false, item, new Item(SUPER_STRENGTH_CERT));
+								break;
+							case SUPER_DEFENSE_POT:
+								calculateExchangeMenu(player, npc, false, item, new Item(SUPER_DEFENSE_CERT));
+								break;
+							case DRAGON_BONES:
+								calculateExchangeMenu(player, npc, false, item, new Item(DRAGON_BONES_CERT));
+								break;
+							case LIMPWURT_ROOT:
+								calculateExchangeMenu(player, npc, false, item, new Item(LIMPWURT_ROOT_CERT));
+								break;
+							case PRAYER_CERT:
+								calculateExchangeMenu(player, npc, true, new Item(PRAYER_RESTORE_POT), item);
+								break;
+							case SUPER_ATTACK_CERT:
+								calculateExchangeMenu(player, npc, true, new Item(SUPER_ATTACK_POT), item);
+								break;
+							case SUPER_STRENGTH_CERT:
+								calculateExchangeMenu(player, npc, true, new Item(SUPER_STRENGTH_POT), item);
+								break;
+							case SUPER_DEFENSE_CERT:
+								calculateExchangeMenu(player, npc, true, new Item(SUPER_DEFENSE_POT), item);
+								break;
+							case DRAGON_BONES_CERT:
+								calculateExchangeMenu(player, npc, true, new Item(DRAGON_BONES), item);
+								break;
+							case LIMPWURT_ROOT_CERT:
+								calculateExchangeMenu(player, npc, true, new Item(LIMPWURT_ROOT), item);
+								break;
+							default:
+								player.message("Nothing interesting happens");
+								break;
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	class Sidney {

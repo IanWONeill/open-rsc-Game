@@ -2,9 +2,9 @@ package com.openrsc.server.plugins;
 
 import com.openrsc.server.Server;
 import com.openrsc.server.event.custom.ShopRestockEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.util.NamedThreadFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,7 +17,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -40,14 +40,10 @@ public final class PluginHandler {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	private final Server server;
-	private final String threadName;
 
 	private URLClassLoader urlClassLoader;
 	private boolean reloading = true;
 	private ArrayList<Class<?>> loadedClassFiles = new ArrayList<Class<?>>();
-
-	// private ExecutorService executor = Executors.newFixedThreadPool(2);
-	private ThreadPoolExecutor executor;
 
 	private Object defaultHandler = null;
 	private Map<String, Set<Object>> actionPlugins;
@@ -58,7 +54,6 @@ public final class PluginHandler {
 
 	public PluginHandler (Server server) {
 		this.server = server;
-		threadName = getServer().getName()+" : PluginThread";
 	}
 
 	public void loadJar() throws Exception {
@@ -283,7 +278,6 @@ public final class PluginHandler {
 		knownInterfaces = new ArrayList<Class<?>>();
 		queue = new ConcurrentHashMap<String, Class<?>>();
 		loadedPlugins = new HashMap<String, Object>();
-		executor = (ThreadPoolExecutor) Executors.newCachedThreadPool(new NamedThreadFactory(threadName));
 		defaultHandler = null;
 
 		loadJar();
@@ -294,7 +288,6 @@ public final class PluginHandler {
 		reloading = true;
 
 		urlClassLoader.close();
-		executor.shutdown();
 
 		getServer().getWorld().getQuests().clear();
 		getServer().getWorld().getMiniGames().clear();
@@ -311,7 +304,6 @@ public final class PluginHandler {
 		executivePlugins = null;
 		knownInterfaces = null;
 		queue = null;
-		executor = null;
 		loadedClassFiles = null;
 
 		defaultHandler = null;
@@ -402,7 +394,7 @@ public final class PluginHandler {
 					}
 
 					if (go) {
-						final FutureTask<Integer> task = new FutureTask<Integer>(
+						/*final FutureTask<Integer> task = new FutureTask<Integer>(
 							new Callable<Integer>() {
 								@Override
 								public Integer call() throws Exception {
@@ -415,7 +407,15 @@ public final class PluginHandler {
 									return 1;
 								}
 							});
-						getExecutor().execute(task);
+						getExecutor().execute(task);*/
+						try {
+							GameStateEvent e = (GameStateEvent) m.invoke(c, data);
+							if(e != null) {
+								getServer().getGameEventHandler().add(e);
+							}
+						} catch (Exception cme) {
+							LOGGER.catching(cme);
+						}
 					}
 				} catch (final Exception e) {
 					System.err.println("Exception at plugin handling: ");
@@ -431,10 +431,6 @@ public final class PluginHandler {
 
 	public Map<String, Set<Object>> getExecutivePlugins() {
 		return executivePlugins;
-	}
-
-	public ExecutorService getExecutor() {
-		return executor;
 	}
 
 	public List<Class<?>> getKnownInterfaces() {

@@ -5,6 +5,7 @@ import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.SingleEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -2304,77 +2305,95 @@ public class TouristTrap implements QuestInterface, TalkToNpcListener, TalkToNpc
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.IRENA.id()) {
-			irenaDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.MERCENARY.id()) {
-			mercenaryDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.MERCENARY_CAPTAIN.id()) {
-			mercenaryCaptainDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.MERCENARY_ESCAPEGATES.id()) {
-			mercenaryInsideDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.MINING_SLAVE.id()) {
-			slaveDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.BEDABIN_NOMAD.id()) {
-			bedabinNomadDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.BEDABIN_NOMAD_GUARD.id()) {
-			switch (p.getQuestStage(this)) {
-				case 8:
-				case 9:
-				case 10:
-				case -1:
-					npcTalk(p, n, "Sorry, but you can't use the tent without permission.",
-						"But thanks for your help to the Bedabin people.");
-					if (hasItem(p, ItemId.TECHNICAL_PLANS.id())) {
-						npcTalk(p, n, "And we'll take those plans off your hands as well!");
-						removeItem(p, ItemId.TECHNICAL_PLANS.id(), 1);
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.IRENA.id()) {
+						irenaDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.MERCENARY.id()) {
+						mercenaryDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.MERCENARY_CAPTAIN.id()) {
+						mercenaryCaptainDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.MERCENARY_ESCAPEGATES.id()) {
+						mercenaryInsideDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.MINING_SLAVE.id()) {
+						slaveDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.BEDABIN_NOMAD.id()) {
+						bedabinNomadDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.BEDABIN_NOMAD_GUARD.id()) {
+						switch (p.getQuestStage(quest)) {
+							case 8:
+							case 9:
+							case 10:
+							case -1:
+								npcTalk(p, n, "Sorry, but you can't use the tent without permission.",
+									"But thanks for your help to the Bedabin people.");
+								if (hasItem(p, ItemId.TECHNICAL_PLANS.id())) {
+									npcTalk(p, n, "And we'll take those plans off your hands as well!");
+									removeItem(p, ItemId.TECHNICAL_PLANS.id(), 1);
+								}
+								break;
+							default:
+								npcTalk(p, n, "Sorry, this is a private tent, no one is allowed in.",
+									"Orders of Al Shabim...");
+								break;
+						}
+					} else if (n.getID() == NpcId.AL_SHABIM.id()) {
+						alShabimDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.CAPTAIN_SIAD.id()) {
+						captainSiadDialogue(p, n, -1, null);
+					} else if (n.getID() == NpcId.MERCENARY_LIFTPLATFORM.id()) {
+						if (p.getQuestStage(quest) == -1) {
+							npcTalk(p, n, "Move along please, don't want any trouble today!");
+							return null;
+						}
+						npcTalk(p, n, "Yes, what do you want?");
+						int menu = showMenu(p, n,
+							"Nothing thanks - sorry for disturbing you.",
+							"Your head on a stick.");
+						if (menu == 0) {
+							npcTalk(p, n, "Well...I guess that's Ok, get on your way though.");
+						} else if (menu == 1) {
+							npcTalk(p, n, "Why you ungrateful whelp...I'll teach you some manners.");
+							message(p, "The guard shouts for help.");
+							n.startCombat(p);
+							message(p, "Other guards start arriving.");
+							npcTalk(p, n, "Get " + (p.isMale() ? "him" : "her") + " men!");
+							p.message("The guards rough you up a bit and then drag you to a cell.");
+							p.teleport(76, 3625);
+						}
+					} else if (n.getID() == NpcId.ANA.id()) {
+						anaDialogue(p, n, -1);
 					}
-					break;
-				default:
-					npcTalk(p, n, "Sorry, this is a private tent, no one is allowed in.",
-						"Orders of Al Shabim...");
-					break;
+
+					return null;
+				});
 			}
-		} else if (n.getID() == NpcId.AL_SHABIM.id()) {
-			alShabimDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.CAPTAIN_SIAD.id()) {
-			captainSiadDialogue(p, n, -1, null);
-		} else if (n.getID() == NpcId.MERCENARY_LIFTPLATFORM.id()) {
-			if (p.getQuestStage(this) == -1) {
-				npcTalk(p, n, "Move along please, don't want any trouble today!");
-				return;
-			}
-			npcTalk(p, n, "Yes, what do you want?");
-			int menu = showMenu(p, n,
-				"Nothing thanks - sorry for disturbing you.",
-				"Your head on a stick.");
-			if (menu == 0) {
-				npcTalk(p, n, "Well...I guess that's Ok, get on your way though.");
-			} else if (menu == 1) {
-				npcTalk(p, n, "Why you ungrateful whelp...I'll teach you some manners.");
-				message(p, "The guard shouts for help.");
-				n.startCombat(p);
-				message(p, "Other guards start arriving.");
-				npcTalk(p, n, "Get " + (p.isMale() ? "him" : "her") + " men!");
-				p.message("The guards rough you up a bit and then drag you to a cell.");
-				p.teleport(76, 3625);
-			}
-		} else if (n.getID() == NpcId.ANA.id()) {
-			anaDialogue(p, n, -1);
-		}
+		};
 	}
 
 	@Override
-	public void onIndirectTalkToNpc(Player p, final Npc n) {
-		if (n.getID() == NpcId.AL_SHABIM.id()) {
-			if (p.getQuestStage(this) == 6 || p.getQuestStage(this) == 7) {
-				alShabimDialogue(p, n, AlShabim.HAVE_PLANS);
-			} else if (p.getQuestStage(this) > 7 || p.getQuestStage(this) == -1) {
-				message(p, "Al Shabim takes the technical plans off you.");
-				npcTalk(p, n, "Thanks for the technical plans Effendi!",
-					"We've been lost without them!");
+	public GameStateEvent onIndirectTalkToNpc(Player p, final Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.AL_SHABIM.id()) {
+						if (p.getQuestStage(quest) == 6 || p.getQuestStage(quest) == 7) {
+							alShabimDialogue(p, n, AlShabim.HAVE_PLANS);
+						} else if (p.getQuestStage(quest) > 7 || p.getQuestStage(quest) == -1) {
+							message(p, "Al Shabim takes the technical plans off you.");
+							npcTalk(p, n, "Thanks for the technical plans Effendi!",
+								"We've been lost without them!");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -2383,224 +2402,233 @@ public class TouristTrap implements QuestInterface, TalkToNpcListener, TalkToNpc
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == STONE_GATE && p.getY() >= 735) {
-			if (command.equals("go through")) {
-				if (!hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-					p.message("you go through the gate");
-					p.teleport(62, 732);
-				} else {
-					if (p.getQuestStage(this) == 9) {
-						message(p, "Ana looks out of the barrel...");
-						message(p, "@gre@Ana: Hey great, we're at the Shantay Pass!");
-						removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
-						p.updateQuestStage(this, 10);
-						Npc Ana = spawnNpc(p.getWorld(), NpcId.ANA.id(), p.getX(), p.getY(), 60000);
-						Ana.teleport(p.getX(), p.getY() + 1);
-						if (Ana != null) {
-							sleep(650);
-							npcTalk(p, Ana, "Great! Thanks for getting me out of that mine!",
-								"And that barrel wasn't too bad anyway!",
-								"Pop by again sometime, I'm sure we'll have a barrel of laughs!",
-								"Oh! I nearly forgot, here's a key I found in the tunnels.",
-								"It might be of some use to you, not sure what it opens.");
-							addItem(p, ItemId.WROUGHT_IRON_KEY.id(), 1);
-							message(p, "Ana spots Irena and waves...");
-							npcTalk(p, Ana, "Hi Mum!",
-								"Sorry, I have to go now!");
-							Ana.remove();
-						}
-						Npc Irena = getNearestNpc(p, NpcId.IRENA.id(), 15);
-						npcTalk(p, Irena, "Hi Ana!");
-						rewardMenu(p, Irena, true);
-						p.getCache().remove("tried_ana_barrel");
-					}
-					//should not have an ana in barrel in other stages
-					else {
-						removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
-					}
-				}
-			} else if (command.equals("look")) {
-				message(p, "You look at the huge Stone Gate.",
-					"On the gate is a large poster, it reads.",
-					"@gre@The Desert is a VERY Dangerous place...do not enter if you are scared of dying.",
-					"@gre@Beware of high temperatures, sand storms, robbers, and slavers...",
-					"@gre@No responsibility is taken by Shantay ",
-					"@gre@If anything bad should happen to you in any circumstances whatsoever.",
-					"Despite this warning lots of people seem to pass through the gate.");
-			}
-		} else if (obj.getID() == IRON_GATE) {
-			if (command.equals("open")) {
-				if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-					failEscapeAnaInBarrel(p, null);
-					return;
-				} else if (!hasItem(p, ItemId.METAL_KEY.id())) {
-					p.message("This gate is locked, you'll need a key to open it.");
-				} else {
-					message(p, "You use the metal key to unlock the gates.",
-						"You manage to sneak past the guards!.");
-					doGate(p, obj);
-					p.message("The gate swings open.");
-					sleep(1000);
-					p.message("The gates close behind you.");
-					Npc n = getNearestNpc(p, NpcId.MERCENARY_ESCAPEGATES.id(), 15);
-					if (n != null) {
-						if (p.getQuestStage(this) == -1) { // no dialogue after quest on just opening gates
-							// todo change the coords going in and going out.
-						} else {
-							Armed armedVal = playerArmed(p);
-							if (armedVal != Armed.NONE) {
-								switch (armedVal) {
-									case WEAPON:
-										npcTalk(p, n, "Oi You with the weapon, what are you doing?");
-										break;
-									case ARMOUR:
-										npcTalk(p, n, "Oi You with the armour on, what are you doing?");
-										break;
-									case BOTH:
-									default:
-										npcTalk(p, n, "Oi You with the weapon and armour, what are you doing?");
-										break;
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == STONE_GATE && p.getY() >= 735) {
+						if (command.equals("go through")) {
+							if (!hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+								p.message("you go through the gate");
+								p.teleport(62, 732);
+							} else {
+								if (p.getQuestStage(quest) == 9) {
+									message(p, "Ana looks out of the barrel...");
+									message(p, "@gre@Ana: Hey great, we're at the Shantay Pass!");
+									removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
+									p.updateQuestStage(quest, 10);
+									Npc Ana = spawnNpc(p.getWorld(), NpcId.ANA.id(), p.getX(), p.getY(), 60000);
+									Ana.teleport(p.getX(), p.getY() + 1);
+									if (Ana != null) {
+										sleep(650);
+										npcTalk(p, Ana, "Great! Thanks for getting me out of that mine!",
+											"And that barrel wasn't too bad anyway!",
+											"Pop by again sometime, I'm sure we'll have a barrel of laughs!",
+											"Oh! I nearly forgot, here's a key I found in the tunnels.",
+											"It might be of some use to you, not sure what it opens.");
+										addItem(p, ItemId.WROUGHT_IRON_KEY.id(), 1);
+										message(p, "Ana spots Irena and waves...");
+										npcTalk(p, Ana, "Hi Mum!",
+											"Sorry, I have to go now!");
+										Ana.remove();
+									}
+									Npc Irena = getNearestNpc(p, NpcId.IRENA.id(), 15);
+									npcTalk(p, Irena, "Hi Ana!");
+									rewardMenu(p, Irena, true);
+									p.getCache().remove("tried_ana_barrel");
 								}
-								npcTalk(p, n, "You don't belong in here!");
-								p.message("More guards come to arrest you.");
+								//should not have an ana in barrel in other stages
+								else {
+									removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
+								}
+							}
+						} else if (command.equals("look")) {
+							message(p, "You look at the huge Stone Gate.",
+								"On the gate is a large poster, it reads.",
+								"@gre@The Desert is a VERY Dangerous place...do not enter if you are scared of dying.",
+								"@gre@Beware of high temperatures, sand storms, robbers, and slavers...",
+								"@gre@No responsibility is taken by Shantay ",
+								"@gre@If anything bad should happen to you in any circumstances whatsoever.",
+								"Despite this warning lots of people seem to pass through the gate.");
+						}
+					} else if (obj.getID() == IRON_GATE) {
+						if (command.equals("open")) {
+							if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+								failEscapeAnaInBarrel(p, null);
+								return null;
+							} else if (!hasItem(p, ItemId.METAL_KEY.id())) {
+								p.message("This gate is locked, you'll need a key to open it.");
+							} else {
+								message(p, "You use the metal key to unlock the gates.",
+									"You manage to sneak past the guards!.");
+								doGate(p, obj);
+								p.message("The gate swings open.");
+								sleep(1000);
+								p.message("The gates close behind you.");
+								Npc n = getNearestNpc(p, NpcId.MERCENARY_ESCAPEGATES.id(), 15);
+								if (n != null) {
+									if (p.getQuestStage(quest) == -1) { // no dialogue after quest on just opening gates
+										// todo change the coords going in and going out.
+									} else {
+										Armed armedVal = playerArmed(p);
+										if (armedVal != Armed.NONE) {
+											switch (armedVal) {
+												case WEAPON:
+													npcTalk(p, n, "Oi You with the weapon, what are you doing?");
+													break;
+												case ARMOUR:
+													npcTalk(p, n, "Oi You with the armour on, what are you doing?");
+													break;
+												case BOTH:
+												default:
+													npcTalk(p, n, "Oi You with the weapon and armour, what are you doing?");
+													break;
+											}
+											npcTalk(p, n, "You don't belong in here!");
+											p.message("More guards come to arrest you.");
+											n.startCombat(p);
+											npcTalk(p, n, "Right, you're going in the cell!");
+											message(p, "You're outnumbered by all the guards.",
+												"They man-handle you into a cell.");
+											p.teleport(89, 801);
+										}
+									}
+								}
+							}
+						} else if (command.equals("search")) {
+							message(p, "You search the gate.",
+								"Inside the compound you can see that there are lots of slaves mining away.",
+								"They all seem to be dressed in dirty disgusting desert rags.",
+								"And equiped only with a mining pick.",
+								"Each slave is chained to a rock where they seemingly mine all day long.",
+								"Guards patrol the area extensively.",
+								"But you might be able to sneak past them if you try to blend in.");
+						}
+					} else if (obj.getID() == ROCK_1) {
+						p.message("You start climbing the rocky elevation.");
+						if (!succeedRate(p)) {
+							p.message("You slip a little and tumble the rest of the way down the slope.");
+							p.damage(7);
+						}
+						p.teleport(93, 799);
+					} else if (obj.getID() == WOODEN_DOORS) {
+						if (command.equals("open")) {
+							message(p, "You push the door.");
+							playerTalk(p, null, "Ugh!");
+							if (p.getInventory().wielding(ItemId.SLAVES_ROBE_BOTTOM.id()) && p.getInventory().wielding(ItemId.SLAVES_ROBE_TOP.id())) {
+								message(p, "The door opens with some effort ");
+								if (obj.getX() == 81 && obj.getY() == 3633) {
+									p.teleport(82, 802);
+									return null;
+								}
+								p.teleport(82, 3630);
+								message(p, "The huge doors open into a dark, dank and smelly tunnel.",
+									"The associated smells of a hundred sweaty miners greets your nostrils.",
+									"And your ears ring with the 'CLANG CLANG CLANG' as metal hits rock.");
+							} else {
+								Npc n = spawnNpc(p.getWorld(), NpcId.DRAFT_MERCENARY_GUARD.id(), p.getX(), p.getY(), 60000);
+								sleep(1000);
+								npcTalk(p, n, "Oi You!");
+								message(p, "A guard notices you and approaches...");
 								n.startCombat(p);
-								npcTalk(p, n, "Right, you're going in the cell!");
-								message(p, "You're outnumbered by all the guards.",
-									"They man-handle you into a cell.");
+								npcTalk(p, n, "Hey, you're no slave, where do you think you're going!");
+								npcTalk(p, n, "Guards, guards!");
+								if (p.getQuestStage(quest) == -1) {
+									p.message("No other guards come to the rescue.");
+									return null;
+								}
+								message(p, "The Guards search you!");
+								if (hasItem(p, ItemId.METAL_KEY.id())) {
+									p.message("The guards find the main gate key and remove it!");
+									removeItem(p, ItemId.METAL_KEY.id(), 1);
+								}
+								message(p, "More guards rush to catch you.",
+									"You are roughed up a bit by the guards as you're manhandlded to a cell.");
+								if (n != null) {
+									npcTalk(p, n, "Into the cell you go! I hope this teaches you a lesson.");
+								}
 								p.teleport(89, 801);
 							}
+						} else if (command.equals("watch")) {
+							if (obj.getX() == 81 && obj.getY() == 3633) {
+								p.message("Nothing much seems to happen.");
+							} else {
+								message(p, "You watch the doors for some time.",
+									"You notice that only slaves seem to go down there.",
+									"You might be able to sneak down if you pass as a slave.");
+							}
+						}
+					} else if (obj.getID() == DESK) {
+						message(p, "You search the captains desk while he's not looking.");
+						if (hasItem(p, ItemId.CELL_DOOR_KEY.id()) && hasItem(p, ItemId.METAL_KEY.id()) &&
+							((p.getQuestStage(quest) >= 0 && p.getQuestStage(quest) <= 9) ? true : hasItem(p, ItemId.WROUGHT_IRON_KEY.id()))) {
+							message(p, "...but you find nothing of interest.");
+							return null;
+						}
+						if (!hasItem(p, ItemId.CELL_DOOR_KEY.id())) {
+							message(p, "You find a cell door key.");
+							addItem(p, ItemId.CELL_DOOR_KEY.id(), 1);
+						}
+						if (!hasItem(p, ItemId.METAL_KEY.id())) {
+							message(p, "You find a large metalic key.");
+							addItem(p, ItemId.METAL_KEY.id(), 1);
+						}
+						//only after player has past to stage of wrought iron key
+						if (!(p.getQuestStage(quest) >= 0 && p.getQuestStage(quest) <= 9) && !hasItem(p, ItemId.WROUGHT_IRON_KEY.id())) {
+							message(p, "You find a large wrought iron key.");
+							addItem(p, ItemId.WROUGHT_IRON_KEY.id(), 1);
+						}
+					} else if (obj.getID() == BOOKCASE) {
+						if (command.equals("search")) {
+							p.message("You notice several books on the subject of Sailing.");
+							if (!p.getCache().hasKey("sailing")) {
+								p.getCache().store("sailing", true);
+							}
+						} else if (command.equals("look")) {
+							p.message("The captain seems to collect lots of books!");
+						}
+					} else if (obj.getID() == CAPTAINS_CHEST) {
+						if (p.getCache().hasKey("tourist_chest") || p.getQuestStage(quest) == -1) {
+							if (hasItem(p, ItemId.BEDOBIN_COPY_KEY.id())) {
+								if (!hasItem(p, ItemId.TECHNICAL_PLANS.id())) {
+									message(p, "While the Captain's distracted, you quickly unlock the chest.",
+										"You use the Bedobin Copy Key to open the chest.",
+										"You open the chest and take out the plans.");
+									addItem(p, ItemId.TECHNICAL_PLANS.id(), 1);
+								} else {
+									p.message("The chest is empty.");
+								}
+								if (p.getCache().hasKey("sailing")) {
+									p.getCache().remove("sailing");
+								}
+								if (p.getCache().hasKey("tourist_chest")) {
+									p.getCache().remove("tourist_chest");
+								}
+							} else {
+								if (p.getCache().hasKey("sailing")) {
+									p.getCache().remove("sailing");
+								}
+								if (p.getCache().hasKey("tourist_chest")) {
+									p.getCache().remove("tourist_chest");
+								}
+								p.message("This chest needs a key!");
+							}
+						} else {
+							Npc n = getNearestNpc(p, NpcId.CAPTAIN_SIAD.id(), 5);
+							if (n == null) {
+								n = spawnNpc(p.getWorld(), NpcId.CAPTAIN_SIAD.id(), p.getX(), p.getY(), 60000);
+								n.teleport(86, 1745);
+								sleep(1000);
+							}
+							captainSiadDialogue(p, n, -1, obj);
 						}
 					}
-				}
-			} else if (command.equals("search")) {
-				message(p, "You search the gate.",
-					"Inside the compound you can see that there are lots of slaves mining away.",
-					"They all seem to be dressed in dirty disgusting desert rags.",
-					"And equiped only with a mining pick.",
-					"Each slave is chained to a rock where they seemingly mine all day long.",
-					"Guards patrol the area extensively.",
-					"But you might be able to sneak past them if you try to blend in.");
+
+					return null;
+				});
 			}
-		} else if (obj.getID() == ROCK_1) {
-			p.message("You start climbing the rocky elevation.");
-			if (!succeedRate(p)) {
-				p.message("You slip a little and tumble the rest of the way down the slope.");
-				p.damage(7);
-			}
-			p.teleport(93, 799);
-		} else if (obj.getID() == WOODEN_DOORS) {
-			if (command.equals("open")) {
-				message(p, "You push the door.");
-				playerTalk(p, null, "Ugh!");
-				if (p.getInventory().wielding(ItemId.SLAVES_ROBE_BOTTOM.id()) && p.getInventory().wielding(ItemId.SLAVES_ROBE_TOP.id())) {
-					message(p, "The door opens with some effort ");
-					if (obj.getX() == 81 && obj.getY() == 3633) {
-						p.teleport(82, 802);
-						return;
-					}
-					p.teleport(82, 3630);
-					message(p, "The huge doors open into a dark, dank and smelly tunnel.",
-						"The associated smells of a hundred sweaty miners greets your nostrils.",
-						"And your ears ring with the 'CLANG CLANG CLANG' as metal hits rock.");
-				} else {
-					Npc n = spawnNpc(p.getWorld(), NpcId.DRAFT_MERCENARY_GUARD.id(), p.getX(), p.getY(), 60000);
-					sleep(1000);
-					npcTalk(p, n, "Oi You!");
-					message(p, "A guard notices you and approaches...");
-					n.startCombat(p);
-					npcTalk(p, n, "Hey, you're no slave, where do you think you're going!");
-					npcTalk(p, n, "Guards, guards!");
-					if (p.getQuestStage(this) == -1) {
-						p.message("No other guards come to the rescue.");
-						return;
-					}
-					message(p, "The Guards search you!");
-					if (hasItem(p, ItemId.METAL_KEY.id())) {
-						p.message("The guards find the main gate key and remove it!");
-						removeItem(p, ItemId.METAL_KEY.id(), 1);
-					}
-					message(p, "More guards rush to catch you.",
-						"You are roughed up a bit by the guards as you're manhandlded to a cell.");
-					if (n != null) {
-						npcTalk(p, n, "Into the cell you go! I hope this teaches you a lesson.");
-					}
-					p.teleport(89, 801);
-				}
-			} else if (command.equals("watch")) {
-				if (obj.getX() == 81 && obj.getY() == 3633) {
-					p.message("Nothing much seems to happen.");
-				} else {
-					message(p, "You watch the doors for some time.",
-						"You notice that only slaves seem to go down there.",
-						"You might be able to sneak down if you pass as a slave.");
-				}
-			}
-		} else if (obj.getID() == DESK) {
-			message(p, "You search the captains desk while he's not looking.");
-			if (hasItem(p, ItemId.CELL_DOOR_KEY.id()) && hasItem(p, ItemId.METAL_KEY.id()) &&
-				((p.getQuestStage(this) >= 0 && p.getQuestStage(this) <= 9) ? true : hasItem(p, ItemId.WROUGHT_IRON_KEY.id()))) {
-				message(p, "...but you find nothing of interest.");
-				return;
-			}
-			if (!hasItem(p, ItemId.CELL_DOOR_KEY.id())) {
-				message(p, "You find a cell door key.");
-				addItem(p, ItemId.CELL_DOOR_KEY.id(), 1);
-			}
-			if (!hasItem(p, ItemId.METAL_KEY.id())) {
-				message(p, "You find a large metalic key.");
-				addItem(p, ItemId.METAL_KEY.id(), 1);
-			}
-			//only after player has past to stage of wrought iron key
-			if (!(p.getQuestStage(this) >= 0 && p.getQuestStage(this) <= 9) && !hasItem(p, ItemId.WROUGHT_IRON_KEY.id())) {
-				message(p, "You find a large wrought iron key.");
-				addItem(p, ItemId.WROUGHT_IRON_KEY.id(), 1);
-			}
-		} else if (obj.getID() == BOOKCASE) {
-			if (command.equals("search")) {
-				p.message("You notice several books on the subject of Sailing.");
-				if (!p.getCache().hasKey("sailing")) {
-					p.getCache().store("sailing", true);
-				}
-			} else if (command.equals("look")) {
-				p.message("The captain seems to collect lots of books!");
-			}
-		} else if (obj.getID() == CAPTAINS_CHEST) {
-			if (p.getCache().hasKey("tourist_chest") || p.getQuestStage(this) == -1) {
-				if (hasItem(p, ItemId.BEDOBIN_COPY_KEY.id())) {
-					if (!hasItem(p, ItemId.TECHNICAL_PLANS.id())) {
-						message(p, "While the Captain's distracted, you quickly unlock the chest.",
-							"You use the Bedobin Copy Key to open the chest.",
-							"You open the chest and take out the plans.");
-						addItem(p, ItemId.TECHNICAL_PLANS.id(), 1);
-					} else {
-						p.message("The chest is empty.");
-					}
-					if (p.getCache().hasKey("sailing")) {
-						p.getCache().remove("sailing");
-					}
-					if (p.getCache().hasKey("tourist_chest")) {
-						p.getCache().remove("tourist_chest");
-					}
-				} else {
-					if (p.getCache().hasKey("sailing")) {
-						p.getCache().remove("sailing");
-					}
-					if (p.getCache().hasKey("tourist_chest")) {
-						p.getCache().remove("tourist_chest");
-					}
-					p.message("This chest needs a key!");
-				}
-			} else {
-				Npc n = getNearestNpc(p, NpcId.CAPTAIN_SIAD.id(), 5);
-				if (n == null) {
-					n = spawnNpc(p.getWorld(), NpcId.CAPTAIN_SIAD.id(), p.getX(), p.getY(), 60000);
-					n.teleport(86, 1745);
-					sleep(1000);
-				}
-				captainSiadDialogue(p, n, -1, obj);
-			}
-		}
+		};
 	}
 
 	@Override
@@ -2609,12 +2637,20 @@ public class TouristTrap implements QuestInterface, TalkToNpcListener, TalkToNpc
 	}
 
 	@Override
-	public void onNpcCommand(Npc n, String command, Player p) {
-		if (n.getID() == NpcId.MERCENARY_CAPTAIN.id() && command.equalsIgnoreCase("watch")) {
-			message(p, "You watch the Mercenary Captain for some time.",
-				"He has a large metal key attached to his belt.",
-				"You notice that he usually gets his men to do his dirty work.");
-		}
+	public GameStateEvent onNpcCommand(Npc n, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.MERCENARY_CAPTAIN.id() && command.equalsIgnoreCase("watch")) {
+						message(p, "You watch the Mercenary Captain for some time.",
+							"He has a large metal key attached to his belt.",
+							"You notice that he usually gets his men to do his dirty work.");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -2623,19 +2659,28 @@ public class TouristTrap implements QuestInterface, TalkToNpcListener, TalkToNpc
 	}
 
 	@Override
-	public void onPlayerKilledNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.MERCENARY_CAPTAIN.id()) {
-			p.message("You kill the captain!");
-			if (p.getQuestStage(this) == 1 && !p.getCache().hasKey("first_kill_captn")) {
-				p.getCache().store("first_kill_captn", true);
+	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.MERCENARY_CAPTAIN.id()) {
+						p.message("You kill the captain!");
+						if (p.getQuestStage(quest) == 1 && !p.getCache().hasKey("first_kill_captn")) {
+							p.getCache().store("first_kill_captn", true);
+						}
+						n.killedBy(p);
+						if (!hasItem(p, ItemId.METAL_KEY.id())) {
+							addItem(p, ItemId.METAL_KEY.id(), 1);
+							message(p, "The mercenary captain drops a metal key on the floor.",
+								"You quickly grab the key and add it to your inventory.");
+						}
+					}
+
+					return null;
+				});
 			}
-			n.killedBy(p);
-			if (!hasItem(p, ItemId.METAL_KEY.id())) {
-				addItem(p, ItemId.METAL_KEY.id(), 1);
-				message(p, "The mercenary captain drops a metal key on the floor.",
-					"You quickly grab the key and add it to your inventory.");
-			}
-		}
+		};
 	}
 
 	@Override
@@ -2645,8 +2690,16 @@ public class TouristTrap implements QuestInterface, TalkToNpcListener, TalkToNpc
 	}
 
 	@Override
-	public void onPlayerAttackNpc(Player p, Npc affectedmob) {
-		tryToAttackMercenarys(p, affectedmob);
+	public GameStateEvent onPlayerAttackNpc(Player p, Npc affectedmob) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					tryToAttackMercenarys(p, affectedmob);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -2656,8 +2709,16 @@ public class TouristTrap implements QuestInterface, TalkToNpcListener, TalkToNpc
 	}
 
 	@Override
-	public void onPlayerRangeNpc(Player p, Npc n) {
-		tryToAttackMercenarys(p, n);
+	public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					tryToAttackMercenarys(p, n);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -2667,8 +2728,16 @@ public class TouristTrap implements QuestInterface, TalkToNpcListener, TalkToNpc
 	}
 
 	@Override
-	public void onPlayerMageNpc(Player p, Npc n) {
-		tryToAttackMercenarys(p, n);
+	public GameStateEvent onPlayerMageNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					tryToAttackMercenarys(p, n);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void tryToAttackMercenarys(Player p, Npc affectedmob) {
@@ -2817,100 +2886,109 @@ public class TouristTrap implements QuestInterface, TalkToNpcListener, TalkToNpc
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		if (obj.getID() == WINDOW && (obj.getX() == 90 || obj.getX() == 89) && obj.getY() == 802) {
-			message(p, "You search the window.",
-				"After some time you find that one of the bars looks weak,  ",
-				"you may be able to bend one of the bars. ",
-				"Would you like to try ?");
-			int menu = showMenu(p,
-				"Yes, I'll bend the bar.",
-				"No, I'd better stay here.");
-			if (menu == 0) {
-				attemptBendBar(p);
-			} else if (menu == 1) {
-				message(p, "You decide to stay in the cell.",
-					"Maybe they'll let you out soon?");
-			}
-		} else if (obj.getID() == JAIL_DOOR && obj.getX() == 88 && obj.getY() == 801) {
-			if (hasItem(p, ItemId.CELL_DOOR_KEY.id())) {
-				p.message("You unlock the door and walk through.");
-				doDoor(obj, p);
-			} else {
-				message(p, "You need a key to unlock this door,",
-					"And you don't seem to have one that fits.");
-			}
-		} else if (obj.getID() == TENT_DOOR_1) {
-			if (p.getY() <= 793) {
-				p.teleport(171, 795);
-			} else {
-				Npc n = getNearestNpc(p, NpcId.BEDABIN_NOMAD_GUARD.id(), 5);
-				if (n == null) {
-					n = spawnNpc(p.getWorld(), NpcId.BEDABIN_NOMAD_GUARD.id(), p.getX(), p.getY(), 60000);
-					sleep(650);
-				}
-				n.teleport(170, 794);
-				switch (p.getQuestStage(this)) {
-					case 8:
-					case 9:
-					case 10:
-					case -1:
-						npcTalk(p, n, "Sorry, but you can't use the tent without permission.",
-							"But thanks for your help to the Bedabin people.");
-						if (hasItem(p, ItemId.TECHNICAL_PLANS.id())) {
-							npcTalk(p, n, "And we'll take those plans off your hands as well!");
-							removeItem(p, ItemId.TECHNICAL_PLANS.id(), 1);
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == WINDOW && (obj.getX() == 90 || obj.getX() == 89) && obj.getY() == 802) {
+						message(p, "You search the window.",
+							"After some time you find that one of the bars looks weak,  ",
+							"you may be able to bend one of the bars. ",
+							"Would you like to try ?");
+						int menu = showMenu(p,
+							"Yes, I'll bend the bar.",
+							"No, I'd better stay here.");
+						if (menu == 0) {
+							attemptBendBar(p);
+						} else if (menu == 1) {
+							message(p, "You decide to stay in the cell.",
+								"Maybe they'll let you out soon?");
 						}
-						break;
-					default:
-						npcTalk(p, n, "Sorry, this is a private tent, no one is allowed in.",
-							"Orders of Al Shabim...");
-						break;
-				}
-			}
-		} else if (obj.getID() == TENT_DOOR_2) {
+					} else if (obj.getID() == JAIL_DOOR && obj.getX() == 88 && obj.getY() == 801) {
+						if (hasItem(p, ItemId.CELL_DOOR_KEY.id())) {
+							p.message("You unlock the door and walk through.");
+							doDoor(obj, p);
+						} else {
+							message(p, "You need a key to unlock this door,",
+								"And you don't seem to have one that fits.");
+						}
+					} else if (obj.getID() == TENT_DOOR_1) {
+						if (p.getY() <= 793) {
+							p.teleport(171, 795);
+						} else {
+							Npc n = getNearestNpc(p, NpcId.BEDABIN_NOMAD_GUARD.id(), 5);
+							if (n == null) {
+								n = spawnNpc(p.getWorld(), NpcId.BEDABIN_NOMAD_GUARD.id(), p.getX(), p.getY(), 60000);
+								sleep(650);
+							}
+							n.teleport(170, 794);
+							switch (p.getQuestStage(quest)) {
+								case 8:
+								case 9:
+								case 10:
+								case -1:
+									npcTalk(p, n, "Sorry, but you can't use the tent without permission.",
+										"But thanks for your help to the Bedabin people.");
+									if (hasItem(p, ItemId.TECHNICAL_PLANS.id())) {
+										npcTalk(p, n, "And we'll take those plans off your hands as well!");
+										removeItem(p, ItemId.TECHNICAL_PLANS.id(), 1);
+									}
+									break;
+								default:
+									npcTalk(p, n, "Sorry, this is a private tent, no one is allowed in.",
+										"Orders of Al Shabim...");
+									break;
+							}
+						}
+					} else if (obj.getID() == TENT_DOOR_2) {
 			/*if(p.getY() >= 805) {
 				p.teleport(169, 804);
 			} else {
 				p.teleport(171, 806);
 			}*/
-			doTentDoor(obj, p);
-		} else if (obj.getID() == CAVE_JAIL_DOOR) {
-			Npc n = getNearestNpc(p, NpcId.MERCENARY_JAILDOOR.id(), 5);
-			if (n != null) {
-				if (p.getX() >= 72) {
-					if (!hasItem(p, ItemId.ROCKS.id(), 15)) {
-						npcTalk(p, n, "Hey, move away from the gate.",
-							"If you wanna get out, you're gonna have to mine for it.",
-							"You're gonna have to bring me 15 loads of rocks - in one go!",
-							"And then I'll let you out.",
-							"You can go back and work with the other slaves then!");
-					} else {
-						playerTalk(p, n, "Hey, I have your rocks here, let me out.");
-						removeItem(p, ItemId.ROCKS.id(), 15);
-						npcTalk(p, n, "Ok, ok, come on out.");
-						p.teleport(71, 3626);
-						p.message("The guard unlocks the gate and lets you out.");
-						p.teleport(69, 3625);
+						doTentDoor(obj, p);
+					} else if (obj.getID() == CAVE_JAIL_DOOR) {
+						Npc n = getNearestNpc(p, NpcId.MERCENARY_JAILDOOR.id(), 5);
+						if (n != null) {
+							if (p.getX() >= 72) {
+								if (!hasItem(p, ItemId.ROCKS.id(), 15)) {
+									npcTalk(p, n, "Hey, move away from the gate.",
+										"If you wanna get out, you're gonna have to mine for it.",
+										"You're gonna have to bring me 15 loads of rocks - in one go!",
+										"And then I'll let you out.",
+										"You can go back and work with the other slaves then!");
+								} else {
+									playerTalk(p, n, "Hey, I have your rocks here, let me out.");
+									removeItem(p, ItemId.ROCKS.id(), 15);
+									npcTalk(p, n, "Ok, ok, come on out.");
+									p.teleport(71, 3626);
+									p.message("The guard unlocks the gate and lets you out.");
+									p.teleport(69, 3625);
+								}
+							} else {
+								npcTalk(p, n, "Hey, move away from that gate!");
+							}
+						}
+					} else if (obj.getID() == STURDY_IRON_GATE) {
+						if (p.getY() >= 3617) {
+							if (hasItem(p, ItemId.WROUGHT_IRON_KEY.id())) {
+								p.message("You use the wrought iron key to unlock the gate.");
+								p.teleport(p.getX(), p.getY() - 1);
+							} else {
+								message(p, "You need a key to unlock this door,",
+									"And you don't seem to have one that fits.");
+							}
+						} else {
+							p.message("You push the gate open and walk through.");
+							p.teleport(p.getX(), p.getY() + 1);
+						}
 					}
-				} else {
-					npcTalk(p, n, "Hey, move away from that gate!");
-				}
+
+					return null;
+				});
 			}
-		} else if (obj.getID() == STURDY_IRON_GATE) {
-			if (p.getY() >= 3617) {
-				if (hasItem(p, ItemId.WROUGHT_IRON_KEY.id())) {
-					p.message("You use the wrought iron key to unlock the gate.");
-					p.teleport(p.getX(), p.getY() - 1);
-				} else {
-					message(p, "You need a key to unlock this door,",
-						"And you don't seem to have one that fits.");
-				}
-			} else {
-				p.message("You push the gate open and walk through.");
-				p.teleport(p.getX(), p.getY() + 1);
-			}
-		}
+		};
 	}
 
 	private void attemptBendBar(Player p) {
@@ -3051,16 +3129,25 @@ public class TouristTrap implements QuestInterface, TalkToNpcListener, TalkToNpc
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player player, Npc npc, Item item) {
-		if (npc.getID() == NpcId.AL_SHABIM.id() && hasItem(player, ItemId.PROTOTYPE_THROWING_DART.id())) {
-			if (player.getQuestStage(this) == 7) {
-				alShabimDialogue(player, npc, AlShabim.MADE_WEAPON);
-			} else if (player.getQuestStage(this) > 7 || player.getQuestStage(this) == -1) {
-				npcTalk(player, npc, "Where did you get this from Effendi!",
-					"I'll have to confiscate this for your own safety!");
-				removeItem(player, ItemId.PROTOTYPE_THROWING_DART.id(), 1);
+	public GameStateEvent onInvUseOnNpc(Player player, Npc npc, Item item) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (npc.getID() == NpcId.AL_SHABIM.id() && hasItem(player, ItemId.PROTOTYPE_THROWING_DART.id())) {
+						if (player.getQuestStage(quest) == 7) {
+							alShabimDialogue(player, npc, AlShabim.MADE_WEAPON);
+						} else if (player.getQuestStage(quest) > 7 || player.getQuestStage(quest) == -1) {
+							npcTalk(player, npc, "Where did you get this from Effendi!",
+								"I'll have to confiscate this for your own safety!");
+							removeItem(player, ItemId.PROTOTYPE_THROWING_DART.id(), 1);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	enum Armed {

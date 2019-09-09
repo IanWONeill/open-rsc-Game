@@ -7,8 +7,6 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.ObjectActionListener;
 import com.openrsc.server.plugins.listeners.executive.ObjectActionExecutiveListener;
 
-import static com.openrsc.server.plugins.Functions.sleep;
-
 public class DeadTree implements ObjectActionListener, ObjectActionExecutiveListener {
 
 	@Override
@@ -17,8 +15,8 @@ public class DeadTree implements ObjectActionListener, ObjectActionExecutiveList
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0,"Dead Tree") {
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0,getClass().getName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					getPlayerOwner().setBusy(true);
@@ -32,6 +30,6 @@ public class DeadTree implements ObjectActionListener, ObjectActionExecutiveList
 					return null;
 				});
 			}
-		});
+		};
 	}
 }

@@ -1,5 +1,7 @@
 package com.openrsc.server.plugins.npcs.brimhaven;
 
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -8,27 +10,33 @@ import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener
 import static com.openrsc.server.plugins.Functions.npcTalk;
 import static com.openrsc.server.plugins.Functions.showMenu;
 
-import com.openrsc.server.constants.NpcId;
-
 public class CharlieTheCook implements TalkToNpcExecutiveListener, TalkToNpcListener {
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.CHARLIE_THE_COOK.id()) {
-			npcTalk(p, n, "Hey what are you doing round here");
-			int menu = showMenu(p, n,
-				"I'm looking for a gherkin",
-				"I'm a fellow member of the phoenix gang",
-				"Just exploring");
-			if (menu == 0) {
-				fellowPheonix(p, n);
-			} else if (menu == 1) {
-				fellowPheonix(p, n);
-			} else if (menu == 2) {
-				npcTalk(p, n, "This kitchen isn't for exploring",
-					"It's a private establishment, now get out");
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.CHARLIE_THE_COOK.id()) {
+						npcTalk(p, n, "Hey what are you doing round here");
+						int menu = showMenu(p, n,
+							"I'm looking for a gherkin",
+							"I'm a fellow member of the phoenix gang",
+							"Just exploring");
+						if (menu == 0) {
+							fellowPheonix(p, n);
+						} else if (menu == 1) {
+							fellowPheonix(p, n);
+						} else if (menu == 2) {
+							npcTalk(p, n, "This kitchen isn't for exploring",
+								"It's a private establishment, now get out");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void fellowPheonix(Player p, Npc n) {

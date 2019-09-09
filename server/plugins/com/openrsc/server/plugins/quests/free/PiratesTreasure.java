@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.free;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -65,47 +66,56 @@ public class PiratesTreasure implements QuestInterface, InvActionListener,
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		if (item.getID() == ItemId.BANANA.id() && obj.getID() == 182 && obj.getY() == 711) {
-			if (p.getCache().hasKey("bananas")) {
-				if (p.getCache().getInt("bananas") >= 10) {
-					p.message(
-						"the crate is already full");
-					return;
-				}
-				if (p.getInventory().remove(item) > -1) {
-					p.message(
-						"you put a banana in the crate");
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.BANANA.id() && obj.getID() == 182 && obj.getY() == 711) {
+						if (p.getCache().hasKey("bananas")) {
+							if (p.getCache().getInt("bananas") >= 10) {
+								p.message(
+									"the crate is already full");
+								return null;
+							}
+							if (p.getInventory().remove(item) > -1) {
+								p.message(
+									"you put a banana in the crate");
 
-					p.getCache().set("bananas",
-						p.getCache().getInt("bananas") + 1);
-				}
-			} else {
-				p.message("I have no reason to do that");
-			}
-		} else if (item.getID() == ItemId.KARAMJA_RUM.id() && obj.getID() == 182
-			&& p.getQuestStage(this) > 0) {
-			if (p.getCache().hasKey("bananas")) {
-				if (p.getInventory().remove(item) > -1) {
-					p.message(
-						"You stash the rum in the crate");
-					if (!p.getCache().hasKey("rum_in_crate")) {
-						p.getCache().store("rum_in_crate", true);
+								p.getCache().set("bananas",
+									p.getCache().getInt("bananas") + 1);
+							}
+						} else {
+							p.message("I have no reason to do that");
+						}
+					} else if (item.getID() == ItemId.KARAMJA_RUM.id() && obj.getID() == 182
+						&& p.getQuestStage(quest) > 0) {
+						if (p.getCache().hasKey("bananas")) {
+							if (p.getInventory().remove(item) > -1) {
+								p.message(
+									"You stash the rum in the crate");
+								if (!p.getCache().hasKey("rum_in_crate")) {
+									p.getCache().store("rum_in_crate", true);
+								}
+							}
+						}
+					} else if (item.getID() == ItemId.CHEST_KEY.id() && obj.getID() == HECTORS_CHEST_CLOSED) {
+						p.message("You unlock the chest");
+						p.getWorld().replaceGameObject(obj,
+							new GameObject(obj.getWorld(), obj.getLocation(), HECTORS_CHEST_OPEN, obj.getDirection(),
+								obj.getType()));
+						p.getWorld().delayedSpawnObject(obj.getLoc(), 3000);
+						removeItem(p, ItemId.CHEST_KEY.id(), 1);
+						message(p, "All that is in the chest is a message");
+						message(p, "You take the message from the chest");
+						message(p, "It says dig just behind the south bench in the park");
+						p.updateQuestStage(quest, 3);
 					}
-				}
+
+					return null;
+				});
 			}
-		} else if (item.getID() == ItemId.CHEST_KEY.id() && obj.getID() == HECTORS_CHEST_CLOSED) {
-			p.message("You unlock the chest");
-			p.getWorld().replaceGameObject(obj,
-				new GameObject(obj.getWorld(), obj.getLocation(), HECTORS_CHEST_OPEN, obj.getDirection(),
-					obj.getType()));
-			p.getWorld().delayedSpawnObject(obj.getLoc(), 3000);
-			removeItem(p, ItemId.CHEST_KEY.id(), 1);
-			message(p, "All that is in the chest is a message");
-			message(p, "You take the message from the chest");
-			message(p, "It says dig just behind the south bench in the park");
-			p.updateQuestStage(this, 3);
-		}
+		};
 	}
 
 	@Override
@@ -286,12 +296,20 @@ public class PiratesTreasure implements QuestInterface, InvActionListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.LUTHAS.id()) {
-			luthasDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.REDBEARD_FRANK.id()) {
-			frankDialogue(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.LUTHAS.id()) {
+						luthasDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.REDBEARD_FRANK.id()) {
+						frankDialogue(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -301,40 +319,47 @@ public class PiratesTreasure implements QuestInterface, InvActionListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		switch (obj.getID()) {
-			case 182:
-				String s = "";
-				if (p.getCache().hasKey("bananas")) {
-					int b = p.getCache().getInt("bananas");
-					if (b == 0)
-						s = "The crate is completely empty";
-					else if (b < 10)
-						s = "the crate is partially full of bananas";
-					else
-						s = "The crate is full of bananas";
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					switch (obj.getID()) {
+						case 182:
+							String s = "";
+							if (p.getCache().hasKey("bananas")) {
+								int b = p.getCache().getInt("bananas");
+								if (b == 0)
+									s = "The crate is completely empty";
+								else if (b < 10)
+									s = "the crate is partially full of bananas";
+								else
+									s = "The crate is full of bananas";
 
-				} else {
-					s = "The crate is completely empty";
-				}
-				p.message(s);
-				break;
-			case 185:
-				if (p.getCache().hasKey("rum_delivered") && p.getCache().getBoolean("rum_delivered")) {
-					message(p, "There are a lot of bananas in the crate",
-							"You find your bottle of rum in amoungst the bananas");
-					p.getInventory().add(new Item(ItemId.KARAMJA_RUM.id()));
-					p.getCache().remove("rum_delivered");
-				}
-				message(p, "Do you want to take a banana?");
-				int wantabanana = showMenu(p, "Yes", "No");
-				if (wantabanana == 0) {
-					p.getInventory().add(new Item(ItemId.BANANA.id()));
-					p.playerServerMessage(MessageType.QUEST, "you take a banana");
-				}
-				break;
-		}
+							} else {
+								s = "The crate is completely empty";
+							}
+							p.message(s);
+							break;
+						case 185:
+							if (p.getCache().hasKey("rum_delivered") && p.getCache().getBoolean("rum_delivered")) {
+								message(p, "There are a lot of bananas in the crate",
+									"You find your bottle of rum in amoungst the bananas");
+								p.getInventory().add(new Item(ItemId.KARAMJA_RUM.id()));
+								p.getCache().remove("rum_delivered");
+							}
+							message(p, "Do you want to take a banana?");
+							int wantabanana = showMenu(p, "Yes", "No");
+							if (wantabanana == 0) {
+								p.getInventory().add(new Item(ItemId.BANANA.id()));
+								p.playerServerMessage(MessageType.QUEST, "you take a banana");
+							}
+							break;
+					}
 
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -352,38 +377,47 @@ public class PiratesTreasure implements QuestInterface, InvActionListener,
 	}
 
 	@Override
-	public void onInvAction(Item item, Player p, String command) {
-		if (p.getQuestStage(this) != 3)
-			return;
-		if (p.isBusy())
-			return;
-		if ((p.getY() == 548 && p.getX() >= 287 && p.getX() <= 291)
-			&& item.getID() == ItemId.SPADE.id()) {
-			if (p.getX() == 290 || p.getX() == 289) {
-				Npc wyson = getNearestNpc(p, NpcId.WYSON_THE_GARDENER.id(), 20);
-				boolean dig = false;
-				if (wyson != null) {
-					wyson.getUpdateFlags().setChatMessage(new ChatMessage(wyson, "Hey leave off my flowers", p));
-					sleep(1000);
-					wyson.setChasing(p);
-					long start = System.currentTimeMillis();
-					while (!p.inCombat()) {
-						if (System.currentTimeMillis() - start > 2000) {
-							dig = true;
-							break;
+	public GameStateEvent onInvAction(Item item, Player p, String command) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (p.getQuestStage(quest) != 3)
+						return null;
+					if (p.isBusy())
+						return null;
+					if ((p.getY() == 548 && p.getX() >= 287 && p.getX() <= 291)
+						&& item.getID() == ItemId.SPADE.id()) {
+						if (p.getX() == 290 || p.getX() == 289) {
+							Npc wyson = getNearestNpc(p, NpcId.WYSON_THE_GARDENER.id(), 20);
+							boolean dig = false;
+							if (wyson != null) {
+								wyson.getUpdateFlags().setChatMessage(new ChatMessage(wyson, "Hey leave off my flowers", p));
+								sleep(1000);
+								wyson.setChasing(p);
+								long start = System.currentTimeMillis();
+								while (!p.inCombat()) {
+									if (System.currentTimeMillis() - start > 2000) {
+										dig = true;
+										break;
+									}
+									sleep(50);
+								}
+							} else {
+								dig = true;
+							}
+							if (dig) {
+								message(p, "You dig a hole in the ground",
+									"You find a little bag of treasure");
+								p.sendQuestComplete(getQuestId());
+							}
 						}
-						sleep(50);
 					}
-				} else {
-					dig = true;
-				}
-				if (dig) {
-					message(p, "You dig a hole in the ground",
-						"You find a little bag of treasure");
-					p.sendQuestComplete(this.getQuestId());
-				}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	class Frank {

@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -471,216 +472,236 @@ public class FishingContest implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnObject(final GameObject obj, final Item item,
-								 final Player player) {
-
-		if (obj.getID() == 355 && item.getID() == ItemId.SPADE.id()) { // teleport coords:
-			// 567, 451
-			message(player, "you dig in amoungst the vines",
-				"You find a red vine worm");
-			addItem(player, ItemId.RED_VINE_WORMS.id(), 1);
-		}
-		else if (obj.getID() == 350 && item.getID() == ItemId.GARLIC.id()) {
-			//stashing garlics in pipes should not check if other
-			//garlics have been stashed
-			if (!player.getCache().hasKey("paid_contest_fee")) {
-				message(player, "You stash the garlic in the pipe");
-				player.getInventory().remove(ItemId.GARLIC.id(), 1);
-				if (!player.getCache().hasKey("garlic_activated")) {
-					player.getCache().store("garlic_activated", true);
-				}
-			} else {
-				player.message("Nothing interesting happens");
-			}
-		}
-	}
-
-	@Override
-	public void onObjectAction(final GameObject obj, final String command,
-							   final Player p) {
-
-		if (obj.getID() == 358) {
-			Npc bonzo = getNearestNpc(p, NpcId.BONZO.id(), 15);
-			Npc morris = getNearestNpc(p, NpcId.MORRIS.id(), 15);
-			if (p.getX() <= 564) {
-
-				if (morris != null) {
-					npcTalk(p, morris, "competition pass please");
-					if (hasItem(p, ItemId.FISHING_COMPETITION_PASS.id())) {
-						message(p, "You show Morris your pass");
-						npcTalk(p, morris, "Move on through");
-						doGate(p, obj, 357);
-					} else {
-						int m = showMenu(p, morris,
-							"I don't have one of them",
-							"What do I need that for?");
-						if (m == 1) {
-							npcTalk(p, morris,
-								"This is the entrance to the Hementster fishing competition");
-							npcTalk(p, morris, "It's a high class competition");
-							npcTalk(p, morris, "Invitation only");
+	public GameStateEvent onInvUseOnObject(final GameObject obj, final Item item, final Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 355 && item.getID() == ItemId.SPADE.id()) { // teleport coords:
+						// 567, 451
+						message(player, "you dig in amoungst the vines",
+							"You find a red vine worm");
+						addItem(player, ItemId.RED_VINE_WORMS.id(), 1);
+					}
+					else if (obj.getID() == 350 && item.getID() == ItemId.GARLIC.id()) {
+						//stashing garlics in pipes should not check if other
+						//garlics have been stashed
+						if (!player.getCache().hasKey("paid_contest_fee")) {
+							message(player, "You stash the garlic in the pipe");
+							player.getInventory().remove(ItemId.GARLIC.id(), 1);
+							if (!player.getCache().hasKey("garlic_activated")) {
+								player.getCache().store("garlic_activated", true);
+							}
+						} else {
+							player.message("Nothing interesting happens");
 						}
 					}
-				} else
-					System.err.println("morris is null");
-			} else if (p.getX() >= 565) {
-				if (p.getQuestStage(getQuestId()) == 3) {
-					doGate(p, obj, 357);
-					return;
-				}
-				if (bonzo != null && p.getCache().hasKey("paid_contest_fee")) {
-					npcTalk(p, bonzo,
-						"so you're calling it quits here for now?");
-					int leaveMenu = showMenu(p, bonzo,
-						"Yes I'll compete again another day",
-						"Actually I'll go back and catch some more");
-					if (leaveMenu == 0) {
-						p.getCache().remove("paid_contest_fee");
-						p.getCache().remove("contest_catches");
-						doGate(p, obj, 357);
-					} else if (leaveMenu == 1) {
-						npcTalk(p, bonzo, "Good luck");
-					}
-				} else {
-					doGate(p, obj, 357);
-					return;
-				}
-			}
-		}
-		Npc sinister = getNearestNpc(p, NpcId.SINISTER_STRANGER.id(), 10);
-		Npc bonzo = getNearestNpc(p, NpcId.BONZO.id(), 15);
-		if (obj.getID() == 351) {
-			if (hasItem(p, ItemId.HEMENSTER_FISHING_TROPHY.id())) {
-				p.message("you have already won the fishing competition");
-				return;
-			} else if (bonzo != null && !p.getCache().hasKey("paid_contest_fee")) {
-				bonzoDialogue(p, bonzo, false);
-				return;
-			}
-			if (p.getQuestStage(getQuestId()) > 0 && !p.getCache().hasKey("garlic_activated")) {
-				//cases: not enough level
-				//no bait
-				//else do catch
-				if (p.getSkills().getLevel(Skills.FISHING) < 10) {
-					p.message("You need at least level 10 fishing to lure these fish");
-				} else if (!hasItem(p, ItemId.FISHING_ROD.id())) {
-					// probably non-kosher
-					p.message("I don't have the equipment to catch a fish");
-				} else if (!hasItem(p, ItemId.FISHING_BAIT.id()) && !hasItem(p, ItemId.RED_VINE_WORMS.id())) {
-					p.message("you have no bait to catch fish here");
-				}
-				// fishing using worm gives raw sardine
-				else if (hasItem(p, ItemId.RED_VINE_WORMS.id())) {
-					p.message("You catch a sardine");
-					p.getInventory().add(new Item(ItemId.RAW_SARDINE.id()));
-					p.getInventory().remove(ItemId.RED_VINE_WORMS.id(), 1);
-					addCatchCache(p, ItemId.RAW_SARDINE.id());
-				} else if (hasItem(p, ItemId.FISHING_BAIT.id())) {
-					p.message("You catch some shrimps");
-					p.getInventory().add(new Item(ItemId.RAW_SHRIMP.id()));
-					p.getInventory().remove(ItemId.FISHING_BAIT.id(), 1);
-					addCatchCache(p, ItemId.RAW_SHRIMP.id());
-				}
 
-				if (p.getCache().hasKey("contest_catches")) {
-					int numCatches = p.getCache().getString("contest_catches").split("-").length;
-					if (numCatches > 2 && bonzo != null) {
-						bonzoTimesUpDialogue(p, bonzo);
-					}
-				}
-			} else {
-				npcTalk(p, sinister, "I think you will find that is my spot");
+					return null;
+				});
 			}
-		}
-		else if (obj.getID() == 352) {
-			if (hasItem(p, ItemId.HEMENSTER_FISHING_TROPHY.id())) {
-				p.message("you have already won the fishing competition");
-				return;
-			} else if (bonzo != null && !p.getCache().hasKey("paid_contest_fee")) {
-				bonzoDialogue(p, bonzo, false);
-				return;
-			}
-			if (p.getQuestStage(getQuestId()) > 0 && p.getCache().hasKey("garlic_activated")) {
-				//cases: not enough level
-				//no rod
-				//no bait
-				//else do catch
-				if (p.getSkills().getLevel(Skills.FISHING) < 10) {
-					p.message("You need at least level 10 fishing to lure these fish");
-				} else if (!hasItem(p, ItemId.FISHING_ROD.id())) {
-					// probably non-kosher
-					p.message("I don't have the equipment to catch a fish");
-				} else if (!hasItem(p, ItemId.FISHING_BAIT.id()) && !hasItem(p, ItemId.RED_VINE_WORMS.id())) {
-					p.message("you have no bait to catch fish here");
-				}
-				// fishing using worm gives raw carp
-				else if (hasItem(p, ItemId.RED_VINE_WORMS.id())) {
-					p.message("You catch a giant carp");
-					p.getInventory().add(new Item(ItemId.RAW_GIANT_CARP.id()));
-					p.getInventory().remove(ItemId.RED_VINE_WORMS.id(), 1);
-					addCatchCache(p, ItemId.RAW_GIANT_CARP.id());
-				} else if (hasItem(p, ItemId.FISHING_BAIT.id())) {
-					p.message("You catch a sardine");
-					p.getInventory().add(new Item(ItemId.RAW_SARDINE.id()));
-					p.getInventory().remove(ItemId.FISHING_BAIT.id(), 1);
-					addCatchCache(p, ItemId.RAW_SARDINE.id());
-				}
-
-				if (p.getCache().hasKey("contest_catches")) {
-					int numCatches = p.getCache().getString("contest_catches").split("-").length;
-					if (numCatches > 2 && bonzo != null) {
-						bonzoTimesUpDialogue(p, bonzo);
-					}
-				}
-			} else {
-				npcTalk(p, sinister, "I think you will find that is my spot");
-				playerTalk(p, sinister, "Can't you go to another spot?");
-				npcTalk(p, sinister, "I like this place",
-					"I like to savour the aroma coming from these pipes");
-			}
-		}
-		else if (obj.getID() == 353) {
-			Npc dave = getNearestNpc(p, NpcId.BIG_DAVE.id(), 10);
-			bigDaveDialogue(p, dave);
-		}
-		else if (obj.getID() == 354) {
-			Npc joshua = getNearestNpc(p, NpcId.JOSHUA.id(), 10);
-			joshuaDialogue(p, joshua);
-		}
-		else if (obj.getID() == 359) {
-			if (p.getQuestStage(getQuestId()) == -1) {
-				p.message("You go down the stairs");
-				if (obj.getX() == 426 && obj.getY() == 458) {
-					p.teleport(426, 3294, false);
-				} else {
-					p.teleport(385, 3301, false);
-				}
-			} else {
-				// from player's position
-				Npc dwarf = getNearestNpc(p, NpcId.MOUNTAIN_DWARF.id(), 25);
-				//final Npc dwarf = getWorld().getNpc(355, 375, 395, 445,
-				//		475);
-				if (dwarf != null) {
-					mountainDwarfDialogue(p, dwarf);
-				}
-			}
-		}
+		};
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		if (n.getID() == NpcId.MOUNTAIN_DWARF.id()) {
-			mountainDwarfDialogue(p, n);
-		}
-		else if (n.getID() == NpcId.BONZO.id()) {
-			bonzoDialogue(p, n, true);
-		}
-		else if (n.getID() == NpcId.SINISTER_STRANGER.id()) {
-			sinisterDialogue(p, n, -1);
-		}
-		else if (n.getID() == NpcId.GRANDPA_JACK.id()) {
-			grandpaJackDialogue(p, n);
-		}
+	public GameStateEvent onObjectAction(final GameObject obj, final String command, final Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 358) {
+						Npc bonzo = getNearestNpc(p, NpcId.BONZO.id(), 15);
+						Npc morris = getNearestNpc(p, NpcId.MORRIS.id(), 15);
+						if (p.getX() <= 564) {
+
+							if (morris != null) {
+								npcTalk(p, morris, "competition pass please");
+								if (hasItem(p, ItemId.FISHING_COMPETITION_PASS.id())) {
+									message(p, "You show Morris your pass");
+									npcTalk(p, morris, "Move on through");
+									doGate(p, obj, 357);
+								} else {
+									int m = showMenu(p, morris,
+										"I don't have one of them",
+										"What do I need that for?");
+									if (m == 1) {
+										npcTalk(p, morris,
+											"This is the entrance to the Hementster fishing competition");
+										npcTalk(p, morris, "It's a high class competition");
+										npcTalk(p, morris, "Invitation only");
+									}
+								}
+							} else
+								System.err.println("morris is null");
+						} else if (p.getX() >= 565) {
+							if (p.getQuestStage(getQuestId()) == 3) {
+								doGate(p, obj, 357);
+								return null;
+							}
+							if (bonzo != null && p.getCache().hasKey("paid_contest_fee")) {
+								npcTalk(p, bonzo,
+									"so you're calling it quits here for now?");
+								int leaveMenu = showMenu(p, bonzo,
+									"Yes I'll compete again another day",
+									"Actually I'll go back and catch some more");
+								if (leaveMenu == 0) {
+									p.getCache().remove("paid_contest_fee");
+									p.getCache().remove("contest_catches");
+									doGate(p, obj, 357);
+								} else if (leaveMenu == 1) {
+									npcTalk(p, bonzo, "Good luck");
+								}
+							} else {
+								doGate(p, obj, 357);
+								return null;
+							}
+						}
+					}
+					Npc sinister = getNearestNpc(p, NpcId.SINISTER_STRANGER.id(), 10);
+					Npc bonzo = getNearestNpc(p, NpcId.BONZO.id(), 15);
+					if (obj.getID() == 351) {
+						if (hasItem(p, ItemId.HEMENSTER_FISHING_TROPHY.id())) {
+							p.message("you have already won the fishing competition");
+							return null;
+						} else if (bonzo != null && !p.getCache().hasKey("paid_contest_fee")) {
+							bonzoDialogue(p, bonzo, false);
+							return null;
+						}
+						if (p.getQuestStage(getQuestId()) > 0 && !p.getCache().hasKey("garlic_activated")) {
+							//cases: not enough level
+							//no bait
+							//else do catch
+							if (p.getSkills().getLevel(Skills.FISHING) < 10) {
+								p.message("You need at least level 10 fishing to lure these fish");
+							} else if (!hasItem(p, ItemId.FISHING_ROD.id())) {
+								// probably non-kosher
+								p.message("I don't have the equipment to catch a fish");
+							} else if (!hasItem(p, ItemId.FISHING_BAIT.id()) && !hasItem(p, ItemId.RED_VINE_WORMS.id())) {
+								p.message("you have no bait to catch fish here");
+							}
+							// fishing using worm gives raw sardine
+							else if (hasItem(p, ItemId.RED_VINE_WORMS.id())) {
+								p.message("You catch a sardine");
+								p.getInventory().add(new Item(ItemId.RAW_SARDINE.id()));
+								p.getInventory().remove(ItemId.RED_VINE_WORMS.id(), 1);
+								addCatchCache(p, ItemId.RAW_SARDINE.id());
+							} else if (hasItem(p, ItemId.FISHING_BAIT.id())) {
+								p.message("You catch some shrimps");
+								p.getInventory().add(new Item(ItemId.RAW_SHRIMP.id()));
+								p.getInventory().remove(ItemId.FISHING_BAIT.id(), 1);
+								addCatchCache(p, ItemId.RAW_SHRIMP.id());
+							}
+
+							if (p.getCache().hasKey("contest_catches")) {
+								int numCatches = p.getCache().getString("contest_catches").split("-").length;
+								if (numCatches > 2 && bonzo != null) {
+									bonzoTimesUpDialogue(p, bonzo);
+								}
+							}
+						} else {
+							npcTalk(p, sinister, "I think you will find that is my spot");
+						}
+					}
+					else if (obj.getID() == 352) {
+						if (hasItem(p, ItemId.HEMENSTER_FISHING_TROPHY.id())) {
+							p.message("you have already won the fishing competition");
+							return null;
+						} else if (bonzo != null && !p.getCache().hasKey("paid_contest_fee")) {
+							bonzoDialogue(p, bonzo, false);
+							return null;
+						}
+						if (p.getQuestStage(getQuestId()) > 0 && p.getCache().hasKey("garlic_activated")) {
+							//cases: not enough level
+							//no rod
+							//no bait
+							//else do catch
+							if (p.getSkills().getLevel(Skills.FISHING) < 10) {
+								p.message("You need at least level 10 fishing to lure these fish");
+							} else if (!hasItem(p, ItemId.FISHING_ROD.id())) {
+								// probably non-kosher
+								p.message("I don't have the equipment to catch a fish");
+							} else if (!hasItem(p, ItemId.FISHING_BAIT.id()) && !hasItem(p, ItemId.RED_VINE_WORMS.id())) {
+								p.message("you have no bait to catch fish here");
+							}
+							// fishing using worm gives raw carp
+							else if (hasItem(p, ItemId.RED_VINE_WORMS.id())) {
+								p.message("You catch a giant carp");
+								p.getInventory().add(new Item(ItemId.RAW_GIANT_CARP.id()));
+								p.getInventory().remove(ItemId.RED_VINE_WORMS.id(), 1);
+								addCatchCache(p, ItemId.RAW_GIANT_CARP.id());
+							} else if (hasItem(p, ItemId.FISHING_BAIT.id())) {
+								p.message("You catch a sardine");
+								p.getInventory().add(new Item(ItemId.RAW_SARDINE.id()));
+								p.getInventory().remove(ItemId.FISHING_BAIT.id(), 1);
+								addCatchCache(p, ItemId.RAW_SARDINE.id());
+							}
+
+							if (p.getCache().hasKey("contest_catches")) {
+								int numCatches = p.getCache().getString("contest_catches").split("-").length;
+								if (numCatches > 2 && bonzo != null) {
+									bonzoTimesUpDialogue(p, bonzo);
+								}
+							}
+						} else {
+							npcTalk(p, sinister, "I think you will find that is my spot");
+							playerTalk(p, sinister, "Can't you go to another spot?");
+							npcTalk(p, sinister, "I like this place",
+								"I like to savour the aroma coming from these pipes");
+						}
+					}
+					else if (obj.getID() == 353) {
+						Npc dave = getNearestNpc(p, NpcId.BIG_DAVE.id(), 10);
+						bigDaveDialogue(p, dave);
+					}
+					else if (obj.getID() == 354) {
+						Npc joshua = getNearestNpc(p, NpcId.JOSHUA.id(), 10);
+						joshuaDialogue(p, joshua);
+					}
+					else if (obj.getID() == 359) {
+						if (p.getQuestStage(getQuestId()) == -1) {
+							p.message("You go down the stairs");
+							if (obj.getX() == 426 && obj.getY() == 458) {
+								p.teleport(426, 3294, false);
+							} else {
+								p.teleport(385, 3301, false);
+							}
+						} else {
+							// from player's position
+							Npc dwarf = getNearestNpc(p, NpcId.MOUNTAIN_DWARF.id(), 25);
+							//final Npc dwarf = getWorld().getNpc(355, 375, 395, 445,
+							//		475);
+							if (dwarf != null) {
+								mountainDwarfDialogue(p, dwarf);
+							}
+						}
+					}
+
+					return null;
+				});
+			}
+		};
+	}
+
+	@Override
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.MOUNTAIN_DWARF.id()) {
+						mountainDwarfDialogue(p, n);
+					}
+					else if (n.getID() == NpcId.BONZO.id()) {
+						bonzoDialogue(p, n, true);
+					}
+					else if (n.getID() == NpcId.SINISTER_STRANGER.id()) {
+						sinisterDialogue(p, n, -1);
+					}
+					else if (n.getID() == NpcId.GRANDPA_JACK.id()) {
+						grandpaJackDialogue(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void sinisterDialogue(final Player p, final Npc n, final int cID) {
@@ -769,12 +790,20 @@ public class FishingContest implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player p, Npc n, Item i) {
-		if (n.getID() == NpcId.SINISTER_STRANGER.id() && i.getID() == ItemId.GARLIC.id()) {
-			npcTalk(p, n, "urrggh get zat horrible ving avay from me",
-				"How do people like to eat that stuff",
-				"I can't stand even to be near it for ten seconds");
-		}
+	public GameStateEvent onInvUseOnNpc(Player p, Npc n, Item i) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.SINISTER_STRANGER.id() && i.getID() == ItemId.GARLIC.id()) {
+						npcTalk(p, n, "urrggh get zat horrible ving avay from me",
+							"How do people like to eat that stuff",
+							"I can't stand even to be near it for ten seconds");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	class SINISTER {

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.misc;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.event.rsc.impl.FireCannonEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -223,27 +224,35 @@ public class Cannon implements ObjectActionListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		if (inArray(obj.getID(), 946, 947, 948, 943) && !obj.getOwner().equals(player.getUsername())) {
-			if (!command.equalsIgnoreCase("fire")) {
-				player.message("you can't pick that up, the owners still around");
-			} else {
-				player.message("you can't fire this cannon...");
-				sleep(1500);
-				player.message("...it doesn't belong to you");
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (inArray(obj.getID(), 946, 947, 948, 943) && !obj.getOwner().equals(player.getUsername())) {
+						if (!command.equalsIgnoreCase("fire")) {
+							player.message("you can't pick that up, the owners still around");
+						} else {
+							player.message("you can't fire this cannon...");
+							sleep(1500);
+							player.message("...it doesn't belong to you");
+						}
+					} else if (!command.equalsIgnoreCase("fire") && player.getFatigue() >= player.MAX_FATIGUE)
+						player.message("you arms are too tired to pick it up");
+					else if (obj.getID() == 946)
+						pickupBase(player, obj);
+					else if (obj.getID() == 947)
+						pickupStand(player, obj);
+					else if (obj.getID() == 948)
+						pickupBarrels(player, obj);
+					else if (obj.getID() == 943 && !command.equalsIgnoreCase("fire"))
+						pickupCannon(player, obj);
+					else if (obj.getID() == 943 && command.equalsIgnoreCase("fire"))
+						handleFire(player);
+
+					return null;
+				});
 			}
-		} else if (!command.equalsIgnoreCase("fire") && player.getFatigue() >= player.MAX_FATIGUE)
-			player.message("you arms are too tired to pick it up");
-		else if (obj.getID() == 946)
-			pickupBase(player, obj);
-		else if (obj.getID() == 947)
-			pickupStand(player, obj);
-		else if (obj.getID() == 948)
-			pickupBarrels(player, obj);
-		else if (obj.getID() == 943 && !command.equalsIgnoreCase("fire"))
-			pickupCannon(player, obj);
-		else if (obj.getID() == 943 && command.equalsIgnoreCase("fire"))
-			handleFire(player);
+		};
 	}
 
 	@Override
@@ -252,10 +261,18 @@ public class Cannon implements ObjectActionListener,
 	}
 
 	@Override
-	public void onInvAction(Item item, Player player, String command) {
-		if (item.getID() == ItemId.DWARF_CANNON_BASE.id()) {
-			handleBase(player, item, command);
-		}
+	public GameStateEvent onInvAction(Item item, Player player, String command) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.DWARF_CANNON_BASE.id()) {
+						handleBase(player, item, command);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -273,30 +290,38 @@ public class Cannon implements ObjectActionListener,
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		if (obj.getID() == 946) {
-			if (!obj.getOwner().equals(p.getUsername())) {
-				p.message("you can only add this stand to your own base");
-				return;
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 946) {
+						if (!obj.getOwner().equals(p.getUsername())) {
+							p.message("you can only add this stand to your own base");
+							return null;
+						}
+						addCannonStand(p, item, obj);
+					}
+					if (obj.getID() == 947) {
+						if (!obj.getOwner().equals(p.getUsername())) {
+							p.message("you can only add the barrels to your own cannon");
+							return null;
+						}
+						addCannonBarrels(p, item, obj);
+					}
+					if (obj.getID() == 948) {
+						if (!obj.getOwner().equals(p.getUsername())) {
+							p.message("you can only add the furnace to your own cannon");
+							return null;
+						}
+						addCannonFurnace(p, item, obj);
+					}
+					if (obj.getID() == 943 && item.getID() == ItemId.MULTI_CANNON_BALL.id()) {
+						p.message("the cannon loads automatically");
+					}
+
+					return null;
+				});
 			}
-			addCannonStand(p, item, obj);
-		}
-		if (obj.getID() == 947) {
-			if (!obj.getOwner().equals(p.getUsername())) {
-				p.message("you can only add the barrels to your own cannon");
-				return;
-			}
-			addCannonBarrels(p, item, obj);
-		}
-		if (obj.getID() == 948) {
-			if (!obj.getOwner().equals(p.getUsername())) {
-				p.message("you can only add the furnace to your own cannon");
-				return;
-			}
-			addCannonFurnace(p, item, obj);
-		}
-		if (obj.getID() == 943 && item.getID() == ItemId.MULTI_CANNON_BALL.id()) {
-			p.message("the cannon loads automatically");
-		}
+		};
 	}
 }

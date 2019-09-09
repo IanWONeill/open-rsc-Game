@@ -20,8 +20,8 @@ public class UndergroundPassWell implements ObjectActionListener, ObjectActionEx
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Underground Pass Well") {
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == WELL) {
@@ -47,6 +47,6 @@ public class UndergroundPassWell implements ObjectActionListener, ObjectActionEx
 					return null;
 				});
 			}
-		});
+		};
 	}
 }

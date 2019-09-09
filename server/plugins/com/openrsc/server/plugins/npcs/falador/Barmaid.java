@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.falador;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -21,39 +22,47 @@ public final class Barmaid implements TalkToNpcExecutiveListener,
 	}
 	
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		if (!p.getCache().hasKey("barcrawl")
-			&& !p.getCache().hasKey("barthree")) {
-			NORMAL_ALES(p, n);
-		} else {
-			int barCrawlOpt = showMenu(p, n, false, //do not send over 
-				"Hi what ales are you serving",
-				"I'm doing Alfred Grimhand's barcrawl");
-			if (barCrawlOpt == 0) {
-				NORMAL_ALES(p, n);
-			} else if (barCrawlOpt == 1) {
-				playerTalk(p, n, "I'm doing Alfred Grimhand's barcrawl");
-				npcTalk(p,
-					n,
-					"Hehe this'll be fun",
-					"You'll be after our off the menu hand of death cocktail then",
-					"Lots of expensive parts to the cocktail though",
-					"So it will cost you 70 coins");
-				if (hasItem(p, ItemId.COINS.id(), 70)) {
-					message(p, "You buy a hand of death cocktail");
-					p.getInventory().remove(ItemId.COINS.id(), 70);
-					message(p, "You drink the cocktail",
-						"You stumble around the room");
-					drinkAle(p);
-					p.damage(p.getRandom().nextInt(2) + 1);
-					message(p, "The barmaid giggles",
-						"The barmaid signs your card");
-					p.getCache().store("barthree", true);
-				} else {
-					playerTalk(p, n, "I don't have that much money on me");
-				}
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (!p.getCache().hasKey("barcrawl")
+						&& !p.getCache().hasKey("barthree")) {
+						NORMAL_ALES(p, n);
+					} else {
+						int barCrawlOpt = showMenu(p, n, false, //do not send over
+							"Hi what ales are you serving",
+							"I'm doing Alfred Grimhand's barcrawl");
+						if (barCrawlOpt == 0) {
+							NORMAL_ALES(p, n);
+						} else if (barCrawlOpt == 1) {
+							playerTalk(p, n, "I'm doing Alfred Grimhand's barcrawl");
+							npcTalk(p,
+								n,
+								"Hehe this'll be fun",
+								"You'll be after our off the menu hand of death cocktail then",
+								"Lots of expensive parts to the cocktail though",
+								"So it will cost you 70 coins");
+							if (hasItem(p, ItemId.COINS.id(), 70)) {
+								message(p, "You buy a hand of death cocktail");
+								p.getInventory().remove(ItemId.COINS.id(), 70);
+								message(p, "You drink the cocktail",
+									"You stumble around the room");
+								drinkAle(p);
+								p.damage(p.getRandom().nextInt(2) + 1);
+								message(p, "The barmaid giggles",
+									"The barmaid signs your card");
+								p.getCache().store("barthree", true);
+							} else {
+								playerTalk(p, n, "I don't have that much money on me");
+							}
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 	
 	private void NORMAL_ALES(Player p, Npc n) {

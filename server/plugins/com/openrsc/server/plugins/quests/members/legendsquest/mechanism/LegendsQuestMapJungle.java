@@ -1,6 +1,8 @@
 package com.openrsc.server.plugins.quests.members.legendsquest.mechanism;
 
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -8,13 +10,7 @@ import com.openrsc.server.plugins.listeners.action.InvActionListener;
 import com.openrsc.server.plugins.listeners.executive.InvActionExecutiveListener;
 import com.openrsc.server.util.rsc.DataConversions;
 
-import static com.openrsc.server.plugins.Functions.getCurrentLevel;
-import static com.openrsc.server.plugins.Functions.hasItem;
-import static com.openrsc.server.plugins.Functions.message;
-import static com.openrsc.server.plugins.Functions.removeItem;
-import static com.openrsc.server.plugins.Functions.showMenu;
-
-import com.openrsc.server.constants.ItemId;
+import static com.openrsc.server.plugins.Functions.*;
 
 public class LegendsQuestMapJungle implements InvActionListener, InvActionExecutiveListener {
 
@@ -44,75 +40,83 @@ public class LegendsQuestMapJungle implements InvActionListener, InvActionExecut
 	}
 
 	@Override
-	public void onInvAction(Item item, Player p, String command) {
-		if (item.getID() == ItemId.RADIMUS_SCROLLS_COMPLETE.id()) {
-			p.message("The map of Kharazi Jungle is complete, Sir Radimus will be pleased.");
-			int menu = showMenu(p, "Read Mission Briefing", "Close");
-			if (menu == 0) {
-				missionBreifing(p);
-			} else if (menu == 1) {
-				p.message("You put the scrolls away.");
-			}
-		}
-		else if (item.getID() == ItemId.RADIMUS_SCROLLS.id()) {
-			boolean canMap = true;
-			p.message("You open and start to read the scrolls that Radimus gave you.");
-			int menu = showMenu(p,
-				"Read Mission Briefing",
-				"Start Mapping Kharazi Jungle.");
-			if (menu == 0) {
-				missionBreifing(p);
-			} else if (menu == 1) {
-				if (!JUNGLE_WEST_AREA(p) && !JUNGLE_MIDDLE_AREA(p) && !JUNGLE_EAST_AREA(p)) {
-					int rnd = DataConversions.random(0, 1);
-					if (rnd == 0) {
-						message(p, 1200, "You're not even in the Kharazi Jungle yet.");
-						message(p, 1200, "You need to get to the Southern end of Karamja ");
-						message(p, 1200, "before you can start mapping.");
+	public GameStateEvent onInvAction(Item item, Player p, String command) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.RADIMUS_SCROLLS_COMPLETE.id()) {
+						p.message("The map of Kharazi Jungle is complete, Sir Radimus will be pleased.");
+						int menu = showMenu(p, "Read Mission Briefing", "Close");
+						if (menu == 0) {
+							missionBreifing(p);
+						} else if (menu == 1) {
+							p.message("You put the scrolls away.");
+						}
 					}
-					else {
-						message(p, 1900, "You prepare to start mapping this area...");
-						message(p, 1200, "This doesn't look like the Kharazi Jungle! ");
-						message(p, 1200, "You need to go to the very southern end of the Island of Karamja !");
+					else if (item.getID() == ItemId.RADIMUS_SCROLLS.id()) {
+						boolean canMap = true;
+						p.message("You open and start to read the scrolls that Radimus gave you.");
+						int menu = showMenu(p,
+							"Read Mission Briefing",
+							"Start Mapping Kharazi Jungle.");
+						if (menu == 0) {
+							missionBreifing(p);
+						} else if (menu == 1) {
+							if (!JUNGLE_WEST_AREA(p) && !JUNGLE_MIDDLE_AREA(p) && !JUNGLE_EAST_AREA(p)) {
+								int rnd = DataConversions.random(0, 1);
+								if (rnd == 0) {
+									message(p, 1200, "You're not even in the Kharazi Jungle yet.");
+									message(p, 1200, "You need to get to the Southern end of Karamja ");
+									message(p, 1200, "before you can start mapping.");
+								}
+								else {
+									message(p, 1900, "You prepare to start mapping this area...");
+									message(p, 1200, "This doesn't look like the Kharazi Jungle! ");
+									message(p, 1200, "You need to go to the very southern end of the Island of Karamja !");
+								}
+								return null;
+							}
+							message(p, 1900, "You prepare to start mapping this area...");
+							if (p.getCache().hasKey("JUNGLE_EAST") && JUNGLE_EAST_AREA(p)) {
+								message(p, 1200, "You have already completed this part of the map.");
+								checkMapComplete(p);
+								return null;
+							}
+							if (p.getCache().hasKey("JUNGLE_MIDDLE") && JUNGLE_MIDDLE_AREA(p)) {
+								message(p, 1200, "You have already completed this part of the map.");
+								checkMapComplete(p);
+								return null;
+							}
+							if (p.getCache().hasKey("JUNGLE_WEST") && JUNGLE_WEST_AREA(p)) {
+								message(p, 1200, "You have already completed this part of the map.");
+								checkMapComplete(p);
+								return null;
+							}
+							if (!hasItem(p, ItemId.PAPYRUS.id()) && !hasItem(p, ItemId.A_LUMP_OF_CHARCOAL.id())) { // no charcoal or papyrus
+								message(p, 1200, "You'll need some papyrus and charcoal to complete this map.");
+								canMap = false;
+							} else if (hasItem(p, ItemId.PAPYRUS.id()) && !hasItem(p, ItemId.A_LUMP_OF_CHARCOAL.id())) { // has papyrus but no charcoal
+								message(p, 1200, "You'll need some charcoal to complete this map.");
+								canMap = false;
+							} else if (!hasItem(p, ItemId.PAPYRUS.id()) && hasItem(p, ItemId.A_LUMP_OF_CHARCOAL.id())) { // has charcoal but no papyrus
+								message(p, 1200, "You'll need some additional Papyrus to complete this map.");
+								canMap = false;
+							}
+							//potentially this check was done earlier?
+							if (getCurrentLevel(p, Skills.CRAFTING) < 50) {
+								p.message("You need a crafting level of 50 to perform this task.");
+								return null;
+							}
+							if (canMap) {
+								mapArea(p);
+							}
+						}
 					}
-					return;
-				}
-				message(p, 1900, "You prepare to start mapping this area...");
-				if (p.getCache().hasKey("JUNGLE_EAST") && JUNGLE_EAST_AREA(p)) {
-					message(p, 1200, "You have already completed this part of the map.");
-					checkMapComplete(p);
-					return;
-				}
-				if (p.getCache().hasKey("JUNGLE_MIDDLE") && JUNGLE_MIDDLE_AREA(p)) {
-					message(p, 1200, "You have already completed this part of the map.");
-					checkMapComplete(p);
-					return;
-				}
-				if (p.getCache().hasKey("JUNGLE_WEST") && JUNGLE_WEST_AREA(p)) {
-					message(p, 1200, "You have already completed this part of the map.");
-					checkMapComplete(p);
-					return;
-				}
-				if (!hasItem(p, ItemId.PAPYRUS.id()) && !hasItem(p, ItemId.A_LUMP_OF_CHARCOAL.id())) { // no charcoal or papyrus
-					message(p, 1200, "You'll need some papyrus and charcoal to complete this map.");
-					canMap = false;
-				} else if (hasItem(p, ItemId.PAPYRUS.id()) && !hasItem(p, ItemId.A_LUMP_OF_CHARCOAL.id())) { // has papyrus but no charcoal
-					message(p, 1200, "You'll need some charcoal to complete this map.");
-					canMap = false;
-				} else if (!hasItem(p, ItemId.PAPYRUS.id()) && hasItem(p, ItemId.A_LUMP_OF_CHARCOAL.id())) { // has charcoal but no papyrus
-					message(p, 1200, "You'll need some additional Papyrus to complete this map.");
-					canMap = false;
-				}
-				//potentially this check was done earlier?
-				if (getCurrentLevel(p, Skills.CRAFTING) < 50) {
-					p.message("You need a crafting level of 50 to perform this task.");
-					return;
-				}
-				if (canMap) {
-					mapArea(p);
-				}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void missionBreifing(Player p) {

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.portsarim;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -39,20 +40,27 @@ public final class BettysMagicEmporium implements
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		if (n.getID() == NpcId.BETTY.id()) {
-			npcTalk(p, n, "Welcome to the magic emporium");
-			int opt = showMenu(p, n, "Can I see your wares?",
-				"Sorry I'm not into magic");
-			if (opt == 0) {
-				npcTalk(p, n, "Yes");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-			}
-			if (opt == 1) {
-				npcTalk(p, n, "Send anyone my way who is");
-			}
-		}
-	}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.BETTY.id()) {
+						npcTalk(p, n, "Welcome to the magic emporium");
+						int opt = showMenu(p, n, "Can I see your wares?",
+							"Sorry I'm not into magic");
+						if (opt == 0) {
+							npcTalk(p, n, "Yes");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						}
+						if (opt == 1) {
+							npcTalk(p, n, "Send anyone my way who is");
+						}
+					}
 
+					return null;
+				});
+			}
+		};
+	}
 }

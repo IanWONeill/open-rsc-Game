@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.skills;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.custom.BatchEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
 import com.openrsc.server.model.container.Item;
@@ -38,11 +39,19 @@ public class Fishing implements ObjectActionListener, ObjectActionExecutiveListe
 	}
 
 	@Override
-	public void onObjectAction(final GameObject object, String command, Player player) {
-		if (command.equals("lure") || command.equals("bait") || command.equals("net") || command.equals("harpoon")
-			|| command.equals("cage")) {
-			handleFishing(object, player, player.click, command);
-		}
+	public GameStateEvent onObjectAction(final GameObject object, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (command.equals("lure") || command.equals("bait") || command.equals("net") || command.equals("harpoon")
+						|| command.equals("cage")) {
+						handleFishing(object, player, player.click, command);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void handleFishing(final GameObject object, Player player, final int click, final String command) {

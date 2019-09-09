@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.SingleEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -27,22 +28,30 @@ public class LegendsQuestBullRoarer implements InvActionListener, InvActionExecu
 	}
 
 	@Override
-	public void onInvAction(Item item, Player p, String command) {
-		if (item.getID() == ItemId.BULL_ROARER.id()) {
-			message(p, 1300, "You start to swing the bullroarer above your head.",
-				"You feel a bit silly at first, but soon it makes an interesting sound.");
-			if (inKharaziJungle(p)) {
-				message(p, 1300, "You see some movement in the trees...");
-				attractNatives(p);
-			} else {
-				message(p, 1300, "Nothing much seems to happen though.");
-				Npc forester = getNearestNpc(p, NpcId.JUNGLE_FORESTER.id(), 10);
-				if (forester != null) {
-					npcTalk(p, forester, "You might like to use that when you get into the ",
-						"Kharazi jungle, it might attract more natives...");
-				}
+	public GameStateEvent onInvAction(Item item, Player p, String command) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.BULL_ROARER.id()) {
+						message(p, 1300, "You start to swing the bullroarer above your head.",
+							"You feel a bit silly at first, but soon it makes an interesting sound.");
+						if (inKharaziJungle(p)) {
+							message(p, 1300, "You see some movement in the trees...");
+							attractNatives(p);
+						} else {
+							message(p, 1300, "Nothing much seems to happen though.");
+							Npc forester = getNearestNpc(p, NpcId.JUNGLE_FORESTER.id(), 10);
+							if (forester != null) {
+								npcTalk(p, forester, "You might like to use that when you get into the ",
+									"Kharazi jungle, it might attract more natives...");
+							}
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void attractNatives(Player p) {

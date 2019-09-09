@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.varrock;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -36,13 +37,21 @@ public final class ZaffsStaffs implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Would you like to buy or sell some staffs?");
-		int option = showMenu(p, n, "Yes please", "No, thank you");
-		if (option == 0) {
-			p.setAccessingShop(getShop(p.getWorld()));
-			ActionSender.showShop(p, getShop(p.getWorld()));
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Would you like to buy or sell some staffs?");
+					int option = showMenu(p, n, "Yes please", "No, thank you");
+					if (option == 0) {
+						p.setAccessingShop(getShop(p.getWorld()));
+						ActionSender.showShop(p, getShop(p.getWorld()));
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	public Shop getShop(World world) {

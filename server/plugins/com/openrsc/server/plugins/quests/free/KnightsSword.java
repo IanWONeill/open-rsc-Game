@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.free;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -52,14 +53,22 @@ public class KnightsSword implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.THURGO.id()) {
-			dwarfDialogue(p, n);
-		} else if (n.getID() == NpcId.SQUIRE.id()) {
-			squireDialogue(p, n, -1);
-		} else if (n.getID() == NpcId.SIR_VYVIN.id()) {
-			vyvinDialogue(p, n);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.THURGO.id()) {
+						dwarfDialogue(p, n);
+					} else if (n.getID() == NpcId.SQUIRE.id()) {
+						squireDialogue(p, n, -1);
+					} else if (n.getID() == NpcId.SIR_VYVIN.id()) {
+						vyvinDialogue(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void vyvinDialogue(final Player p, final Npc n) {
@@ -385,34 +394,43 @@ public class KnightsSword implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		final Npc n = p.getWorld().getNpc(138, 316, 320, 2454, 2459);
-		if ((obj.getID() == VYVINS_CUPBOARD_OPEN || obj.getID() == VYVINS_CUPBOARD_CLOSED) && obj.getY() == CUPBOARD_Y
-			&& obj.getX() == 318) {
-			if (command.equalsIgnoreCase("open")) {
-				openCupboard(obj, p, VYVINS_CUPBOARD_OPEN);
-			} else if (command.equalsIgnoreCase("close")) {
-				closeCupboard(obj, p, VYVINS_CUPBOARD_CLOSED);
-			} else {
-				if (n != null) {
-					if (!n.isBusy()) {
-						n.face(p);
-						p.face(n);
-						npcTalk(p, n, "Hey what are you doing?",
-							"That's my cupboard");
-						message(p,
-							"Maybe you need to get someone to distract Sir Vyvin for you");
-					} else {
-						if (hasItem(p, ItemId.PORTRAIT.id()) || p.getQuestStage(this) < 4) {
-							p.message("There is just a load of junk in here");
-							return;
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					final Npc n = p.getWorld().getNpc(138, 316, 320, 2454, 2459);
+					if ((obj.getID() == VYVINS_CUPBOARD_OPEN || obj.getID() == VYVINS_CUPBOARD_CLOSED) && obj.getY() == CUPBOARD_Y
+						&& obj.getX() == 318) {
+						if (command.equalsIgnoreCase("open")) {
+							openCupboard(obj, p, VYVINS_CUPBOARD_OPEN);
+						} else if (command.equalsIgnoreCase("close")) {
+							closeCupboard(obj, p, VYVINS_CUPBOARD_CLOSED);
+						} else {
+							if (n != null) {
+								if (!n.isBusy()) {
+									n.face(p);
+									p.face(n);
+									npcTalk(p, n, "Hey what are you doing?",
+										"That's my cupboard");
+									message(p,
+										"Maybe you need to get someone to distract Sir Vyvin for you");
+								} else {
+									if (hasItem(p, ItemId.PORTRAIT.id()) || p.getQuestStage(quest) < 4) {
+										p.message("There is just a load of junk in here");
+										return null;
+									}
+									p.message("You find a small portrait in here which you take");
+									addItem(p, ItemId.PORTRAIT.id(), 1);
+								}
+							}
 						}
-						p.message("You find a small portrait in here which you take");
-						addItem(p, ItemId.PORTRAIT.id(), 1);
 					}
-				}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	class Squire {

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.falador;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -13,6 +14,7 @@ import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
 
 import static com.openrsc.server.plugins.Functions.*;
+import static com.openrsc.server.plugins.Functions.playerTalk;
 
 public final class WaynesChains implements ShopInterface,
 	TalkToNpcExecutiveListener, TalkToNpcListener {
@@ -37,21 +39,28 @@ public final class WaynesChains implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		if (n.getID() == NpcId.WAYNE.id()) {
-			npcTalk(p, n, "Welcome to Wayne's chains",
-				"Do you wanna buy or sell some chain mail?");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.WAYNE.id()) {
+						npcTalk(p, n, "Welcome to Wayne's chains",
+							"Do you wanna buy or sell some chain mail?");
 
-			int option = showMenu(p, n, false, //do not send over
-				"Yes please", "No thanks");
-			if (option == 0) {
-				playerTalk(p, n, "Yes Please");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-			} else if (option == 1) {
-				playerTalk(p, n, "No thanks");
+						int option = showMenu(p, n, false, //do not send over
+							"Yes please", "No thanks");
+						if (option == 0) {
+							playerTalk(p, n, "Yes Please");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						} else if (option == 1) {
+							playerTalk(p, n, "No thanks");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
-
 }

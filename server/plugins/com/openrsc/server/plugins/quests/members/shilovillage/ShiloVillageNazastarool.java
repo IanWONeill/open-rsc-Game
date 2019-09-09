@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.members.shilovillage;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -29,60 +30,68 @@ public class ShiloVillageNazastarool implements ObjectActionListener, ObjectActi
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == TOMB_DOLMEN_Nazastarool) {
-			if (p.getCache().hasKey("dolmen_zombie")
-				&& p.getCache().hasKey("dolmen_skeleton")
-				&& p.getCache().hasKey("dolmen_ghost")) {
-				if (!p.getInventory().wielding(ItemId.BEADS_OF_THE_DEAD.id())) {
-					choke(p);
-				}
-				if (hasItem(p, ItemId.RASHILIYA_CORPSE.id())) {
-					p.message("You find nothing new on the Dolmen.");
-					return;
-				}
-				message(p, "You search the Dolmen...",
-					"and find the mumified remains of a human female corpse.");
-				p.message("Do you want to take the corpse?");
-				int menu = showMenu(p, "Yes, I'll take the remains.", "No, I'll leave them where they are.");
-				if (menu == 0) {
-					p.message("You carefully place the remains in your inventory.");
-					addItem(p, ItemId.RASHILIYA_CORPSE.id(), 1);
-				} else if (menu == 1) {
-					p.message("You decide to leave the remains where they are.");
-				}
-				return;
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == TOMB_DOLMEN_Nazastarool) {
+						if (p.getCache().hasKey("dolmen_zombie")
+							&& p.getCache().hasKey("dolmen_skeleton")
+							&& p.getCache().hasKey("dolmen_ghost")) {
+							if (!p.getInventory().wielding(ItemId.BEADS_OF_THE_DEAD.id())) {
+								choke(p);
+							}
+							if (hasItem(p, ItemId.RASHILIYA_CORPSE.id())) {
+								p.message("You find nothing new on the Dolmen.");
+								return null;
+							}
+							message(p, "You search the Dolmen...",
+								"and find the mumified remains of a human female corpse.");
+							p.message("Do you want to take the corpse?");
+							int menu = showMenu(p, "Yes, I'll take the remains.", "No, I'll leave them where they are.");
+							if (menu == 0) {
+								p.message("You carefully place the remains in your inventory.");
+								addItem(p, ItemId.RASHILIYA_CORPSE.id(), 1);
+							} else if (menu == 1) {
+								p.message("You decide to leave the remains where they are.");
+							}
+							return null;
+						}
+						p.setBusy(true);
+						if (!p.getInventory().wielding(ItemId.BEADS_OF_THE_DEAD.id())) {
+							choke(p);
+						}
+						p.message("You touch the Dolmen, and the ground starts to shake.");
+						sleep(1200);
+						p.message("You hear an unearthly voice booming and ");
+						sleep(1200);
+						p.message("you step away from the Dolmen in anticipation...");
+						sleep(1000);
+						p.teleport(380, 3625);
+						if (!p.getInventory().wielding(ItemId.BEADS_OF_THE_DEAD.id())) {
+							choke(p);
+						}
+						if (!p.getCache().hasKey("dolmen_zombie")) {
+							spawnAndMoveAway(p, NpcId.NAZASTAROOL_ZOMBIE.id());
+							p.setBusy(false);
+							return null;
+						}
+						if (!p.getCache().hasKey("dolmen_skeleton")) {
+							spawnAndMoveAway(p, NpcId.NAZASTAROOL_SKELETON.id());
+							p.setBusy(false);
+							return null;
+						}
+						if (!p.getCache().hasKey("dolmen_ghost")) {
+							spawnAndMoveAway(p, NpcId.NAZASTAROOL_GHOST.id());
+							p.setBusy(false);
+							return null;
+						}
+					}
+
+					return null;
+				});
 			}
-			p.setBusy(true);
-			if (!p.getInventory().wielding(ItemId.BEADS_OF_THE_DEAD.id())) {
-				choke(p);
-			}
-			p.message("You touch the Dolmen, and the ground starts to shake.");
-			sleep(1200);
-			p.message("You hear an unearthly voice booming and ");
-			sleep(1200);
-			p.message("you step away from the Dolmen in anticipation...");
-			sleep(1000);
-			p.teleport(380, 3625);
-			if (!p.getInventory().wielding(ItemId.BEADS_OF_THE_DEAD.id())) {
-				choke(p);
-			}
-			if (!p.getCache().hasKey("dolmen_zombie")) {
-				spawnAndMoveAway(p, NpcId.NAZASTAROOL_ZOMBIE.id());
-				p.setBusy(false);
-				return;
-			}
-			if (!p.getCache().hasKey("dolmen_skeleton")) {
-				spawnAndMoveAway(p, NpcId.NAZASTAROOL_SKELETON.id());
-				p.setBusy(false);
-				return;
-			}
-			if (!p.getCache().hasKey("dolmen_ghost")) {
-				spawnAndMoveAway(p, NpcId.NAZASTAROOL_GHOST.id());
-				p.setBusy(false);
-				return;
-			}
-		}
+		};
 	}
 
 	private void choke(Player p) {
@@ -145,50 +154,58 @@ public class ShiloVillageNazastarool implements ObjectActionListener, ObjectActi
 	}
 
 	@Override
-	public void onPlayerKilledNpc(Player p, Npc n) {
-		if (n.getID() ==  NpcId.NAZASTAROOL_ZOMBIE.id()) {
-			n.remove();
-			p.setBusy(true);
-			if (!p.getCache().hasKey("dolmen_zombie")) {
-				p.getCache().store("dolmen_zombie", true);
+	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() ==  NpcId.NAZASTAROOL_ZOMBIE.id()) {
+						n.remove();
+						p.setBusy(true);
+						if (!p.getCache().hasKey("dolmen_zombie")) {
+							p.getCache().store("dolmen_zombie", true);
+						}
+						p.message("You defeat Nazastarool and the corpse falls to  ");
+						sleep(1200);
+						p.message("the ground. The bones start to move again and   ");
+						sleep(1200);
+						p.message("soon they reform into a grisly giant skeleton.  ");
+						sleep(1000);
+						spawnAndMoveAway(p, NpcId.NAZASTAROOL_SKELETON.id());
+						p.setBusy(false);
+					}
+					if (n.getID() == NpcId.NAZASTAROOL_SKELETON.id()) {
+						n.remove();
+						p.setBusy(true);
+						if (!p.getCache().hasKey("dolmen_skeleton")) {
+							p.getCache().store("dolmen_skeleton", true);
+						}
+						p.message("You defeat the Nazastarool Skeleton as the corpse falls to ");
+						sleep(1200);
+						p.message("the ground. An ethereal form starts taking shape above the ");
+						sleep(1200);
+						p.message("bones and you soon face the vengeful ghost of Nazastarool ");
+						sleep(1000);
+						spawnAndMoveAway(p, NpcId.NAZASTAROOL_GHOST.id());
+						p.setBusy(false);
+					}
+					if (n.getID() == NpcId.NAZASTAROOL_GHOST.id()) {
+						n.remove();
+						p.setBusy(true);
+						if (!p.getCache().hasKey("dolmen_ghost")) {
+							p.getCache().store("dolmen_ghost", true);
+						}
+						p.message("@yel@Nazastarool: May you perish in the fires of Zamoraks furnace!");
+						sleep(1200);
+						p.message("@yel@Nazastarool: May Rashiliyias Curse be upon you!");
+						sleep(1200);
+						p.message("You see something appear on the Dolmen");
+						p.setBusy(false);
+					}
+
+					return null;
+				});
 			}
-			p.message("You defeat Nazastarool and the corpse falls to  ");
-			sleep(1200);
-			p.message("the ground. The bones start to move again and   ");
-			sleep(1200);
-			p.message("soon they reform into a grisly giant skeleton.  ");
-			sleep(1000);
-			spawnAndMoveAway(p, NpcId.NAZASTAROOL_SKELETON.id());
-			p.setBusy(false);
-		}
-		if (n.getID() == NpcId.NAZASTAROOL_SKELETON.id()) {
-			n.remove();
-			p.setBusy(true);
-			if (!p.getCache().hasKey("dolmen_skeleton")) {
-				p.getCache().store("dolmen_skeleton", true);
-			}
-			p.message("You defeat the Nazastarool Skeleton as the corpse falls to ");
-			sleep(1200);
-			p.message("the ground. An ethereal form starts taking shape above the ");
-			sleep(1200);
-			p.message("bones and you soon face the vengeful ghost of Nazastarool ");
-			sleep(1000);
-			spawnAndMoveAway(p, NpcId.NAZASTAROOL_GHOST.id());
-			p.setBusy(false);
-		}
-		if (n.getID() == NpcId.NAZASTAROOL_GHOST.id()) {
-			n.remove();
-			p.setBusy(true);
-			if (!p.getCache().hasKey("dolmen_ghost")) {
-				p.getCache().store("dolmen_ghost", true);
-			}
-			p.message("@yel@Nazastarool: May you perish in the fires of Zamoraks furnace!");
-			sleep(1200);
-			p.message("@yel@Nazastarool: May Rashiliyias Curse be upon you!");
-			sleep(1200);
-			p.message("You see something appear on the Dolmen");
-			p.setBusy(false);
-		}
+		};
 	}
 
 	@Override
@@ -197,10 +214,18 @@ public class ShiloVillageNazastarool implements ObjectActionListener, ObjectActi
 	}
 
 	@Override
-	public void onPlayerNpcRun(Player p, Npc n) {
-		if (n.getID() == NpcId.NAZASTAROOL_ZOMBIE.id() || n.getID() == NpcId.NAZASTAROOL_SKELETON.id() || n.getID() == NpcId.NAZASTAROOL_GHOST.id()) {
-			runFromNazastarool(p, n);
-		}
+	public GameStateEvent onPlayerNpcRun(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.NAZASTAROOL_ZOMBIE.id() || n.getID() == NpcId.NAZASTAROOL_SKELETON.id() || n.getID() == NpcId.NAZASTAROOL_GHOST.id()) {
+						runFromNazastarool(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -209,12 +234,20 @@ public class ShiloVillageNazastarool implements ObjectActionListener, ObjectActi
 	}
 
 	@Override
-	public void onPlayerMageNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.NAZASTAROOL_ZOMBIE.id() || n.getID() == NpcId.NAZASTAROOL_SKELETON.id() || n.getID() == NpcId.NAZASTAROOL_GHOST.id()) {
-			if (!p.getInventory().wielding(ItemId.BEADS_OF_THE_DEAD.id())) {
-				choke(p);
+	public GameStateEvent onPlayerMageNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.NAZASTAROOL_ZOMBIE.id() || n.getID() == NpcId.NAZASTAROOL_SKELETON.id() || n.getID() == NpcId.NAZASTAROOL_GHOST.id()) {
+						if (!p.getInventory().wielding(ItemId.BEADS_OF_THE_DEAD.id())) {
+							choke(p);
+						}
+						n.getSkills().setLevel(Skills.HITS, n.getSkills().getMaxStat(Skills.HITS));
+					}
+
+					return null;
+				});
 			}
-			n.getSkills().setLevel(Skills.HITS, n.getSkills().getMaxStat(Skills.HITS));
-		}
+		};
 	}
 }

@@ -1,8 +1,9 @@
 package com.openrsc.server.plugins.npcs.portsarim;
 
-import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -18,25 +19,33 @@ public final class PortSarimSailor implements ObjectActionExecutiveListener, Obj
 	TalkToNpcListener {
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Do you want to go on a trip to Karamja?",
-			"The trip will cost you 30 gold");
-		String[] menu = new String[]{
-			"I'd rather go to Crandor Isle",
-			"Yes please", "No thankyou"
-		};
-		if (p.getQuestStage(Quests.DRAGON_SLAYER) == -1 || p.getCache().hasKey("ned_hired")) {
-			menu = new String[]{ // Crandor option is not needed.
-				"Yes please", "No thankyou"
-			};
-			int choice = showMenu(p, n, menu);
-			if (choice >= 0) {
-				travel(p, n, choice + 1);
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Do you want to go on a trip to Karamja?",
+						"The trip will cost you 30 gold");
+					String[] menu = new String[]{
+						"I'd rather go to Crandor Isle",
+						"Yes please", "No thankyou"
+					};
+					if (p.getQuestStage(Quests.DRAGON_SLAYER) == -1 || p.getCache().hasKey("ned_hired")) {
+						menu = new String[]{ // Crandor option is not needed.
+							"Yes please", "No thankyou"
+						};
+						int choice = showMenu(p, n, menu);
+						if (choice >= 0) {
+							travel(p, n, choice + 1);
+						}
+					} else {
+						int choice = showMenu(p, n, menu);
+						travel(p, n, choice);
+					}
+
+					return null;
+				});
 			}
-		} else {
-			int choice = showMenu(p, n, menu);
-			travel(p, n, choice);
-		}
+		};
 	}
 
 	public void travel(final Player p, final Npc n, int option) {
@@ -62,14 +71,20 @@ public final class PortSarimSailor implements ObjectActionExecutiveListener, Obj
 	}
 
 	@Override
-	public void onObjectAction(GameObject arg0, String arg1, Player p) {
-		Npc sailor = getNearestNpc(p, NpcId.CAPTAIN_TOBIAS.id(), 5);
-		if (sailor != null) {
-			sailor.initializeTalkScript(p);
-		} else {
-			p.message("I need to speak to the captain before boarding the ship.");
-		}
+	public GameStateEvent onObjectAction(GameObject arg0, String arg1, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {		Npc sailor = getNearestNpc(p, NpcId.CAPTAIN_TOBIAS.id(), 5);
+					if (sailor != null) {
+						sailor.initializeTalkScript(p);
+					} else {
+						p.message("I need to speak to the captain before boarding the ship.");
+					}
 
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

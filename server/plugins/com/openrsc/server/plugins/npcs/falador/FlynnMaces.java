@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.falador;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -37,19 +38,25 @@ public final class FlynnMaces implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Hello do you want to buy or sell any maces?");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Hello do you want to buy or sell any maces?");
 
-		int opt = showMenu(p, n, false, //do not send over
-			"No thanks", "Well I'll have a look anyway");
-		if (opt == 0) {
-			playerTalk(p, n, "no thanks");
-		} else if (opt == 1) {
-			playerTalk(p, n, "Well I'll have a look anyway");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		}
+					int opt = showMenu(p, n, false, //do not send over
+						"No thanks", "Well I'll have a look anyway");
+					if (opt == 0) {
+						playerTalk(p, n, "no thanks");
+					} else if (opt == 1) {
+						playerTalk(p, n, "Well I'll have a look anyway");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					}
 
+					return null;
+				});
+			}
+		};
 	}
-
 }

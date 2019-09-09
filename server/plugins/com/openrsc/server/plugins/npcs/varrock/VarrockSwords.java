@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.varrock;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -43,25 +44,32 @@ public final class VarrockSwords implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		if (n.getID() == NpcId.SHOPKEEPER_VARROCK_SWORD.id() || n.getID() == NpcId.SHOP_ASSISTANT_VARROCK_SWORD.id()
-			&& p.getLocation().inBounds(133, 522, 138, 527)) {
-			npcTalk(p, n, "Hello bold adventurer",
-				"Can I interest you in some swords?");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.SHOPKEEPER_VARROCK_SWORD.id() || n.getID() == NpcId.SHOP_ASSISTANT_VARROCK_SWORD.id()
+						&& p.getLocation().inBounds(133, 522, 138, 527)) {
+						npcTalk(p, n, "Hello bold adventurer",
+							"Can I interest you in some swords?");
 
-			final String[] options = new String[]{"Yes please",
-				"No, I'm OK for swords right now"};
-			int option = showMenu(p, n, options);
-			switch (option) {
-				case 0:
-					p.setAccessingShop(shop);
-					ActionSender.showShop(p, shop);
-					break;
-				case 1:
-					npcTalk(p, n, "Come back if you need any");
-					break;
+						final String[] options = new String[]{"Yes please",
+							"No, I'm OK for swords right now"};
+						int option = showMenu(p, n, options);
+						switch (option) {
+							case 0:
+								p.setAccessingShop(shop);
+								ActionSender.showShop(p, shop);
+								break;
+							case 1:
+								npcTalk(p, n, "Come back if you need any");
+								break;
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
-
 }

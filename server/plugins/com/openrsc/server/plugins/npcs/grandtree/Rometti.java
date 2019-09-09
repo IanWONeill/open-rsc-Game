@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.grandtree;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -27,26 +28,34 @@ public final class Rometti implements ShopInterface,
 		new Item(ItemId.BOOTS_CREAM.id(), 5), new Item(ItemId.BOOTS_BLUE.id(), 5));
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		playerTalk(p, n, "hello");
-		npcTalk(p, n, "hello traveller",
-			"have a look at my latest range of gnome fashion",
-			"rometti is the ultimate label in gnome high society");
-		playerTalk(p, n, "really");
-		npcTalk(p, n, "pastels are all the rage this season");
-		int option = showMenu(p, n, false, //do not send over
-			"i've no time for fashion", "ok then let's have a look");
-		switch (option) {
-			case 0:
-				playerTalk(p, n, "i've no time for fashion");
-				npcTalk(p, n, "hmm...i did wonder");
-				break;
-			case 1:
-				playerTalk(p, n, "ok then, let's have a look");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-				break;
-		}
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					playerTalk(p, n, "hello");
+					npcTalk(p, n, "hello traveller",
+						"have a look at my latest range of gnome fashion",
+						"rometti is the ultimate label in gnome high society");
+					playerTalk(p, n, "really");
+					npcTalk(p, n, "pastels are all the rage this season");
+					int option = showMenu(p, n, false, //do not send over
+						"i've no time for fashion", "ok then let's have a look");
+					switch (option) {
+						case 0:
+							playerTalk(p, n, "i've no time for fashion");
+							npcTalk(p, n, "hmm...i did wonder");
+							break;
+						case 1:
+							playerTalk(p, n, "ok then, let's have a look");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+							break;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

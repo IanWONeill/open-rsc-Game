@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.minigames.kittencare;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Minigames;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -47,15 +48,23 @@ InvActionListener, InvActionExecutiveListener, InvUseOnItemListener, InvUseOnIte
 	}
 
 	@Override
-	public void onDrop(Player p, Item i) {
-		if (i.getID() == ItemId.KITTEN.id()) {
-			removeItem(p, ItemId.KITTEN.id(), 1);
-			message(p, 1200, "you drop the kitten");
-			message(p, 0, "it's upset and runs away");
-		}
-		
-		KittenState state = new KittenState();
-		state.saveState(p);
+	public GameStateEvent onDrop(Player p, Item i) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (i.getID() == ItemId.KITTEN.id()) {
+						removeItem(p, ItemId.KITTEN.id(), 1);
+						message(p, 1200, "you drop the kitten");
+						message(p, 0, "it's upset and runs away");
+					}
+
+					KittenState state = new KittenState();
+					state.saveState(p);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -64,14 +73,22 @@ InvActionListener, InvActionExecutiveListener, InvUseOnItemListener, InvUseOnIte
 	}
 
 	@Override
-	public void onInvAction(Item item, Player p, String command) {
-		if (item.getID() == ItemId.KITTEN.id()) {
-			message(p, "you softly stroke the kitten",
-				"@yel@kitten:..purr..purr..");
-			message(p, 600, "the kitten appreciates the attention");
-			
-			reduceKittensLoneliness(p);
-		}
+	public GameStateEvent onInvAction(Item item, Player p, String command) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.KITTEN.id()) {
+						message(p, "you softly stroke the kitten",
+							"@yel@kitten:..purr..purr..");
+						message(p, 600, "the kitten appreciates the attention");
+
+						reduceKittensLoneliness(p);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 	
 	public void entertainCat(Item item, Player p, boolean isGrown) {
@@ -157,64 +174,72 @@ InvActionListener, InvActionExecutiveListener, InvUseOnItemListener, InvUseOnIte
 	}
 
 	@Override
-	public void onCatGrowth(Player p) {
-		if (p.getInventory().hasItemId(ItemId.KITTEN.id())) {
-			// no events in memory, check in cache
-			KittenState state = new KittenState();
-			state.loadState(p);
-			int kittenHunger = state.getHunger();
-			int kittenLoneliness = state.getLoneliness();
-			int kittenEvents = state.getEvents();
-			
-			int changeHunger = DataConversions.random(4, 6);
-			int changeLoneliness = DataConversions.random(4, 6);
-			
-			// trigger only if the gauges have passed to the next tenth digit
-			boolean tHunger = ((kittenHunger + changeHunger) / BASE_FACTOR) - (kittenHunger / BASE_FACTOR) > 0;
-			boolean tLoneliness = ((kittenLoneliness + changeLoneliness) / BASE_FACTOR) - (kittenLoneliness / BASE_FACTOR) > 0;
-			
-			kittenHunger += changeHunger;
-			kittenLoneliness += changeLoneliness;
-			
-			List<String> messages = new ArrayList<String>();
-			// hungry and lonely
-			if (tHunger && tLoneliness) {
-				messages = KittenMessageSolver.messagesCombined(kittenHunger, kittenLoneliness);
-				kittenEvents++;
+	public GameStateEvent onCatGrowth(Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (p.getInventory().hasItemId(ItemId.KITTEN.id())) {
+						// no events in memory, check in cache
+						KittenState state = new KittenState();
+						state.loadState(p);
+						int kittenHunger = state.getHunger();
+						int kittenLoneliness = state.getLoneliness();
+						int kittenEvents = state.getEvents();
+
+						int changeHunger = DataConversions.random(4, 6);
+						int changeLoneliness = DataConversions.random(4, 6);
+
+						// trigger only if the gauges have passed to the next tenth digit
+						boolean tHunger = ((kittenHunger + changeHunger) / BASE_FACTOR) - (kittenHunger / BASE_FACTOR) > 0;
+						boolean tLoneliness = ((kittenLoneliness + changeLoneliness) / BASE_FACTOR) - (kittenLoneliness / BASE_FACTOR) > 0;
+
+						kittenHunger += changeHunger;
+						kittenLoneliness += changeLoneliness;
+
+						List<String> messages = new ArrayList<String>();
+						// hungry and lonely
+						if (tHunger && tLoneliness) {
+							messages = KittenMessageSolver.messagesCombined(kittenHunger, kittenLoneliness);
+							kittenEvents++;
+						}
+						// just hungry
+						else if (tHunger) {
+							messages = KittenMessageSolver.messagesHunger(kittenHunger);
+							kittenEvents++;
+						}
+						// just lonely
+						else if (tLoneliness) {
+							messages = KittenMessageSolver.messagesLoneliness(kittenLoneliness);
+							kittenEvents++;
+						}
+
+						for (String message : messages) {
+							p.message(message);
+						}
+
+						// kitten runs off - reset counters
+						if (kittenHunger >= 4*BASE_FACTOR || kittenLoneliness >= 4*BASE_FACTOR) {
+							p.getInventory().remove(ItemId.KITTEN.id(), 1);
+							kittenEvents = kittenHunger = kittenLoneliness = 0;
+						}
+						// kitten grows to cat - replace and reset counters
+						else if (kittenEvents >= 32) {
+							p.getInventory().replace(ItemId.KITTEN.id(), ItemId.CAT.id());
+							kittenEvents = kittenHunger = kittenLoneliness = 0;
+							message(p, 1200, "you're kitten has grown into a healthy cat",
+								"it can hunt for its self now");
+						}
+
+						state.setEvents(kittenEvents);
+						state.setHunger(kittenHunger);
+						state.setLoneliness(kittenLoneliness);
+						state.saveState(p);
+					}
+
+					return null;
+				});
 			}
-			// just hungry
-			else if (tHunger) {
-				messages = KittenMessageSolver.messagesHunger(kittenHunger);
-				kittenEvents++;
-			}
-			// just lonely
-			else if (tLoneliness) {
-				messages = KittenMessageSolver.messagesLoneliness(kittenLoneliness);
-				kittenEvents++;
-			}
-			
-			for (String message : messages) {
-				p.message(message);
-			}
-			
-			// kitten runs off - reset counters
-			if (kittenHunger >= 4*BASE_FACTOR || kittenLoneliness >= 4*BASE_FACTOR) {
-				p.getInventory().remove(ItemId.KITTEN.id(), 1);
-				kittenEvents = kittenHunger = kittenLoneliness = 0;
-			}
-			// kitten grows to cat - replace and reset counters
-			else if (kittenEvents >= 32) {
-				p.getInventory().replace(ItemId.KITTEN.id(), ItemId.CAT.id());
-				kittenEvents = kittenHunger = kittenLoneliness = 0;
-				message(p, 1200, "you're kitten has grown into a healthy cat",
-						"it can hunt for its self now");
-			}
-			
-			state.setEvents(kittenEvents);
-			state.setHunger(kittenHunger);
-			state.setLoneliness(kittenLoneliness);
-			state.saveState(p);
-		}
+		};
 	}
 
 	@Override
@@ -223,21 +248,29 @@ InvActionListener, InvActionExecutiveListener, InvUseOnItemListener, InvUseOnIte
 	}
 
 	@Override
-	public void onInvUseOnItem(Player p, Item item1, Item item2) {
-		if (isFoodOnCat(item1, item2) || isBallWoolOnCat(item1, item2)) {
-			boolean isGrownCat = item1.getID() != ItemId.KITTEN.id() && item2.getID() != ItemId.KITTEN.id();
-			Item item;
-			if (isGrownCat) {
-				item = item1.getID() == ItemId.CAT.id() ? item2 : item1;
-			} else {
-				item = item1.getID() == ItemId.KITTEN.id() ? item2 : item1;
+	public GameStateEvent onInvUseOnItem(Player p, Item item1, Item item2) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (isFoodOnCat(item1, item2) || isBallWoolOnCat(item1, item2)) {
+						boolean isGrownCat = item1.getID() != ItemId.KITTEN.id() && item2.getID() != ItemId.KITTEN.id();
+						Item item;
+						if (isGrownCat) {
+							item = item1.getID() == ItemId.CAT.id() ? item2 : item1;
+						} else {
+							item = item1.getID() == ItemId.KITTEN.id() ? item2 : item1;
+						}
+						if (isBallWoolOnCat(item1, item2)) {
+							entertainCat(item, p, isGrownCat);
+						} else if (isFoodOnCat(item1, item2)) {
+							feedCat(item, p, isGrownCat);
+						}
+					}
+
+					return null;
+				});
 			}
-			if (isBallWoolOnCat(item1, item2)) {
-				entertainCat(item, p, isGrownCat);
-			} else if (isFoodOnCat(item1, item2)) {
-				feedCat(item, p, isGrownCat);
-			}
-		}
+		};
 	}
 	
 	private boolean isBallWoolOnCat(Item item1, Item item2) {
@@ -261,30 +294,38 @@ InvActionListener, InvActionExecutiveListener, InvUseOnItemListener, InvUseOnIte
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player p, Npc n, Item item) {
-		if (item.getID() == ItemId.KITTEN.id() && n.getID() == NpcId.RAT_WITCHES_POTION.id()) {
-			p.message("it pounces on the rat...");
-			if (DataConversions.random(0,9) == 0) {
-				n.face(p);
-				sleep(600);
-				n.remove();
-				p.setBusyTimer(2);
-				sleep(1200);
-				//possibly non kosher
-				message(p, 1800, "...and quickly gobbles it up",
-						"it returns to your satchel licking it's paws");
-				
-				reduceKittensLoneliness(p);
+	public GameStateEvent onInvUseOnNpc(Player p, Npc n, Item item) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.KITTEN.id() && n.getID() == NpcId.RAT_WITCHES_POTION.id()) {
+						p.message("it pounces on the rat...");
+						if (DataConversions.random(0,9) == 0) {
+							n.face(p);
+							sleep(600);
+							n.remove();
+							p.setBusyTimer(2);
+							sleep(1200);
+							//possibly non kosher
+							message(p, 1800, "...and quickly gobbles it up",
+								"it returns to your satchel licking it's paws");
+
+							reduceKittensLoneliness(p);
+						}
+					} else if (item.getID() == ItemId.CAT.id() && n.getID() == NpcId.RAT_WITCHES_POTION.id()) {
+						p.message("the cat pounces on the rat...");
+						n.face(p);
+						sleep(600);
+						n.remove();
+						p.setBusyTimer(2);
+						sleep(1200);
+						message(p, 1800, "...and quickly gobbles it up",
+							"it returns to your satchel licking it's paws");
+					}
+
+					return null;
+				});
 			}
-		} else if (item.getID() == ItemId.CAT.id() && n.getID() == NpcId.RAT_WITCHES_POTION.id()) {
-			p.message("the cat pounces on the rat...");
-			n.face(p);
-			sleep(600);
-			n.remove();
-			p.setBusyTimer(2);
-			sleep(1200);
-			message(p, 1800, "...and quickly gobbles it up",
-					"it returns to your satchel licking it's paws");
-		}
+		};
 	}
 }

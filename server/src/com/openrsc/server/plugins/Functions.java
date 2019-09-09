@@ -1455,9 +1455,9 @@ public class Functions {
 	public static GameNotifyEvent getBankPinInput(Player player, GameStateEvent parent) {
 		ActionSender.sendBankPinInterface(player);
 		player.setAttribute("bank_pin_entered", null);
-		final GameNotifyEvent notifier = new GameNotifyEvent() {
+		final GameNotifyEvent notifier = new GameNotifyEvent(player.getWorld(), player, 0, "getBankPinInput Notifier") {
 			@Override
-			public void poll() {
+			public void run() {
 				String enteredPin = player.getAttribute("bank_pin_entered", null);
 				if (enteredPin != null) {
 					setTriggered(true);
@@ -1618,8 +1618,8 @@ public class Functions {
 
 	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final String... options) {
 		player.resetMenuHandler();
-		GameNotifyEvent event = new GameNotifyEvent() {
-			@Override public void poll(){
+		GameNotifyEvent event = new GameNotifyEvent(player.getWorld(), player, 0, "showPlayerMenu Notifier") {
+			@Override public void run(){
 				if (player.shouldBreakMenu(npc)) {
 					player.setBusy(false);
 					setTriggered(true);

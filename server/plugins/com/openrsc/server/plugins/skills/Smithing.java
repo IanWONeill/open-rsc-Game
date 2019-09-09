@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.custom.BatchEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.ItemSmithingDef;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -26,14 +27,25 @@ public class Smithing implements InvUseOnObjectListener,
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, final Item item, final Player player) {
+	public GameStateEvent onInvUseOnObject(GameObject obj, final Item item, final Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					// Doric's Anvil
+					if (obj.getID() == 177 && !allowDorics(player)) {
+						return null;
+					}
 
-		// Doric's Anvil
-		if (obj.getID() == 177 && !allowDorics(player)) return;
+					if (!smithingChecks(obj, item, player)) {
+						return null;
+					}
 
-		if (!smithingChecks(obj, item, player)) return;
+					beginSmithing(item, player);
 
-		beginSmithing(item, player);
+					return null;
+				});
+			}
+		};
 	}
 
 	private boolean allowDorics(Player player) {

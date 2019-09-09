@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.catherby;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -41,17 +42,24 @@ public class HarrysFishingShack implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Welcome you can buy fishing equipment at my store",
-			"We'll also buy fish that you catch off you");
-		final int option = showMenu(p, n, false, "Let's see what you've got then", "Sorry, I'm not interested");
-		if (option == 0) {
-			playerTalk(p, n, "Let's see what you've got then");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		} else if (option == 1) {
-			playerTalk(p, n, "Sorry,I'm not interested");
-		}
-	}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Welcome you can buy fishing equipment at my store",
+						"We'll also buy fish that you catch off you");
+					final int option = showMenu(p, n, false, "Let's see what you've got then", "Sorry, I'm not interested");
+					if (option == 0) {
+						playerTalk(p, n, "Let's see what you've got then");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					} else if (option == 1) {
+						playerTalk(p, n, "Sorry,I'm not interested");
+					}
 
+					return null;
+				});
+			}
+		};
+	}
 }

@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.listeners.action;
 
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.player.Player;
 
 public interface PlayerDeathListener {
@@ -8,6 +9,6 @@ public interface PlayerDeathListener {
 	 *
 	 * @param p
 	 */
-	public void onPlayerDeath(Player p);
+	public GameStateEvent onPlayerDeath(Player p);
 
 }

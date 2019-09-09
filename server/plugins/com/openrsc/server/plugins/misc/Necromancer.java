@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.misc;
 
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.PlayerAttackNpcListener;
@@ -78,13 +79,29 @@ public class Necromancer implements PlayerAttackNpcListener, PlayerAttackNpcExec
 
 
 	@Override
-	public void onPlayerAttackNpc(Player p, Npc necromancer) {
-		necromancerFightSpawnMethod(p, necromancer);
+	public GameStateEvent onPlayerAttackNpc(Player p, Npc necromancer) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					necromancerFightSpawnMethod(p, necromancer);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
-	public void onPlayerKilledNpc(Player p, Npc n) {
-		necromancerOnKilledMethod(p, n);
+	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					necromancerOnKilledMethod(p, n);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -98,8 +115,16 @@ public class Necromancer implements PlayerAttackNpcListener, PlayerAttackNpcExec
 	}
 
 	@Override
-	public void onPlayerMageNpc(Player p, Npc necromancer) {
-		necromancerFightSpawnMethod(p, necromancer);
+	public GameStateEvent onPlayerMageNpc(Player p, Npc necromancer) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					necromancerFightSpawnMethod(p, necromancer);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -108,7 +133,15 @@ public class Necromancer implements PlayerAttackNpcListener, PlayerAttackNpcExec
 	}
 	
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		p.playerServerMessage(MessageType.QUEST, "Invrigar the necromancer is not interested in talking");
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					p.playerServerMessage(MessageType.QUEST, "Invrigar the necromancer is not interested in talking");
+
+					return null;
+				});
+			}
+		};
 	}
 }

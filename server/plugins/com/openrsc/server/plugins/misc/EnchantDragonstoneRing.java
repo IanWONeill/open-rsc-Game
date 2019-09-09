@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.misc;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.SpellDef;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
@@ -18,28 +19,36 @@ public class EnchantDragonstoneRing implements PlayerMageItemListener, PlayerMag
 	}
 
 	@Override
-	public void onPlayerMageItem(Player p, Integer itemID, Integer spellID) {
-		SpellDef spellDef = p.getWorld().getServer().getEntityHandler().getSpellDef(spellID.intValue());
-		if (spellDef == null)
-			return;
+	public GameStateEvent onPlayerMageItem(Player p, Integer itemID, Integer spellID) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					SpellDef spellDef = p.getWorld().getServer().getEntityHandler().getSpellDef(spellID.intValue());
+					if (spellDef == null)
+						return null;
 
-		if (itemID.intValue() == ItemId.DRAGONSTONE_RING.id()) {
-			p.message("What type of dragonstone ring would you like to make?");
-			sleep(600);
-			int choice = Functions.showMenu(p, "Ring of Wealth", "Ring of Avarice");
-			int item;
-			if (choice == 0) {
-				item = ItemId.RING_OF_WEALTH.id();
-			} else if (choice == 1) {
-				item = ItemId.RING_OF_AVARICE.id();
-			} else {
-				return;
+					if (itemID.intValue() == ItemId.DRAGONSTONE_RING.id()) {
+						p.message("What type of dragonstone ring would you like to make?");
+						sleep(600);
+						int choice = Functions.showMenu(p, "Ring of Wealth", "Ring of Avarice");
+						int item;
+						if (choice == 0) {
+							item = ItemId.RING_OF_WEALTH.id();
+						} else if (choice == 1) {
+							item = ItemId.RING_OF_AVARICE.id();
+						} else {
+							return null;
+						}
+						SpellHandler.checkAndRemoveRunes(p,spellDef);
+						p.getInventory().remove(ItemId.DRAGONSTONE_RING.id(),1, false);
+						p.getInventory().add(new Item(item));
+						SpellHandler.finalizeSpell(p, spellDef);
+					}
+
+					return null;
+				});
 			}
-			SpellHandler.checkAndRemoveRunes(p,spellDef);
-			p.getInventory().remove(ItemId.DRAGONSTONE_RING.id(),1, false);
-			p.getInventory().add(new Item(item));
-			SpellHandler.finalizeSpell(p, spellDef);
-		}
+		};
 	}
 	/*@Override
 	public boolean blockPlayerMageItem(Player player, int itemID, int spell) {

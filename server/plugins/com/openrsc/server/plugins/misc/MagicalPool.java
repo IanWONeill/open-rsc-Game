@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.misc;
 
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.ObjectActionListener;
@@ -15,8 +16,11 @@ public class MagicalPool implements ObjectActionListener, ObjectActionExecutiveL
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		if (obj.getID() == 1155) {
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 1155) {
 			/*
 			if (!player.canUsePool()) {
 				player.message("You have just died, you must wait for "
@@ -39,7 +43,7 @@ public class MagicalPool implements ObjectActionListener, ObjectActionExecutiveL
 			int option = showMenu(player, "Edgeville", "Varrock",
 					"Castle (dangerous)", "Graveyard (dangerous)", "Hobgoblins (dangerous)", "Altar (dangerous)",
 					"Dragon Maze (dangerous)", "Mage Arena (dangerous)", "Rune rocks (dangerous)", "Red dragons (dangerous)", "Further underground mage arena");
-			
+
 			if (option == 0) {
 				player.teleport(215, 436);
 			} else if (option == 1) {
@@ -62,19 +66,24 @@ public class MagicalPool implements ObjectActionListener, ObjectActionExecutiveL
 				player.teleport(143, 173);
 			} else if(option == 10) {
 			*/
-			if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") >= 2) {
-				movePlayer(player, 471, 3385);
-				player.message("you are teleported further under ground");
-			} else {
-				message(player, 1200, "you step into the pool");
-				message(player, 1200, "you wet your boots");
+						if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") >= 2) {
+							movePlayer(player, 471, 3385);
+							player.message("you are teleported further under ground");
+						} else {
+							message(player, 1200, "you step into the pool");
+							message(player, 1200, "you wet your boots");
+						}
+					}
+					if (obj.getID() == 1166) {
+						message(player, 1200, "you step into the sparkling water");
+						message(player, 1200, "you feel energy rush through your veins");
+						movePlayer(player, 447, 3373);
+						player.message("you are teleported to kolodions cave");
+					}
+
+					return null;
+				});
 			}
-		}
-		if (obj.getID() == 1166) {
-			message(player, 1200, "you step into the sparkling water");
-			message(player, 1200, "you feel energy rush through your veins");
-			movePlayer(player, 447, 3373);
-			player.message("you are teleported to kolodions cave");
-		}
+		};
 	}
 }

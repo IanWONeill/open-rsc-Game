@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.catherby;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -44,18 +45,25 @@ public class HicktonArcheryShop implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Welcome to Hickton's Archery Store",
-			"Do you want to see my wares?");
-		final int option = showMenu(p, n, false, //do not send over
-			"Yes please", "No, I prefer to bash things close up");
-		if (option == 0) {
-			playerTalk(p, n, "Yes Please");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		} else if (option == 1) {
-			playerTalk(p, n, "No, I prefer to bash things close up");
-		}
-	}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Welcome to Hickton's Archery Store",
+						"Do you want to see my wares?");
+					final int option = showMenu(p, n, false, //do not send over
+						"Yes please", "No, I prefer to bash things close up");
+					if (option == 0) {
+						playerTalk(p, n, "Yes Please");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					} else if (option == 1) {
+						playerTalk(p, n, "No, I prefer to bash things close up");
+					}
 
+					return null;
+				});
+			}
+		};
+	}
 }

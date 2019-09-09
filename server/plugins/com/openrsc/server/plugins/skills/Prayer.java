@@ -12,8 +12,8 @@ import static com.openrsc.server.plugins.Functions.*;
 public class Prayer implements ObjectActionExecutiveListener, ObjectActionListener {
 
 	@Override
-	public void onObjectAction(final GameObject object, String command, Player player) {
-		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0, "Prayer Recharge") {
+	public GameStateEvent onObjectAction(final GameObject object, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					if (command.equalsIgnoreCase("recharge at")) {
@@ -40,7 +40,7 @@ public class Prayer implements ObjectActionExecutiveListener, ObjectActionListen
 					return null;
 				});
 			}
-		});
+		};
 	}
 
 	@Override

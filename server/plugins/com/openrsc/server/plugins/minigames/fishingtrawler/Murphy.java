@@ -4,9 +4,9 @@ import com.openrsc.server.constants.Minigames;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler.TrawlerBoat;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.MiniGameInterface;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -56,40 +56,48 @@ public class Murphy implements MiniGameInterface, TalkToNpcListener, TalkToNpcEx
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.MURPHY_LAND.id()) { // Murphy on land
-			if (p.isIronMan(1) || p.isIronMan(2) || p.isIronMan(3)) {
-				p.message("As an Iron Man, you cannot use the Trawler.");
-				return;
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.MURPHY_LAND.id()) { // Murphy on land
+						if (p.isIronMan(1) || p.isIronMan(2) || p.isIronMan(3)) {
+							p.message("As an Iron Man, you cannot use the Trawler.");
+							return null;
+						}
+						if (!p.getCache().hasKey("fishingtrawler")) {
+							playerTalk(p, n, "good day to you sir");
+							npcTalk(p, n, "well hello my brave adventurer");
+							playerTalk(p, n, "what are you up to?");
+							npcTalk(p, n, "getting ready to go fishing of course",
+								"there's no time to waste",
+								"i've got all the supplies i need from the shop at the end of the pier",
+								"they sell good rope, although their bailing buckets aren't too effective");
+							showStartOption(p, n, true, true, true);
+						} else {
+							playerTalk(p, n, "hello again murphy");
+							npcTalk(p, n, "good day to you land lover");
+							if (p.getCache().hasKey("fishing_trawler_reward")) {
+								npcTalk(p, n, "It looks like your net is full from last trip");
+								return null;
+							}
+							npcTalk(p, n, "fancy hitting the high seas again?");
+							int option = showMenu(p, n, "no thanks, i still feel ill from last time", "yes, lets do it");
+							if (option == 0) {
+								npcTalk(p, n, "hah..softy");
+							} else if (option == 1) {
+								letsGo(p, n);
+							}
+						}
+					} else if (n.getID() == NpcId.MURPHY_BOAT.id()) { // Murphy on the boat.
+						onship(n, p);
+					} else if (n.getID() == NpcId.MURPHY_UNRELEASED.id()) { // Another murphy potentially non existent
+					}
+
+					return null;
+				});
 			}
-			if (!p.getCache().hasKey("fishingtrawler")) {
-				playerTalk(p, n, "good day to you sir");
-				npcTalk(p, n, "well hello my brave adventurer");
-				playerTalk(p, n, "what are you up to?");
-				npcTalk(p, n, "getting ready to go fishing of course",
-						"there's no time to waste",
-						"i've got all the supplies i need from the shop at the end of the pier",
-						"they sell good rope, although their bailing buckets aren't too effective");
-				showStartOption(p, n, true, true, true);
-			} else {
-				playerTalk(p, n, "hello again murphy");
-				npcTalk(p, n, "good day to you land lover");
-				if (p.getCache().hasKey("fishing_trawler_reward")) {
-					npcTalk(p, n, "It looks like your net is full from last trip");
-					return;
-				}
-				npcTalk(p, n, "fancy hitting the high seas again?");
-				int option = showMenu(p, n, "no thanks, i still feel ill from last time", "yes, lets do it");
-				if (option == 0) {
-					npcTalk(p, n, "hah..softy");
-				} else if (option == 1) {
-					letsGo(p, n);
-				}
-			}
-		} else if (n.getID() == NpcId.MURPHY_BOAT.id()) { // Murphy on the boat.
-			onship(n, p);
-		} else if (n.getID() == NpcId.MURPHY_UNRELEASED.id()) { // Another murphy potentially non existent
-		}
+		};
 	}
 
 	private void showStartOption(Player p, Npc n, boolean showOptionFish, boolean showOptionNotSafe, boolean showOptionHelp) {

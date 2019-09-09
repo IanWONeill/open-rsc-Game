@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.grandtree;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -26,24 +27,32 @@ public final class HeckelFunchGroceries implements ShopInterface,
 		new Item(ItemId.KNIFE.id(), 5), new Item(ItemId.GNOME_COCKTAIL_GUIDE.id(), 5));
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		playerTalk(p, n, "hello there");
-		npcTalk(p, n, "good day to you my friend ..and a beautiful one at that",
-			"would you like some groceries? i have all sorts",
-			"alcohol also, if your partial to a drink");
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					playerTalk(p, n, "hello there");
+					npcTalk(p, n, "good day to you my friend ..and a beautiful one at that",
+						"would you like some groceries? i have all sorts",
+						"alcohol also, if your partial to a drink");
 
-		int option = showMenu(p, n, "no thank you", "i'll have a look");
-		switch (option) {
-			case 0:
-				npcTalk(p, n, "ahh well, all the best to you");
-				break;
+					int option = showMenu(p, n, "no thank you", "i'll have a look");
+					switch (option) {
+						case 0:
+							npcTalk(p, n, "ahh well, all the best to you");
+							break;
 
-			case 1:
-				npcTalk(p, n, "there's a good human");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-				break;
-		}
+						case 1:
+							npcTalk(p, n, "there's a good human");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+							break;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

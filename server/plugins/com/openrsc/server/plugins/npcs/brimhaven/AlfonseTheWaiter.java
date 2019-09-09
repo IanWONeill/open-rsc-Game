@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.brimhaven;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -23,32 +24,40 @@ public class AlfonseTheWaiter implements ShopInterface, TalkToNpcExecutiveListen
 		new Item(ItemId.TUNA.id(), 5), new Item(ItemId.LOBSTER.id(), 3), new Item(ItemId.SWORDFISH.id(), 2));
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.ALFONSE_THE_WAITER.id()) {
-			npcTalk(p, n, "Welcome to the shrimp and parrot",
-				"Would you like to order sir?");
-			int menu;
-			if (isBlackArmGang(p) || (p.getQuestStage(Quests.HEROS_QUEST) != 1 && p.getQuestStage(Quests.HEROS_QUEST) != 2 && !p.getCache().hasKey("pheonix_mission") && !p.getCache().hasKey("pheonix_alf"))) {
-				menu = showMenu(p, n,
-					"Yes please",
-					"No thankyou");
-			} else {
-				menu = showMenu(p, n,
-					"Yes please",
-					"No thankyou",
-					"Do you sell Gherkins?");
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.ALFONSE_THE_WAITER.id()) {
+						npcTalk(p, n, "Welcome to the shrimp and parrot",
+							"Would you like to order sir?");
+						int menu;
+						if (isBlackArmGang(p) || (p.getQuestStage(Quests.HEROS_QUEST) != 1 && p.getQuestStage(Quests.HEROS_QUEST) != 2 && !p.getCache().hasKey("pheonix_mission") && !p.getCache().hasKey("pheonix_alf"))) {
+							menu = showMenu(p, n,
+								"Yes please",
+								"No thankyou");
+						} else {
+							menu = showMenu(p, n,
+								"Yes please",
+								"No thankyou",
+								"Do you sell Gherkins?");
+						}
+						if (menu == 0) {
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						} else if (menu == 2) {
+							npcTalk(p, n, "Hmm ask Charlie the cook round the back",
+								"He may have some Gherkins for you");
+							message(p, "Alfonse winks");
+							p.getCache().store("talked_alf", true);
+							p.getCache().remove("pheonix_alf");
+						}
+					}
+
+					return null;
+				});
 			}
-			if (menu == 0) {
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-			} else if (menu == 2) {
-				npcTalk(p, n, "Hmm ask Charlie the cook round the back",
-					"He may have some Gherkins for you");
-				message(p, "Alfonse winks");
-				p.getCache().store("talked_alf", true);
-				p.getCache().remove("pheonix_alf");
-			}
-		}
+		};
 	}
 
 	@Override

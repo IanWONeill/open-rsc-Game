@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
@@ -31,25 +32,33 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 	private static int DISTURBED_SAND2 = 945;
 
 	@Override
-	public void onUnWield(Player player, Item item) {
-		if ((item.getID() == ItemId.SLAVES_ROBE_BOTTOM.id() || item.getID() == ItemId.SLAVES_ROBE_TOP.id()) && (player.getLocation().inTouristTrapCave()) && player.getQuestStage(Quests.TOURIST_TRAP) != -1) {
-			Npc n = getNearestNpc(player, NpcId.MERCENARY.id(), 5);
-			if (n != null) {
-				n.teleport(player.getX(), player.getY());
-				player.teleport(player.getX(), player.getY());
-				sleep(650);
-				npcTalk(player, n, "Oi! What are you doing down here?",
-					"You're no slave!");
-				n.startCombat(player);
-			} else {
-				player.teleport(player.getX(), player.getY());
-				Npc newNpc = spawnNpc(player.getWorld(), NpcId.MERCENARY.id(), player.getX(), player.getY(), 30000);
-				sleep(650);
-				npcTalk(player, newNpc, "Oi! What are you doing down here?",
-					"You're no slave!");
-				newNpc.startCombat(player);
+	public GameStateEvent onUnWield(Player player, Item item) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if ((item.getID() == ItemId.SLAVES_ROBE_BOTTOM.id() || item.getID() == ItemId.SLAVES_ROBE_TOP.id()) && (player.getLocation().inTouristTrapCave()) && player.getQuestStage(Quests.TOURIST_TRAP) != -1) {
+						Npc n = getNearestNpc(player, NpcId.MERCENARY.id(), 5);
+						if (n != null) {
+							n.teleport(player.getX(), player.getY());
+							player.teleport(player.getX(), player.getY());
+							sleep(650);
+							npcTalk(player, n, "Oi! What are you doing down here?",
+								"You're no slave!");
+							n.startCombat(player);
+						} else {
+							player.teleport(player.getX(), player.getY());
+							Npc newNpc = spawnNpc(player.getWorld(), NpcId.MERCENARY.id(), player.getX(), player.getY(), 30000);
+							sleep(650);
+							npcTalk(player, newNpc, "Oi! What are you doing down here?",
+								"You're no slave!");
+							newNpc.startCombat(player);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -61,73 +70,81 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player p, Npc npc, Item item) {
-		if (item.getID() == ItemId.TECHNICAL_PLANS.id() && npc.getID() == NpcId.BEDABIN_NOMAD_GUARD.id()) {
-			if (p.getQuestStage(Quests.TOURIST_TRAP) > 7
-				|| p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
-				npcTalk(p, npc, "Sorry, but you can't use the tent without permission.",
-					"But thanks for all your help with the Bedabin people.",
-					"And we'll take those plans off your hands as well!");
-			} else if (p.getQuestStage(Quests.TOURIST_TRAP) == 6 || p.getQuestStage(Quests.TOURIST_TRAP) == 7) {
-				npcTalk(p, npc, "Ok, you can go in, Al Shabim has told me about you.");
-				p.teleport(171, 792);
-			} else if (p.getQuestStage(Quests.TOURIST_TRAP) >= 0) {
-				npcTalk(p, npc, "Hmm, those plans look interesting.",
-					"Go and show them to Al Shabim...",
-					"I'm sure he'll be pleased to see them.");
+	public GameStateEvent onInvUseOnNpc(Player p, Npc npc, Item item) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.TECHNICAL_PLANS.id() && npc.getID() == NpcId.BEDABIN_NOMAD_GUARD.id()) {
+						if (p.getQuestStage(Quests.TOURIST_TRAP) > 7
+							|| p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
+							npcTalk(p, npc, "Sorry, but you can't use the tent without permission.",
+								"But thanks for all your help with the Bedabin people.",
+								"And we'll take those plans off your hands as well!");
+						} else if (p.getQuestStage(Quests.TOURIST_TRAP) == 6 || p.getQuestStage(Quests.TOURIST_TRAP) == 7) {
+							npcTalk(p, npc, "Ok, you can go in, Al Shabim has told me about you.");
+							p.teleport(171, 792);
+						} else if (p.getQuestStage(Quests.TOURIST_TRAP) >= 0) {
+							npcTalk(p, npc, "Hmm, those plans look interesting.",
+								"Go and show them to Al Shabim...",
+								"I'm sure he'll be pleased to see them.");
+						}
+					}
+					else if (item.getID() == ItemId.TECHNICAL_PLANS.id() && npc.getID() == NpcId.AL_SHABIM.id()) {
+						npc.initializeIndirectTalkScript(p);
+					}
+					else if (item.getID() == ItemId.TENTI_PINEAPPLE.id() && npc.getID() == NpcId.MERCENARY_ESCAPEGATES.id()) {
+						removeItem(p, ItemId.TENTI_PINEAPPLE.id(), 1);
+						npcTalk(p, npc, "Great! Just what I've been looking for!",
+							"Mmmmmmm, delicious!!",
+							"Oh, this is soo nice!",
+							"Mmmmm, *SLURP*",
+							"Yummmm....Oh yes, this is great.");
+						if (p.getQuestStage(Quests.TOURIST_TRAP) == 8) {
+							p.updateQuestStage(Quests.TOURIST_TRAP, 9);
+						}
+					}
+					else if (item.getID() == ItemId.MINING_BARREL.id() && npc.getID() == NpcId.ANA.id()) {
+						if (p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
+							p.message("You have already completed this quest.");
+							npcTalk(p, npc, "I think you might have me confused with someone else.");
+							return null;
+						}
+						if (!hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+							boolean isFirstTime = !p.getCache().hasKey("tried_ana_barrel");
+							if (p.getCache().hasKey("ana_lift") || p.getCache().hasKey("ana_cart")
+								|| p.getCache().hasKey("ana_in_cart")) {
+								message(p, "Oh, here's Ana, the guards must have discovered her.",
+									"And sent her back to the mines...");
+							}
+							if (isFirstTime) {
+								npcTalk(p, npc, "Hey, what do you think you're doing?",
+									"Harumph!");
+							} else {
+								npcTalk(p, npc, "Hey, what do you think you're doing?",
+									"Leave me alone and let me get on with my work.",
+									"Else we'll both be in trouble.",
+									"Oh no, NOT AGAIN!",
+									"Harumph!");
+							}
+							playerTalk(p, npc, "Shush...It's for your own good!");
+							message(p, "You manage to squeeze Ana into the barrel,",
+								"despite her many complaints.");
+							p.getInventory().replace(ItemId.MINING_BARREL.id(), ItemId.ANA_IN_A_BARREL.id());
+							if (npc != null) {
+								npc.remove();
+							}
+							if (isFirstTime) {
+								p.getCache().store("tried_ana_barrel", true);
+							}
+						} else {
+							p.message("You already have Ana in a barrel, you can't get two in there!");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
-		else if (item.getID() == ItemId.TECHNICAL_PLANS.id() && npc.getID() == NpcId.AL_SHABIM.id()) {
-			npc.initializeIndirectTalkScript(p);
-		}
-		else if (item.getID() == ItemId.TENTI_PINEAPPLE.id() && npc.getID() == NpcId.MERCENARY_ESCAPEGATES.id()) {
-			removeItem(p, ItemId.TENTI_PINEAPPLE.id(), 1);
-			npcTalk(p, npc, "Great! Just what I've been looking for!",
-				"Mmmmmmm, delicious!!",
-				"Oh, this is soo nice!",
-				"Mmmmm, *SLURP*",
-				"Yummmm....Oh yes, this is great.");
-			if (p.getQuestStage(Quests.TOURIST_TRAP) == 8) {
-				p.updateQuestStage(Quests.TOURIST_TRAP, 9);
-			}
-		}
-		else if (item.getID() == ItemId.MINING_BARREL.id() && npc.getID() == NpcId.ANA.id()) {
-			if (p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
-				p.message("You have already completed this quest.");
-				npcTalk(p, npc, "I think you might have me confused with someone else.");
-				return;
-			}
-			if (!hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-				boolean isFirstTime = !p.getCache().hasKey("tried_ana_barrel");
-				if (p.getCache().hasKey("ana_lift") || p.getCache().hasKey("ana_cart")
-					|| p.getCache().hasKey("ana_in_cart")) {
-					message(p, "Oh, here's Ana, the guards must have discovered her.",
-						"And sent her back to the mines...");
-				}
-				if (isFirstTime) {
-					npcTalk(p, npc, "Hey, what do you think you're doing?",
-						"Harumph!");
-				} else {
-					npcTalk(p, npc, "Hey, what do you think you're doing?",
-						"Leave me alone and let me get on with my work.",
-						"Else we'll both be in trouble.",
-						"Oh no, NOT AGAIN!",
-						"Harumph!");
-				}
-				playerTalk(p, npc, "Shush...It's for your own good!");
-				message(p, "You manage to squeeze Ana into the barrel,",
-					"despite her many complaints.");
-				p.getInventory().replace(ItemId.MINING_BARREL.id(), ItemId.ANA_IN_A_BARREL.id());
-				if (npc != null) {
-					npc.remove();
-				}
-				if (isFirstTime) {
-					p.getCache().store("tried_ana_barrel", true);
-				}
-			} else {
-				p.message("You already have Ana in a barrel, you can't get two in there!");
-			}
-		}
+		};
 	}
 
 	private void makeDartTip(Player p, GameObject obj) {
@@ -210,253 +227,261 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		//closest to irena
-		if (obj.getID() == DISTURBED_SAND1) {
-			if (command.equals("look")) {
-				if (p.getQuestStage(Quests.TOURIST_TRAP) <= 0) {
-					message(p, "You see some footsteps in the sand.");
-				} else {
-					message(p, "This looks like some disturbed sand.",
-						"footsteps seem to be heading of towards the south west.");
-				}
-			} else if (command.equals("search")) {
-				if (p.getQuestStage(Quests.TOURIST_TRAP) <= 0) {
-					message(p, "You just see some footsteps in the sand.");
-				} else {
-					message(p, "You search the footsteps more closely.",
-						"You can see that there are five sets of footprints.",
-						"One set of footprints seems lighter than the others.",
-						"The four other footsteps were made by heavier people with boots.");
-				}
-			}
-		}
-		//closest to camp
-		else if (obj.getID() == DISTURBED_SAND2) {
-			if (command.equals("look")) {
-				if (p.getQuestStage(Quests.TOURIST_TRAP) <= 0) {
-					message(p, "You just see some footsteps in the sand.");
-				} else {
-					message(p, "You find footsteps heading south.",
-						"And this time evidence of a struggle...",
-						"The footsteps head off due south.");
-				}
-			} else if (command.equals("search")) {
-				if (p.getQuestStage(Quests.TOURIST_TRAP) <= 0) {
-					message(p, "You just see some footsteps in the sand!");
-				} else {
-					message(p, "You search the area thoroughly...",
-						"You notice something colourful in the sand.",
-						"You dig around and find a piece of red silk scarf.",
-						"It looks as if Ana has been this way!");
-				}
-			}
-		}
-		else if (obj.getID() == 1006) {
-			makeDartTip(p, obj);
-		}
-		else if (obj.getID() == MINING_CAVE_BACK) {
-			if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-				failCaveAnaInBarrel(p, null);
-				return;
-			}
-			message(p, "You walk into the dark of the cavern...");
-			p.message("And emerge in a different part of this huge underground complex.");
-			p.teleport(84, 3640);
-		}
-		else if (obj.getID() == MINING_CAVE) {
-			Npc n = getNearestNpc(p, NpcId.MERCENARY_ESCAPEGATES.id(), 10);
-			if (!p.getInventory().wielding(ItemId.SLAVES_ROBE_BOTTOM.id()) && !p.getInventory().wielding(ItemId.SLAVES_ROBE_TOP.id()) && p.getQuestStage(Quests.TOURIST_TRAP) != -1) {
-				p.message("This guard looks as if he's been down here a while.");
-				npcTalk(p, n, "Hey, you're no slave!");
-				npcTalk(p, n, "What are you doing down here?");
-				n.setChasing(p);
-				message(p, "More guards rush to catch you.",
-					"You are roughed up a bit by the guards as you're manhandlded to a cell.");
-				npcTalk(p, n, "Into the cell you go! I hope this teaches you a lesson.");
-				p.teleport(89, 801);
-				return;
-			}
-			if (p.getQuestStage(Quests.TOURIST_TRAP) >= 9 || p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
-				message(p, "You walk into the dark of the cavern...");
-				p.message("And emerge in a different part of this huge underground complex.");
-				p.teleport(76, 3640);
-				return;
-			}
-			p.message("Two guards block your way further into the caves");
-			if (n != null) {
-				npcTalk(p, n, "Hey you, move away from there!");
-			}
-		}
-		else if (obj.getID() == MINING_CART) {
-			if (command.equals("look")) {
-				if (obj.getX() == 62 && obj.getY() == 3639) {
-					p.message("This cart is being unloaded into this section of the mine.");
-					p.message("Before being sent back for another load.");
-				} else {
-					p.message("This mine cart is being loaded up with new rocks and stone.");
-					p.message("It gets sent to a different section of the mine for unloading.");
-				}
-			} else if (command.equals("search")) {
-				p.message("You search the mine cart.");
-				if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-					p.message("There isn't enough space for both you and Ana in the cart.");
-					return;
-				}
-				p.message("There may be just enough space to squeeze yourself into the cart.");
-				p.message("Would you like to try?");
-				int menu = showMenu(p, "Yes, of course.", "No Thanks, it looks pretty dangerous.");
-				if (menu == 0) {
-					if (succeedRate(p)) {
-						p.message("You succeed!");
-						if (obj.getX() == 56 && obj.getY() == 3631) {
-							p.teleport(62, 3640);
-						} else if (obj.getX() == 62 && obj.getY() == 3639) {
-							p.teleport(55, 3632);
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					//closest to irena
+					if (obj.getID() == DISTURBED_SAND1) {
+						if (command.equals("look")) {
+							if (p.getQuestStage(Quests.TOURIST_TRAP) <= 0) {
+								message(p, "You see some footsteps in the sand.");
+							} else {
+								message(p, "This looks like some disturbed sand.",
+									"footsteps seem to be heading of towards the south west.");
+							}
+						} else if (command.equals("search")) {
+							if (p.getQuestStage(Quests.TOURIST_TRAP) <= 0) {
+								message(p, "You just see some footsteps in the sand.");
+							} else {
+								message(p, "You search the footsteps more closely.",
+									"You can see that there are five sets of footprints.",
+									"One set of footprints seems lighter than the others.",
+									"The four other footsteps were made by heavier people with boots.");
+							}
 						}
-					} else {
-						p.message("You fail to fit yourself into the cart in time before it starts it's journey.");
-						p.message("You fall and hurt yourself.");
-						p.damage(2);
 					}
-				} else if (menu == 1) {
-					p.message("You decide not to get into the dangerous looking mine cart.");
-				}
-			}
-		}
-		else if (obj.getID() == TRACK) {
-			p.message("You see that this track is too dangerous to cross.");
-			p.message("High speed carts are crossing the track most of the time.");
-		}
-		else if (obj.getID() == MINING_BARREL) {
-			if (p.getCache().hasKey("ana_is_up")) {
-				if (hasItem(p, ItemId.MINING_BARREL.id())) {
-					p.message("You can only manage one of these at a time.");
-					return;
-				}
-				message(p, "You find the barrel with ana in it.",
-					"@gre@Ana: Let me out of here, I feel sick!");
-				addItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
-				p.getCache().remove("ana_is_up");
-				return;
-			}
-			if (p.getCache().hasKey("ana_cart")) {
-				if (hasItem(p, ItemId.MINING_BARREL.id())) {
-					p.message("You can only manage one of these at a time.");
-					return;
-				}
-				p.message("You search the barrels and find the one with Ana in it.");
-				p.message("@gre@Ana: Let me out!");
-				addItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
-				p.getCache().remove("ana_cart");
-				return;
-			}
-			if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-				p.message("You cannot carry another barrel while you're carrying Ana.");
-				return;
-			}
-			if (p.getCache().hasKey("ana_lift")) {
-				p.message("You search for Ana, but cannot find her.");
-			}
-			p.message("This barrel is quite big, but you may be able to carry one. ");
-			p.message("Would you like to take one?");
-			int menu = showMenu(p, "Yeah, cool!", "No thanks.");
-			if (menu == 0) {
-				if (hasItem(p, ItemId.MINING_BARREL.id())) {
-					p.message("You can only manage one of these at a time.");
-				} else {
-					p.message("You take the barrel, it's not that heavy, just awkward.");
-					addItem(p, ItemId.MINING_BARREL.id(), 1);
-				}
-			} else if (menu == 1) {
-				p.message("You decide not to take the barrel.");
-			}
-		}
-		else if (obj.getID() == LIFT_PLATFORM) {
-			Npc n = getNearestNpc(p, NpcId.MERCENARY_LIFTPLATFORM.id(), 5);
-			if (n != null) {
-				if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-					anaToLift(p, n);
-					return;
-				}
-				npcTalk(p, n, "Hey there, what do you want?");
-				int menu = showMenu(p, n,
-					"What is this thing?",
-					"Can I use this?");
-				if (menu == 0) {
-					repeatLiftDialogue(p, n, RepeatLift.THING);
-				} else if (menu == 1) {
-					repeatLiftDialogue(p, n, RepeatLift.USETHIS);
-				}
-			}
-		}
-		else if (obj.getID() == LIFT_UP) {
-			p.message("You pull on the winch");
-			if (p.getCache().hasKey("ana_lift")) {
-				message(p, "You see a barrel coming to the surface.",
-					"Before too long you haul it onto the side.",
-					"The barrel seems quite heavy and you hear a muffled sound coming from inside.");
-				p.message("@gre@Ana: Get me OUT OF HERE!");
-				p.getCache().remove("ana_lift");
-				if (!p.getCache().hasKey("ana_is_up")) {
-					p.getCache().store("ana_is_up", true);
-				}
-			} else {
-				p.message("You pull on the winch and a heavy barrel filled with stone comes to the surface.");
-			}
-		}
-		else if (obj.getID() == MINING_CART_ABOVE) {
-			p.message("You search the mine cart.");
-			if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-				message(p, "There should be enough space for Ana (in the barrel) to go on here.");
-			}
-			if (p.getCache().hasKey("ana_in_cart")) {
-				message(p, "You can see the barrel with Ana in it on the cart already.");
-			}
-			message(p, "There is space on the cart for you get on, would you like to try?");
-			int menu = showMenu(p,
-				"Yes, I'll get on.",
-				"No, I've got other plans.",
-				"Attract mine cart drivers attention.");
-			if (menu == 0) {
-				p.message("You decide to climb onto the cart.");
-				if (p.getCache().hasKey("ana_in_cart")) {
-					message(p, "You hear Ana starting to bang on the barrel for her to be let out.");
-					message(p, "@gre@Ana: Get me out of here, I'm suffocating!",
-						"@gre@Ana: It smells like dwarven underwear in here!");
-				}
-				p.teleport(86, 808);
-				if (p.getCache().hasKey("rescue")) {
-					message(p, "As soon as you get on the cart, it starts to move.",
-						"Before too long you are past the gates.",
-						"You jump off the cart taking Ana with you.");
-					p.teleport(106, 806);
-					p.getCache().remove("rescue");
-					addItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
-				}
-			} else if (menu == 1) {
-				p.message("You decide not to get onto the cart.");
-			} else if (menu == 2) {
-				Npc cartDriver = getNearestNpc(p, NpcId.MINING_CART_DRIVER.id(), 10);
-				if (cartDriver != null) {
-					npcTalk(p, cartDriver, "Ahem.");
-					if (p.getCache().hasKey("rescue")) {
-						npcTalk(p, cartDriver, "Hurry up, get in the cart or I'll go without you!");
-						return;
+					//closest to camp
+					else if (obj.getID() == DISTURBED_SAND2) {
+						if (command.equals("look")) {
+							if (p.getQuestStage(Quests.TOURIST_TRAP) <= 0) {
+								message(p, "You just see some footsteps in the sand.");
+							} else {
+								message(p, "You find footsteps heading south.",
+									"And this time evidence of a struggle...",
+									"The footsteps head off due south.");
+							}
+						} else if (command.equals("search")) {
+							if (p.getQuestStage(Quests.TOURIST_TRAP) <= 0) {
+								message(p, "You just see some footsteps in the sand!");
+							} else {
+								message(p, "You search the area thoroughly...",
+									"You notice something colourful in the sand.",
+									"You dig around and find a piece of red silk scarf.",
+									"It looks as if Ana has been this way!");
+							}
+						}
 					}
-					if (p.getCache().hasKey("ana_in_cart")) {
-						getOutWithAnaInCart(p, cartDriver, -1);
-						return;
+					else if (obj.getID() == 1006) {
+						makeDartTip(p, obj);
 					}
-					if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-						npcTalk(p, cartDriver, "What're you doing carrying that big barrel around?",
-							"Put it in the back of the cart like all the others!");
-						return;
+					else if (obj.getID() == MINING_CAVE_BACK) {
+						if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+							failCaveAnaInBarrel(p, null);
+							return null;
+						}
+						message(p, "You walk into the dark of the cavern...");
+						p.message("And emerge in a different part of this huge underground complex.");
+						p.teleport(84, 3640);
 					}
-					p.message("The cart driver is busy loading the cart up ...");
-				}
+					else if (obj.getID() == MINING_CAVE) {
+						Npc n = getNearestNpc(p, NpcId.MERCENARY_ESCAPEGATES.id(), 10);
+						if (!p.getInventory().wielding(ItemId.SLAVES_ROBE_BOTTOM.id()) && !p.getInventory().wielding(ItemId.SLAVES_ROBE_TOP.id()) && p.getQuestStage(Quests.TOURIST_TRAP) != -1) {
+							p.message("This guard looks as if he's been down here a while.");
+							npcTalk(p, n, "Hey, you're no slave!");
+							npcTalk(p, n, "What are you doing down here?");
+							n.setChasing(p);
+							message(p, "More guards rush to catch you.",
+								"You are roughed up a bit by the guards as you're manhandlded to a cell.");
+							npcTalk(p, n, "Into the cell you go! I hope this teaches you a lesson.");
+							p.teleport(89, 801);
+							return null;
+						}
+						if (p.getQuestStage(Quests.TOURIST_TRAP) >= 9 || p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
+							message(p, "You walk into the dark of the cavern...");
+							p.message("And emerge in a different part of this huge underground complex.");
+							p.teleport(76, 3640);
+							return null;
+						}
+						p.message("Two guards block your way further into the caves");
+						if (n != null) {
+							npcTalk(p, n, "Hey you, move away from there!");
+						}
+					}
+					else if (obj.getID() == MINING_CART) {
+						if (command.equals("look")) {
+							if (obj.getX() == 62 && obj.getY() == 3639) {
+								p.message("This cart is being unloaded into this section of the mine.");
+								p.message("Before being sent back for another load.");
+							} else {
+								p.message("This mine cart is being loaded up with new rocks and stone.");
+								p.message("It gets sent to a different section of the mine for unloading.");
+							}
+						} else if (command.equals("search")) {
+							p.message("You search the mine cart.");
+							if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+								p.message("There isn't enough space for both you and Ana in the cart.");
+								return null;
+							}
+							p.message("There may be just enough space to squeeze yourself into the cart.");
+							p.message("Would you like to try?");
+							int menu = showMenu(p, "Yes, of course.", "No Thanks, it looks pretty dangerous.");
+							if (menu == 0) {
+								if (succeedRate(p)) {
+									p.message("You succeed!");
+									if (obj.getX() == 56 && obj.getY() == 3631) {
+										p.teleport(62, 3640);
+									} else if (obj.getX() == 62 && obj.getY() == 3639) {
+										p.teleport(55, 3632);
+									}
+								} else {
+									p.message("You fail to fit yourself into the cart in time before it starts it's journey.");
+									p.message("You fall and hurt yourself.");
+									p.damage(2);
+								}
+							} else if (menu == 1) {
+								p.message("You decide not to get into the dangerous looking mine cart.");
+							}
+						}
+					}
+					else if (obj.getID() == TRACK) {
+						p.message("You see that this track is too dangerous to cross.");
+						p.message("High speed carts are crossing the track most of the time.");
+					}
+					else if (obj.getID() == MINING_BARREL) {
+						if (p.getCache().hasKey("ana_is_up")) {
+							if (hasItem(p, ItemId.MINING_BARREL.id())) {
+								p.message("You can only manage one of these at a time.");
+								return null;
+							}
+							message(p, "You find the barrel with ana in it.",
+								"@gre@Ana: Let me out of here, I feel sick!");
+							addItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
+							p.getCache().remove("ana_is_up");
+							return null;
+						}
+						if (p.getCache().hasKey("ana_cart")) {
+							if (hasItem(p, ItemId.MINING_BARREL.id())) {
+								p.message("You can only manage one of these at a time.");
+								return null;
+							}
+							p.message("You search the barrels and find the one with Ana in it.");
+							p.message("@gre@Ana: Let me out!");
+							addItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
+							p.getCache().remove("ana_cart");
+							return null;
+						}
+						if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+							p.message("You cannot carry another barrel while you're carrying Ana.");
+							return null;
+						}
+						if (p.getCache().hasKey("ana_lift")) {
+							p.message("You search for Ana, but cannot find her.");
+						}
+						p.message("This barrel is quite big, but you may be able to carry one. ");
+						p.message("Would you like to take one?");
+						int menu = showMenu(p, "Yeah, cool!", "No thanks.");
+						if (menu == 0) {
+							if (hasItem(p, ItemId.MINING_BARREL.id())) {
+								p.message("You can only manage one of these at a time.");
+							} else {
+								p.message("You take the barrel, it's not that heavy, just awkward.");
+								addItem(p, ItemId.MINING_BARREL.id(), 1);
+							}
+						} else if (menu == 1) {
+							p.message("You decide not to take the barrel.");
+						}
+					}
+					else if (obj.getID() == LIFT_PLATFORM) {
+						Npc n = getNearestNpc(p, NpcId.MERCENARY_LIFTPLATFORM.id(), 5);
+						if (n != null) {
+							if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+								anaToLift(p, n);
+								return null;
+							}
+							npcTalk(p, n, "Hey there, what do you want?");
+							int menu = showMenu(p, n,
+								"What is this thing?",
+								"Can I use this?");
+							if (menu == 0) {
+								repeatLiftDialogue(p, n, RepeatLift.THING);
+							} else if (menu == 1) {
+								repeatLiftDialogue(p, n, RepeatLift.USETHIS);
+							}
+						}
+					}
+					else if (obj.getID() == LIFT_UP) {
+						p.message("You pull on the winch");
+						if (p.getCache().hasKey("ana_lift")) {
+							message(p, "You see a barrel coming to the surface.",
+								"Before too long you haul it onto the side.",
+								"The barrel seems quite heavy and you hear a muffled sound coming from inside.");
+							p.message("@gre@Ana: Get me OUT OF HERE!");
+							p.getCache().remove("ana_lift");
+							if (!p.getCache().hasKey("ana_is_up")) {
+								p.getCache().store("ana_is_up", true);
+							}
+						} else {
+							p.message("You pull on the winch and a heavy barrel filled with stone comes to the surface.");
+						}
+					}
+					else if (obj.getID() == MINING_CART_ABOVE) {
+						p.message("You search the mine cart.");
+						if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+							message(p, "There should be enough space for Ana (in the barrel) to go on here.");
+						}
+						if (p.getCache().hasKey("ana_in_cart")) {
+							message(p, "You can see the barrel with Ana in it on the cart already.");
+						}
+						message(p, "There is space on the cart for you get on, would you like to try?");
+						int menu = showMenu(p,
+							"Yes, I'll get on.",
+							"No, I've got other plans.",
+							"Attract mine cart drivers attention.");
+						if (menu == 0) {
+							p.message("You decide to climb onto the cart.");
+							if (p.getCache().hasKey("ana_in_cart")) {
+								message(p, "You hear Ana starting to bang on the barrel for her to be let out.");
+								message(p, "@gre@Ana: Get me out of here, I'm suffocating!",
+									"@gre@Ana: It smells like dwarven underwear in here!");
+							}
+							p.teleport(86, 808);
+							if (p.getCache().hasKey("rescue")) {
+								message(p, "As soon as you get on the cart, it starts to move.",
+									"Before too long you are past the gates.",
+									"You jump off the cart taking Ana with you.");
+								p.teleport(106, 806);
+								p.getCache().remove("rescue");
+								addItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
+							}
+						} else if (menu == 1) {
+							p.message("You decide not to get onto the cart.");
+						} else if (menu == 2) {
+							Npc cartDriver = getNearestNpc(p, NpcId.MINING_CART_DRIVER.id(), 10);
+							if (cartDriver != null) {
+								npcTalk(p, cartDriver, "Ahem.");
+								if (p.getCache().hasKey("rescue")) {
+									npcTalk(p, cartDriver, "Hurry up, get in the cart or I'll go without you!");
+									return null;
+								}
+								if (p.getCache().hasKey("ana_in_cart")) {
+									getOutWithAnaInCart(p, cartDriver, -1);
+									return null;
+								}
+								if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+									npcTalk(p, cartDriver, "What're you doing carrying that big barrel around?",
+										"Put it in the back of the cart like all the others!");
+									return null;
+								}
+								p.message("The cart driver is busy loading the cart up ...");
+							}
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void getOutWithAnaInCart(Player p, Npc n, int cID) {
@@ -858,42 +883,50 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		if (obj.getID() == 1006 && item.getID() == ItemId.BRONZE_BAR.id()) {
-			if (hasItem(p, ItemId.PROTOTYPE_DART_TIP.id())) {
-				p.message("You have already made the prototype dart tip.");
-				p.message("You don't need to make another one.");
-			} else if (hasItem(p, ItemId.PROTOTYPE_THROWING_DART.id())) {
-				p.message("You have already made the prototype dart.");
-				p.message("You don't need to make another one.");
-			} else {
-				makeDartTip(p, obj);
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 1006 && item.getID() == ItemId.BRONZE_BAR.id()) {
+						if (hasItem(p, ItemId.PROTOTYPE_DART_TIP.id())) {
+							p.message("You have already made the prototype dart tip.");
+							p.message("You don't need to make another one.");
+						} else if (hasItem(p, ItemId.PROTOTYPE_THROWING_DART.id())) {
+							p.message("You have already made the prototype dart.");
+							p.message("You don't need to make another one.");
+						} else {
+							makeDartTip(p, obj);
+						}
+					}
+					else if (obj.getID() == MINING_CART && item.getID() == ItemId.ANA_IN_A_BARREL.id()) {
+						message(p, "You carefully place Ana in the barrel into the mine cart.",
+							"Soon the cart moves out of sight and then it returns.");
+						removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
+						if (!p.getCache().hasKey("ana_cart")) {
+							p.getCache().store("ana_cart", true);
+						}
+					}
+					else if (obj.getID() == LIFT_PLATFORM && item.getID() == ItemId.ANA_IN_A_BARREL.id()) {
+						Npc n = getNearestNpc(p, NpcId.MERCENARY_LIFTPLATFORM.id(), 5);
+						if (n != null) {
+							anaToLift(p, n);
+						}
+					}
+					else if (obj.getID() == MINING_CART_ABOVE && item.getID() == ItemId.ANA_IN_A_BARREL.id()) {
+						message(p, "You place Ana (In the barrel) carefully on the cart.",
+							"This was the last barrel to go on the cart,",
+							"but the cart driver doesn't seem to be in any rush to get going.",
+							"And the desert heat will soon get to Ana.");
+						removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
+						if (!p.getCache().hasKey("ana_in_cart")) {
+							p.getCache().store("ana_in_cart", true);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
-		else if (obj.getID() == MINING_CART && item.getID() == ItemId.ANA_IN_A_BARREL.id()) {
-			message(p, "You carefully place Ana in the barrel into the mine cart.",
-				"Soon the cart moves out of sight and then it returns.");
-			removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
-			if (!p.getCache().hasKey("ana_cart")) {
-				p.getCache().store("ana_cart", true);
-			}
-		}
-		else if (obj.getID() == LIFT_PLATFORM && item.getID() == ItemId.ANA_IN_A_BARREL.id()) {
-			Npc n = getNearestNpc(p, NpcId.MERCENARY_LIFTPLATFORM.id(), 5);
-			if (n != null) {
-				anaToLift(p, n);
-			}
-		}
-		else if (obj.getID() == MINING_CART_ABOVE && item.getID() == ItemId.ANA_IN_A_BARREL.id()) {
-			message(p, "You place Ana (In the barrel) carefully on the cart.",
-				"This was the last barrel to go on the cart,",
-				"but the cart driver doesn't seem to be in any rush to get going.",
-				"And the desert heat will soon get to Ana.");
-			removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
-			if (!p.getCache().hasKey("ana_in_cart")) {
-				p.getCache().store("ana_in_cart", true);
-			}
-		}
+		};
 	}
 
 	@Override
@@ -902,10 +935,18 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnItem(Player p, Item item1, Item item2) {
-		if (Functions.compareItemsIds(item1, item2, ItemId.FEATHER.id(), ItemId.PROTOTYPE_DART_TIP.id())) {
-			attachFeathersToPrototype(p, item1, item2);
-		}
+	public GameStateEvent onInvUseOnItem(Player p, Item item1, Item item2) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (Functions.compareItemsIds(item1, item2, ItemId.FEATHER.id(), ItemId.PROTOTYPE_DART_TIP.id())) {
+						attachFeathersToPrototype(p, item1, item2);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -914,15 +955,23 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 	}
 	
 	@Override
-	public void onPickup(Player player, GroundItem item) {
-		if (item.getID() == ItemId.ANA_IN_A_BARREL.id()) {
-			//non-kosher, unsure if item despawned when killed or gave dialogue on this condition
-			player.message("@gre@Ana: Don't think for one minute ...");
-			player.message("@gre@Ana: You can just come back and pick me up");
-			player.message("Ana goes out running away");
-			player.getWorld().unregisterItem(item);
-			return;
-		}
+	public GameStateEvent onPickup(Player player, GroundItem item) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.ANA_IN_A_BARREL.id()) {
+						//non-kosher, unsure if item despawned when killed or gave dialogue on this condition
+						player.message("@gre@Ana: Don't think for one minute ...");
+						player.message("@gre@Ana: You can just come back and pick me up");
+						player.message("Ana goes out running away");
+						player.getWorld().unregisterItem(item);
+						return null;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 	
 	@Override
@@ -931,49 +980,57 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 	}
 
 	@Override
-	public void onDrop(Player p, Item i) {
-		if (i.getID() == ItemId.ANA_IN_A_BARREL.id()) {
-			if (p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
-				removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
-				return;
+	public GameStateEvent onDrop(Player p, Item i) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (i.getID() == ItemId.ANA_IN_A_BARREL.id()) {
+						if (p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
+							removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
+							return null;
+						}
+						p.message("Are you sure you want to drop this?");
+						int menu = showMenu(p,
+							"Yes, I'm sure.",
+							"Erm, no I've had second thoughts.");
+						if (menu == 0) {
+							if (outsideCamp(p)) {
+								message(p, "@gre@Ana: You can't drop me here!",
+									"@gre@Ana: I'll die in the desert on my own!",
+									"@gre@Ana: Take me back to the Shantay pass.");
+								return null;
+							}
+							int diffX = 0;
+							//inside mining prison cell
+							if ((p.getX() >= 72 && p.getX() <= 77) && (p.getY() >= 3613 && p.getY() <= 3631)) {
+								//mercenary does not get placed in jail if player is there
+								diffX = -8;
+							}
+							message(p, "You drop the barrel to the floor and Ana gets out.");
+							removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
+							Npc Ana = spawnNpc(p.getWorld(), NpcId.ANA.id(), p.getX(), p.getY(), 20000);
+							sleep(650);
+							npcTalk(p, Ana, "How dare you put me in that barrel you barbarian!");
+							message(p, "Ana's outburst attracts the guards, they come running over.");
+							Npc guard = getNearestNpc(p, NpcId.MERCENARY.id(), 15);
+							if (guard == null || guard.inCombat()) {
+								guard = spawnNpc(p.getWorld(), NpcId.MERCENARY.id(), p.getX() + diffX, p.getY(), 30000);
+							}
+							sleep(650);
+							npcTalk(p, guard, "Hey! What's going on here then?");
+							if (diffX == 0)
+								guard.startCombat(p);
+							message(p, "The guards drag Ana away and then throw you into a cell.");
+							p.teleport(75, 3626);
+						} else if (menu == 1) {
+							message(p, "You think twice about dropping the barrel to the floor.");
+						}
+					}
+
+					return null;
+				});
 			}
-			p.message("Are you sure you want to drop this?");
-			int menu = showMenu(p,
-				"Yes, I'm sure.",
-				"Erm, no I've had second thoughts.");
-			if (menu == 0) {
-				if (outsideCamp(p)) {
-					message(p, "@gre@Ana: You can't drop me here!",
-						"@gre@Ana: I'll die in the desert on my own!",
-						"@gre@Ana: Take me back to the Shantay pass.");
-					return;
-				}
-				int diffX = 0;
-				//inside mining prison cell
-				if ((p.getX() >= 72 && p.getX() <= 77) && (p.getY() >= 3613 && p.getY() <= 3631)) {
-					//mercenary does not get placed in jail if player is there
-					diffX = -8;
-				}
-				message(p, "You drop the barrel to the floor and Ana gets out.");
-				removeItem(p, ItemId.ANA_IN_A_BARREL.id(), 1);
-				Npc Ana = spawnNpc(p.getWorld(), NpcId.ANA.id(), p.getX(), p.getY(), 20000);
-				sleep(650);
-				npcTalk(p, Ana, "How dare you put me in that barrel you barbarian!");
-				message(p, "Ana's outburst attracts the guards, they come running over.");
-				Npc guard = getNearestNpc(p, NpcId.MERCENARY.id(), 15);
-				if (guard == null || guard.inCombat()) {
-					guard = spawnNpc(p.getWorld(), NpcId.MERCENARY.id(), p.getX() + diffX, p.getY(), 30000);
-				}
-				sleep(650);
-				npcTalk(p, guard, "Hey! What's going on here then?");
-				if (diffX == 0)
-					guard.startCombat(p);
-				message(p, "The guards drag Ana away and then throw you into a cell.");
-				p.teleport(75, 3626);
-			} else if (menu == 1) {
-				message(p, "You think twice about dropping the barrel to the floor.");
-			}
-		}
+		};
 	}
 
 	private boolean outsideCamp(Player p) {
@@ -987,30 +1044,37 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.MINING_CART_DRIVER.id()) {
-			if (n.getID() == NpcId.MINING_CART_DRIVER.id()) {
-				if (p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
-					npcTalk(p, n, "Don't trouble me, can't you see I'm busy?");
-					return;
-				}
-				if (p.getCache().hasKey("rescue")) {
-					npcTalk(p, n, "Hurry up, get in the cart or I'll go without you!");
-					return;
-				}
-				if (p.getCache().hasKey("ana_in_cart")) {
-					getOutWithAnaInCart(p, n, -1);
-					return;
-				}
-				if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
-					npcTalk(p, n, "What're you doing carrying that big barrel around?",
-						"Put it in the back of the cart like all the others!");
-					return;
-				}
-				p.message("The cart driver is busy loading the cart up ...");
-			}
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.MINING_CART_DRIVER.id()) {
+						if (n.getID() == NpcId.MINING_CART_DRIVER.id()) {
+							if (p.getQuestStage(Quests.TOURIST_TRAP) == -1) {
+								npcTalk(p, n, "Don't trouble me, can't you see I'm busy?");
+								return null;
+							}
+							if (p.getCache().hasKey("rescue")) {
+								npcTalk(p, n, "Hurry up, get in the cart or I'll go without you!");
+								return null;
+							}
+							if (p.getCache().hasKey("ana_in_cart")) {
+								getOutWithAnaInCart(p, n, -1);
+								return null;
+							}
+							if (hasItem(p, ItemId.ANA_IN_A_BARREL.id())) {
+								npcTalk(p, n, "What're you doing carrying that big barrel around?",
+									"Put it in the back of the cart like all the others!");
+								return null;
+							}
+							p.message("The cart driver is busy loading the cart up ...");
+						}
+					}
 
+					return null;
+				});
+			}
+		};
 	}
 
 	class RepeatLift {

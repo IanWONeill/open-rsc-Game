@@ -4,12 +4,12 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.QuestInterface;
 import com.openrsc.server.plugins.listeners.action.*;
@@ -414,47 +414,56 @@ public class TempleOfIkov implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.LUCIEN_EDGE.id()) {
-			if (p.getQuestStage(this) == -1 || p.getQuestStage(this) == -2) {
-				p.message("You have already completed this quest");
-				return;
-			}
-			npcTalk(p, n, "Have you got the staff of Armadyl yet?");
-			if (hasItem(p, ItemId.STAFF_OF_ARMADYL.id())) {
-				int menu = showMenu(p, n,
-					"Yes here it is",
-					"No not yet");
-				if (menu == 0) {
-					message(p, "You give the staff to Lucien");
-					removeItem(p, ItemId.STAFF_OF_ARMADYL.id(), 1);
-					npcTalk(p, n, "Muhahahaha",
-						"Already I can feel the power of this staff running through my limbs",
-						"Soon I shall be exceedingly powerful",
-						"I suppose you would like a reward now",
-						"I shall grant you much power");
-					p.message("A glow eminates from Lucien's helmet");
-					p.sendQuestComplete(Quests.TEMPLE_OF_IKOV);
-					p.updateQuestStage(this, -2);
-					npcTalk(p, n, "I must be away now to make preparations for my conquest",
-						"Muhahahaha");
-					n.remove();
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.LUCIEN_EDGE.id()) {
+						if (p.getQuestStage(quest) == -1 || p.getQuestStage(quest) == -2) {
+							p.message("You have already completed this quest");
+							return null;
+						}
+						npcTalk(p, n, "Have you got the staff of Armadyl yet?");
+						if (hasItem(p, ItemId.STAFF_OF_ARMADYL.id())) {
+							int menu = showMenu(p, n,
+								"Yes here it is",
+								"No not yet");
+							if (menu == 0) {
+								message(p, "You give the staff to Lucien");
+								removeItem(p, ItemId.STAFF_OF_ARMADYL.id(), 1);
+								npcTalk(p, n, "Muhahahaha",
+									"Already I can feel the power of this staff running through my limbs",
+									"Soon I shall be exceedingly powerful",
+									"I suppose you would like a reward now",
+									"I shall grant you much power");
+								p.message("A glow eminates from Lucien's helmet");
+								p.sendQuestComplete(Quests.TEMPLE_OF_IKOV);
+								p.updateQuestStage(quest, -2);
+								npcTalk(p, n, "I must be away now to make preparations for my conquest",
+									"Muhahahaha");
+								n.remove();
 
-				}
-			} else {
-				playerTalk(p, n, "No not yet");
-			}
-		}
-		else if (n.getID() == NpcId.LUCIEN.id()) {
-			lucienDialogue(p, n, -1);
-		}
-		else if (n.getID() == NpcId.WINELDA.id()) {
-			wineldaDialogue(p, n, -1);
+							}
+						} else {
+							playerTalk(p, n, "No not yet");
+						}
+					}
+					else if (n.getID() == NpcId.LUCIEN.id()) {
+						lucienDialogue(p, n, -1);
+					}
+					else if (n.getID() == NpcId.WINELDA.id()) {
+						wineldaDialogue(p, n, -1);
 
-		}
-		else if (n.getID() == NpcId.GUARDIAN_OF_ARMADYL_FEMALE.id() || n.getID() == NpcId.GUARDIAN_OF_ARMADYL_MALE.id()) {
-			guardianDialogue(p, n, -1);
-		}
+					}
+					else if (n.getID() == NpcId.GUARDIAN_OF_ARMADYL_FEMALE.id() || n.getID() == NpcId.GUARDIAN_OF_ARMADYL_MALE.id()) {
+						guardianDialogue(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -463,57 +472,66 @@ public class TempleOfIkov implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == STAIR_DOWN) {
-			if (hasItem(p, ItemId.LIT_CANDLE.id()) || hasItem(p, ItemId.LIT_BLACK_CANDLE.id()) || hasItem(p, ItemId.LIT_TORCH.id())) {
-				p.message("Your flame lights up the room");
-				p.teleport(537, 3372);
-			} else {
-				p.message("You cannot see any further into the room");
-				p.teleport(537, 3394);
-				sleep(1600);
-				p.message("It is too dark");
-			}
-		}
-		else if (obj.getID() == STAIR_UP) {
-			p.teleport(536, 3338);
-		}
-		else if (obj.getID() == LEVER) {
-			if (command.equals("pull")) {
-				if (!p.getCache().hasKey("ikovLever")) {
-					p.message("You have activated a trap on the lever");
-					p.damage(DataConversions.roundUp(p.getSkills().getLevel(Skills.HITS) / 5));
-				} else {
-					message(p, "You pull the lever",
-						"You hear a clunk",
-						"The trap on the lever resets");
-					if (p.getCache().hasKey("ikovLever")) {
-						p.getCache().remove("ikovLever");
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == STAIR_DOWN) {
+						if (hasItem(p, ItemId.LIT_CANDLE.id()) || hasItem(p, ItemId.LIT_BLACK_CANDLE.id()) || hasItem(p, ItemId.LIT_TORCH.id())) {
+							p.message("Your flame lights up the room");
+							p.teleport(537, 3372);
+						} else {
+							p.message("You cannot see any further into the room");
+							p.teleport(537, 3394);
+							sleep(1600);
+							p.message("It is too dark");
+						}
 					}
-					if (!p.getCache().hasKey("openSpiderDoor") && (p.getQuestStage(this) != -1 || p.getQuestStage(this) != -2)) {
-						p.getCache().store("openSpiderDoor", true);
+					else if (obj.getID() == STAIR_UP) {
+						p.teleport(536, 3338);
 					}
-				}
-			} else if (command.equals("searchfortraps")) {
-				p.message("You search the lever for traps");
-				if (getCurrentLevel(p, Skills.THIEVING) < 42) {
-					p.message("You have not high thieving enough to disable this trap");
-					return;
-				}
-				message(p, "You find a trap on the lever",
-					"You disable the trap");
-				if (!p.getCache().hasKey("ikovLever")) {
-					p.getCache().store("ikovLever", true);
-				}
+					else if (obj.getID() == LEVER) {
+						if (command.equals("pull")) {
+							if (!p.getCache().hasKey("ikovLever")) {
+								p.message("You have activated a trap on the lever");
+								p.damage(DataConversions.roundUp(p.getSkills().getLevel(Skills.HITS) / 5));
+							} else {
+								message(p, "You pull the lever",
+									"You hear a clunk",
+									"The trap on the lever resets");
+								if (p.getCache().hasKey("ikovLever")) {
+									p.getCache().remove("ikovLever");
+								}
+								if (!p.getCache().hasKey("openSpiderDoor") && (p.getQuestStage(quest) != -1 || p.getQuestStage(quest) != -2)) {
+									p.getCache().store("openSpiderDoor", true);
+								}
+							}
+						} else if (command.equals("searchfortraps")) {
+							p.message("You search the lever for traps");
+							if (getCurrentLevel(p, Skills.THIEVING) < 42) {
+								p.message("You have not high thieving enough to disable this trap");
+								return null;
+							}
+							message(p, "You find a trap on the lever",
+								"You disable the trap");
+							if (!p.getCache().hasKey("ikovLever")) {
+								p.getCache().store("ikovLever", true);
+							}
+						}
+					}
+					else if (obj.getID() == COMPLETE_LEVER) {
+						message(p, "You pull the lever",
+							"You hear the door next to you make a clunking noise");
+						if (!p.getCache().hasKey("completeLever") && (p.getQuestStage(quest) != -1 || p.getQuestStage(quest) != -2)) {
+							p.getCache().store("completeLever", true);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
-		else if (obj.getID() == COMPLETE_LEVER) {
-			message(p, "You pull the lever",
-				"You hear the door next to you make a clunking noise");
-			if (!p.getCache().hasKey("completeLever") && (p.getQuestStage(this) != -1 || p.getQuestStage(this) != -2)) {
-				p.getCache().store("completeLever", true);
-			}
-		}
+		};
 	}
 
 	@Override
@@ -532,36 +550,45 @@ public class TempleOfIkov implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPickup(Player p, GroundItem i) {
-		if (i.getID() == ItemId.ICE_ARROWS.id()) {
-			if (i.getX() == 560 && i.getY() == 3352 || i.getX() == 563 && i.getY() == 3354) {
-				addItem(p, ItemId.ICE_ARROWS.id(), 1);
-				p.teleport(538, 3348);
-				sleep(650);
-				ActionSender.sendTeleBubble(p, p.getX(), p.getY(), false);
-				sleep(1000);
-				p.message("Suddenly your surroundings change");
-			} else {
-				message(p, "You can only take ice arrows from the cave of ice spiders",
-					"In the temple of Ikov");
+	public GameStateEvent onPickup(Player p, GroundItem i) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (i.getID() == ItemId.ICE_ARROWS.id()) {
+						if (i.getX() == 560 && i.getY() == 3352 || i.getX() == 563 && i.getY() == 3354) {
+							addItem(p, ItemId.ICE_ARROWS.id(), 1);
+							p.teleport(538, 3348);
+							sleep(650);
+							ActionSender.sendTeleBubble(p, p.getX(), p.getY(), false);
+							sleep(1000);
+							p.message("Suddenly your surroundings change");
+						} else {
+							message(p, "You can only take ice arrows from the cave of ice spiders",
+								"In the temple of Ikov");
+						}
+					}
+					else if (i.getID() == ItemId.STAFF_OF_ARMADYL.id()) {
+						if (p.getQuestStage(quest) == 2 || p.getQuestStage(quest) == -1 || p.getQuestStage(quest) == -2) {
+							p.message("I shouldn't steal this");
+							return null;
+						}
+						if (hasItem(p, ItemId.STAFF_OF_ARMADYL.id())) {
+							p.message("I already have one of those");
+							return null;
+						}
+						Npc n = getMultipleNpcsInArea(p, 5, NpcId.GUARDIAN_OF_ARMADYL_FEMALE.id(), NpcId.GUARDIAN_OF_ARMADYL_MALE.id());
+						if (n != null) {
+							npcTalk(p, n, "That is not thine to take");
+							n.setChasing(p);
+							return null;
+						}
+					}
+
+					return null;
+				});
 			}
-		}
-		else if (i.getID() == ItemId.STAFF_OF_ARMADYL.id()) {
-			if (p.getQuestStage(this) == 2 || p.getQuestStage(this) == -1 || p.getQuestStage(this) == -2) {
-				p.message("I shouldn't steal this");
-				return;
-			}
-			if (hasItem(p, ItemId.STAFF_OF_ARMADYL.id())) {
-				p.message("I already have one of those");
-				return;
-			}
-			Npc n = getMultipleNpcsInArea(p, 5, NpcId.GUARDIAN_OF_ARMADYL_FEMALE.id(), NpcId.GUARDIAN_OF_ARMADYL_MALE.id());
-			if (n != null) {
-				npcTalk(p, n, "That is not thine to take");
-				n.setChasing(p);
-				return;
-			}
-		}
+		};
 	}
 
 	@Override
@@ -570,15 +597,23 @@ public class TempleOfIkov implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		if (item.getID() == ItemId.LEVER.id() && obj.getID() == LEVER_BRACKET) {
-			p.message("You fit the lever into the bracket");
-			removeItem(p, ItemId.LEVER.id(), 1);
-			p.getWorld().replaceGameObject(obj,
-				new GameObject(obj.getWorld(), obj.getLocation(), COMPLETE_LEVER, obj.getDirection(), obj
-					.getType()));
-			p.getWorld().delayedSpawnObject(obj.getLoc(), 15000);
-		}
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.LEVER.id() && obj.getID() == LEVER_BRACKET) {
+						p.message("You fit the lever into the bracket");
+						removeItem(p, ItemId.LEVER.id(), 1);
+						p.getWorld().replaceGameObject(obj,
+							new GameObject(obj.getWorld(), obj.getLocation(), COMPLETE_LEVER, obj.getDirection(), obj
+								.getType()));
+						p.getWorld().delayedSpawnObject(obj.getLoc(), 15000);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -587,14 +622,23 @@ public class TempleOfIkov implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPlayerMageNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.THE_FIRE_WARRIOR_OF_LESARKUS.id()) {
-			if (p.getCache().hasKey("killedLesarkus") || p.getQuestStage(this) == -1 || p.getQuestStage(this) == -2) {
-				p.message("You have already killed the fire warrior");
-				return;
+	public GameStateEvent onPlayerMageNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.THE_FIRE_WARRIOR_OF_LESARKUS.id()) {
+						if (p.getCache().hasKey("killedLesarkus") || p.getQuestStage(quest) == -1 || p.getQuestStage(quest) == -2) {
+							p.message("You have already killed the fire warrior");
+							return null;
+						}
+						p.message("You need to kill the fire warrior with ice arrows");
+					}
+
+					return null;
+				});
 			}
-			p.message("You need to kill the fire warrior with ice arrows");
-		}
+		};
 	}
 
 	@Override
@@ -603,26 +647,35 @@ public class TempleOfIkov implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPlayerKilledNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.THE_FIRE_WARRIOR_OF_LESARKUS.id()) {
-			n.killedBy(p);
-			if (!p.getCache().hasKey("killedLesarkus")) {
-				p.getCache().store("killedLesarkus", true);
+	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.THE_FIRE_WARRIOR_OF_LESARKUS.id()) {
+						n.killedBy(p);
+						if (!p.getCache().hasKey("killedLesarkus")) {
+							p.getCache().store("killedLesarkus", true);
+						}
+					}
+					else if (n.getID() == NpcId.LUCIEN_EDGE.id()) {
+						if (p.getQuestStage(quest) == -1 || p.getQuestStage(quest) == -2) {
+							p.message("You have already completed this quest");
+							n.getSkills().setLevel(Skills.HITS, n.getSkills().getMaxStat(Skills.HITS));
+							return null;
+						}
+						n.getSkills().setLevel(Skills.HITS, n.getSkills().getMaxStat(Skills.HITS));
+						npcTalk(p, n, "You may have defeated me for now",
+							"But I will be back");
+						p.sendQuestComplete(Quests.TEMPLE_OF_IKOV);
+						n.displayNpcTeleportBubble(n.getX(), n.getY());
+						n.remove();
+					}
+
+					return null;
+				});
 			}
-		}
-		else if (n.getID() == NpcId.LUCIEN_EDGE.id()) {
-			if (p.getQuestStage(this) == -1 || p.getQuestStage(this) == -2) {
-				p.message("You have already completed this quest");
-				n.getSkills().setLevel(Skills.HITS, n.getSkills().getMaxStat(Skills.HITS));
-				return;
-			}
-			n.getSkills().setLevel(Skills.HITS, n.getSkills().getMaxStat(Skills.HITS));
-			npcTalk(p, n, "You may have defeated me for now",
-				"But I will be back");
-			p.sendQuestComplete(Quests.TEMPLE_OF_IKOV);
-			n.displayNpcTeleportBubble(n.getX(), n.getY());
-			n.remove();
-		}
+		};
 	}
 
 	@Override
@@ -631,21 +684,30 @@ public class TempleOfIkov implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPlayerAttackNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.LUCIEN_EDGE.id()) {
-			if (p.getQuestStage(this) == -1 || p.getQuestStage(this) == -2) {
-				p.message("You have already completed this quest");
-			} else {
-				if (p.getInventory().wielding(ItemId.PENDANT_OF_ARMADYL.id())) {
-					p.startCombat(n);
-				} else {
-					npcTalk(p, n, "I'm sure you don't want to attack me really",
-						"I am your friend");
-					message(p, "You decide you don't want to attack Lucien really",
-						"He is your friend");
-				}
+	public GameStateEvent onPlayerAttackNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.LUCIEN_EDGE.id()) {
+						if (p.getQuestStage(quest) == -1 || p.getQuestStage(quest) == -2) {
+							p.message("You have already completed this quest");
+						} else {
+							if (p.getInventory().wielding(ItemId.PENDANT_OF_ARMADYL.id())) {
+								p.startCombat(n);
+							} else {
+								npcTalk(p, n, "I'm sure you don't want to attack me really",
+									"I am your friend");
+								message(p, "You decide you don't want to attack Lucien really",
+									"He is your friend");
+							}
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -680,30 +742,38 @@ public class TempleOfIkov implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPlayerRangeNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.LUCIEN_EDGE.id()) {
-			if (p.getQuestStage(Quests.TEMPLE_OF_IKOV) == -1 || p.getQuestStage(Quests.TEMPLE_OF_IKOV) == -2) {
-				p.message("You have already completed this quest");
-				return;
+	public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.LUCIEN_EDGE.id()) {
+						if (p.getQuestStage(Quests.TEMPLE_OF_IKOV) == -1 || p.getQuestStage(Quests.TEMPLE_OF_IKOV) == -2) {
+							p.message("You have already completed this quest");
+							return null;
+						}
+						if (!p.getInventory().wielding(ItemId.PENDANT_OF_ARMADYL.id())) {
+							npcTalk(p, n, "I'm sure you don't want to attack me really",
+								"I am your friend");
+							message(p, "You decide you don't want to attack Lucien really",
+								"He is your friend");
+							return null;
+						}
+					}
+					else if (n.getID() == NpcId.THE_FIRE_WARRIOR_OF_LESARKUS.id()) {
+						if ((p.getCache().hasKey("killedLesarkus") || p.getQuestStage(Quests.TEMPLE_OF_IKOV) == -1 || p.getQuestStage(Quests.TEMPLE_OF_IKOV) == -2)) {
+							p.message("You have already killed the fire warrior");
+							return null;
+						}
+						if (!p.getCache().hasKey("shot_ice")) {
+							p.message("You need to kill the fire warrior with ice arrows");
+							return null;
+						}
+					}
+
+					return null;
+				});
 			}
-			if (!p.getInventory().wielding(ItemId.PENDANT_OF_ARMADYL.id())) {
-				npcTalk(p, n, "I'm sure you don't want to attack me really",
-					"I am your friend");
-				message(p, "You decide you don't want to attack Lucien really",
-					"He is your friend");
-				return;
-			}
-		}
-		else if (n.getID() == NpcId.THE_FIRE_WARRIOR_OF_LESARKUS.id()) {
-			if ((p.getCache().hasKey("killedLesarkus") || p.getQuestStage(Quests.TEMPLE_OF_IKOV) == -1 || p.getQuestStage(Quests.TEMPLE_OF_IKOV) == -2)) {
-				p.message("You have already killed the fire warrior");
-				return;
-			}
-			if (!p.getCache().hasKey("shot_ice")) {
-				p.message("You need to kill the fire warrior with ice arrows");
-				return;
-			}
-		}
+		};
 	}
 
 	class Lucien {

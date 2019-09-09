@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.itemactions;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
@@ -18,12 +19,20 @@ public class InvItemPoisoning implements InvUseOnItemListener, InvUseOnItemExecu
 	}
 
 	@Override
-	public void onInvUseOnItem(Player player, Item item1, Item item2) {
-		if (item1.getID() == ItemId.WEAPON_POISON.id()) {
-			applyPoison(player, item2);
-		} else if (item2.getID() == ItemId.WEAPON_POISON.id()) {
-			applyPoison(player, item1);
-		}
+	public GameStateEvent onInvUseOnItem(Player player, Item item1, Item item2) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item1.getID() == ItemId.WEAPON_POISON.id()) {
+						applyPoison(player, item2);
+					} else if (item2.getID() == ItemId.WEAPON_POISON.id()) {
+						applyPoison(player, item1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 

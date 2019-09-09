@@ -45,44 +45,49 @@ public class Runecrafting implements ObjectActionListener, ObjectActionExecutive
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
 		final ObjectRunecraftingDef def = player.getWorld().getServer().getEntityHandler().getObjectRunecraftingDef(obj.getID());
-
 		if (def == null) {
-			return;
+			return null;
 		}
 
-		if (player.getQuestStage(Quests.RUNE_MYSTERIES) != -1)
-		{
-			player.message("You need to complete Rune Mysteries first. How did you get here?");
-			return;
-		}
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (player.getQuestStage(Quests.RUNE_MYSTERIES) != -1)
+					{
+						player.message("You need to complete Rune Mysteries first. How did you get here?");
+						return null;
+					}
 
-		if (!hasItem(player,ItemId.RUNE_ESSENCE.id())){
-			player.message("You have no rune essence to bind.");
-			return;
-		}
-		else {
-			if (player.getSkills().getLevel(Skills.RUNECRAFTING) < def.getRequiredLvl()) {
-				player.message("You require more skill to use this altar.");
-				return;
+					if (!hasItem(player,ItemId.RUNE_ESSENCE.id())){
+						player.message("You have no rune essence to bind.");
+						return null;
+					}
+					else {
+						if (player.getSkills().getLevel(Skills.RUNECRAFTING) < def.getRequiredLvl()) {
+							player.message("You require more skill to use this altar.");
+							return null;
+						}
+						player.message("You bind the temple's power into " + def.getRuneName() + " runes.");
+					}
+					player.setBatchEvent(new BatchEvent(player.getWorld(), player, 100, "Binding runes", 1030, false) {
+						@Override
+						public void action() {
+							if (!hasItem(getOwner(), ItemId.RUNE_ESSENCE.id())) {
+								interrupt();
+								return;
+							}
+							removeItem(getOwner(), ItemId.RUNE_ESSENCE.id(), 1);
+							addItem(getOwner(), def.getRuneId(), getRuneMultiplier(getOwner(), def.getRuneId()));
+							getOwner().incExp(Skills.RUNECRAFTING, def.getExp(), true);
+						}
+					});
+
+					return null;
+				});
 			}
-			player.message("You bind the temple's power into " + def.getRuneName() + " runes.");
-		}
-		player.setBatchEvent(new BatchEvent(player.getWorld(), player, 100, "Binding runes", 1030, false) {
-			@Override
-			public void action() {
-				if (!hasItem(getOwner(), ItemId.RUNE_ESSENCE.id())) {
-					interrupt();
-					return;
-				}
-				removeItem(getOwner(), ItemId.RUNE_ESSENCE.id(), 1);
-				addItem(getOwner(), def.getRuneId(), getRuneMultiplier(getOwner(), def.getRuneId()));
-				getOwner().incExp(Skills.RUNECRAFTING, def.getExp(), true);
-			}
-		});
-
+		};
 	}
 
 	@Override
@@ -116,8 +121,8 @@ public class Runecrafting implements ObjectActionListener, ObjectActionExecutive
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "RC Use Talisman") {
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					if (p.getQuestStage(Quests.RUNE_MYSTERIES) != -1)
@@ -173,7 +178,7 @@ public class Runecrafting implements ObjectActionListener, ObjectActionExecutive
 					return null;
 				});
 			}
-		});
+		};
 	}
 
 	public int getRuneMultiplier(Player p, int runeId) {

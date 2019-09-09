@@ -37,8 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.*;
+import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -441,13 +440,11 @@ public final class Server implements Runnable {
 
 				}
 			}
-
-
 		}
 	}
 
 	protected final long runGameEvents() {
-		return getGameEventHandler().doGameEvents();
+		return getGameEventHandler().runGameEvents();
 	}
 
 	protected final long runGameStateUpdate() throws Exception {
@@ -457,7 +454,6 @@ public final class Server implements Runnable {
 	protected final long processIncomingPackets() {
 		final long processPacketsStart	= System.currentTimeMillis();
 		for (Player p : getWorld().getPlayers()) {
-
 			p.processIncomingPackets();
 		}
 		final long processPacketsEnd = System.currentTimeMillis();
@@ -468,7 +464,7 @@ public final class Server implements Runnable {
 	protected long processOutgoingPackets() {
 		final long processPacketsStart	= System.currentTimeMillis();
 		for (Player p : getWorld().getPlayers()) {
-			p.sendOutgoingPackets();
+			p.processOutgoingPackets();
 		}
 		final long processPacketsEnd = System.currentTimeMillis();
 
@@ -490,10 +486,12 @@ public final class Server implements Runnable {
 	}
 
 	private void saveAndShutdown() {
+		LOGGER.info("Saving players for shutdown...");
 		getWorld().getClanManager().saveClans();
 		for (Player p : getWorld().getPlayers()) {
 			p.unregister(true, "Server shutting down.");
 		}
+		LOGGER.info("Players saved...");
 
 		SingleEvent up = new SingleEvent(getWorld(), null, 6000, "Save and Shutdown") {
 			public void action() {
@@ -528,11 +526,11 @@ public final class Server implements Runnable {
 
 	private void saveAndRestart() {
 		getWorld().getClanManager().saveClans();
-		LOGGER.info("Saving players...");
+		LOGGER.info("Saving players for shutdown...");
 		for (Player p : getWorld().getPlayers()) {
 			p.unregister(true, "Server shutting down.");
-			LOGGER.info("Players saved...");
 		}
+		LOGGER.info("Players saved...");
 
 		SingleEvent up = new SingleEvent(getWorld(), null, 6000, "Save and Restart") {
 			public void action() {
@@ -546,68 +544,6 @@ public final class Server implements Runnable {
 			}
 		};
 		getGameEventHandler().add(up);
-	}
-
-	public final String buildProfilingDebugInformation(boolean forInGame) {
-		int countAllEvents = 0;
-		long durationAllEvents = 0;
-		String newLine = forInGame ? "%" : "\r\n";
-
-		final HashMap<String, Integer> eventsCounts = getGameEventHandler().getEventsCounts();
-		final HashMap<String, Long> eventsDurations = getGameEventHandler().getEventsDurations();
-
-		// Calculate Totals
-		for (Map.Entry<String, Integer> eventEntry : eventsCounts.entrySet()) {
-			countAllEvents += eventEntry.getValue();
-		}
-		for (Map.Entry<String, Long> eventEntry : eventsDurations.entrySet()) {
-			durationAllEvents += eventEntry.getValue();
-		}
-
-		// Sort the Events Hashmap
-		List list = new LinkedList(eventsDurations.entrySet());
-		Collections.sort(list, new Comparator() {
-			public int compare(Object o1, Object o2) {
-				int o1EventCount = eventsCounts.get(((Map.Entry) (o1)).getKey());
-				int o2EventCount = eventsCounts.get(((Map.Entry) (o2)).getKey());
-				long o1EventDuration = eventsDurations.get(((Map.Entry) (o1)).getKey());
-				long o2EventDuration = eventsDurations.get(((Map.Entry) (o2)).getKey());
-
-				if(o1EventDuration == o2EventDuration) {
-					return o1EventCount < o2EventCount ? 1 : -1;
-				} else {
-					return o1EventDuration < o2EventDuration ? 1 : -1;
-				}
-			}
-		});
-		HashMap sortedHashMap = new LinkedHashMap();
-		for (Iterator it = list.iterator(); it.hasNext(); ) {
-			Map.Entry entry = (Map.Entry) it.next();
-			sortedHashMap.put(entry.getKey(), entry.getValue());
-		}
-		eventsDurations.clear();
-		eventsDurations.putAll(sortedHashMap);
-
-		int i = 0;
-		StringBuilder s = new StringBuilder();
-		for (Map.Entry<String, Long> entry : eventsDurations.entrySet()) {
-			if (forInGame && i >= 17) // Only display first 17 elements of the hashmap
-				break;
-
-			String name = entry.getKey();
-			Long duration = entry.getValue();
-			Integer count = eventsCounts.get(entry.getKey());
-			s.append(name).append(" : ").append(duration).append("ms").append(" : ").append(count).append(newLine);
-			++i;
-		}
-
-		return
-			"Tick: " + getConfig().GAME_TICK + "ms, Server: " + getLastTickDuration() + "ms " + getLastIncomingPacketsDuration() + "ms " + getLastEventsDuration() + "ms " + getLastGameStateDuration() + "ms " + getLastOutgoingPacketsDuration() + "ms" + newLine +
-			"Game Updater: " + getGameUpdater().getLastProcessPlayersDuration() + "ms " + getGameUpdater().getLastProcessNpcsDuration() + "ms " + getGameUpdater().getLastProcessMessageQueuesDuration() + "ms " + getGameUpdater().getLastUpdateClientsDuration() + "ms " + getGameUpdater().getLastDoCleanupDuration() + "ms " + getGameUpdater().getLastExecuteWalkToActionsDuration() + "ms " + newLine +
-			"Events: " + countAllEvents + ", NPCs: " + getWorld().getNpcs().size() + ", Players: " + getWorld().getPlayers().size() + ", Shops: " + getWorld().getShops().size() + newLine +
-			/*"Player Atk Map: " + getWorld().getPlayersUnderAttack().size() + ", NPC Atk Map: " + getWorld().getNpcsUnderAttack().size() + ", Quests: " + getWorld().getQuests().size() + ", Mini Games: " + getWorld().getMiniGames().size() + newLine +*/
-			s;
-
 	}
 
 	public GameTickEventHandler getGameEventHandler() {

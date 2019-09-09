@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.ardougne.east;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -22,28 +23,36 @@ public class SilverMerchant implements ShopInterface, TalkToNpcExecutiveListener
 		2), new Item(ItemId.SILVER.id(), 1), new Item(ItemId.SILVER_BAR.id(), 1));
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (p.getCache().hasKey("silverStolen") && (Instant.now().getEpochSecond() < p.getCache().getLong("silverStolen") + 1200)) {
-			npcTalk(p, n, "Do you really think I'm going to buy something",
-				"That you have just stolen from me",
-				"guards guards");
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (p.getCache().hasKey("silverStolen") && (Instant.now().getEpochSecond() < p.getCache().getLong("silverStolen") + 1200)) {
+						npcTalk(p, n, "Do you really think I'm going to buy something",
+							"That you have just stolen from me",
+							"guards guards");
 
-			Npc attacker = getNearestNpc(p, NpcId.PALADIN.id(), 5); // Paladin first
-			if (attacker == null)
-				attacker = getNearestNpc(p, NpcId.KNIGHT.id(), 5); // Knight second
-			if (attacker == null)
-				attacker = getNearestNpc(p, NpcId.GUARD_ARDOUGNE.id(), 5); // Guard third
+						Npc attacker = getNearestNpc(p, NpcId.PALADIN.id(), 5); // Paladin first
+						if (attacker == null)
+							attacker = getNearestNpc(p, NpcId.KNIGHT.id(), 5); // Knight second
+						if (attacker == null)
+							attacker = getNearestNpc(p, NpcId.GUARD_ARDOUGNE.id(), 5); // Guard third
 
-			if (attacker != null)
-				attacker.setChasing(p);
-		} else {
-			npcTalk(p, n, "Silver! Silver!", "Best prices for buying and selling in all Kandarin!");
-			int menu = showMenu(p, n, "Yes please", "No thankyou");
-			if (menu == 0) {
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
+						if (attacker != null)
+							attacker.setChasing(p);
+					} else {
+						npcTalk(p, n, "Silver! Silver!", "Best prices for buying and selling in all Kandarin!");
+						int menu = showMenu(p, n, "Yes please", "No thankyou");
+						if (menu == 0) {
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	// WHEN STEALING AND CAUGHT BY A MERCHANT ("Hey thats mine");

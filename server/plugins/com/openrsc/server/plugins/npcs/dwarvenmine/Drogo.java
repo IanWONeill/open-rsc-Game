@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.dwarvenmine;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -38,21 +39,29 @@ public class Drogo implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		npcTalk(p, n, "Ello");
-		int m = showMenu(p, n, false, //do not send over
-			"Do you want to trade?", "Hello shorty",
-			"Why don't you ever restock ores and bars?");
-		if (m == 0) {
-			playerTalk(p, n, "Do you want to trade?");
-			npcTalk(p, n, "Yeah sure, I run a mining store.");
-			ActionSender.showShop(p, shop);
-		} else if (m == 1) {
-			playerTalk(p, n, "Hello Shorty.");
-			npcTalk(p, n, "I may be short, but at least I've got manners");
-		} else if (m == 2) {
-			playerTalk(p, n, "Why don't you ever restock ores and bars?");
-			npcTalk(p, n, "The only ores and bars I sell are those sold to me");
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Ello");
+					int m = showMenu(p, n, false, //do not send over
+						"Do you want to trade?", "Hello shorty",
+						"Why don't you ever restock ores and bars?");
+					if (m == 0) {
+						playerTalk(p, n, "Do you want to trade?");
+						npcTalk(p, n, "Yeah sure, I run a mining store.");
+						ActionSender.showShop(p, shop);
+					} else if (m == 1) {
+						playerTalk(p, n, "Hello Shorty.");
+						npcTalk(p, n, "I may be short, but at least I've got manners");
+					} else if (m == 2) {
+						playerTalk(p, n, "Why don't you ever restock ores and bars?");
+						npcTalk(p, n, "The only ores and bars I sell are those sold to me");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 }

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.khazard;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -25,19 +26,26 @@ public final class FishingTrawlerGeneralStore implements ShopInterface,
 		new Item(ItemId.POT_OF_FLOUR.id(), 30), new Item(ItemId.BAILING_BUCKET.id(), 30), new Item(ItemId.SWAMP_PASTE.id(), 30));
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Can I help you at all?");
 
-		npcTalk(p, n, "Can I help you at all?");
+					int option = showMenu(p, n, "Yes please. What are you selling?",
+						"No thanks");
+					switch (option) {
+						case 0:
+							npcTalk(p, n, "Take a look");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+							break;
+					}
 
-		int option = showMenu(p, n, "Yes please. What are you selling?",
-				"No thanks");
-		switch (option) {
-			case 0:
-				npcTalk(p, n, "Take a look");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-				break;
-		}
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

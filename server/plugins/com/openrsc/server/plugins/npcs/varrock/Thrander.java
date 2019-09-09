@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.varrock;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -20,13 +21,21 @@ public class Thrander implements TalkToNpcListener, TalkToNpcExecutiveListener, 
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		npcTalk(p, n, "Hello I'm Thrander the smith",
-			"I'm an expert in armour modification",
-			"Give me your armour designed for men",
-			"And I can convert it into something more comfortable for a women",
-			"And visa versa"
-		);
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Hello I'm Thrander the smith",
+						"I'm an expert in armour modification",
+						"Give me your armour designed for men",
+						"And I can convert it into something more comfortable for a women",
+						"And visa versa"
+					);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -35,39 +44,47 @@ public class Thrander implements TalkToNpcListener, TalkToNpcExecutiveListener, 
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player player, Npc npc, Item item) {
-		if (inArray(item.getID(), ItemId.BRONZE_PLATE_MAIL_TOP.id(), ItemId.IRON_PLATE_MAIL_TOP.id(), ItemId.STEEL_PLATE_MAIL_TOP.id(),
-			ItemId.BLACK_PLATE_MAIL_TOP.id(), ItemId.MITHRIL_PLATE_MAIL_TOP.id(), ItemId.ADAMANTITE_PLATE_MAIL_TOP.id(), ItemId.RUNE_PLATE_MAIL_TOP.id(),
-			ItemId.BRONZE_PLATE_MAIL_BODY.id(), ItemId.IRON_PLATE_MAIL_BODY.id(), ItemId.STEEL_PLATE_MAIL_BODY.id(),
-			ItemId.BLACK_PLATE_MAIL_BODY.id(), ItemId.MITHRIL_PLATE_MAIL_BODY.id(), ItemId.ADAMANTITE_PLATE_MAIL_BODY.id(), ItemId.RUNE_PLATE_MAIL_BODY.id(),
-			ItemId.BRONZE_PLATED_SKIRT.id(), ItemId.IRON_PLATED_SKIRT.id(), ItemId.STEEL_PLATED_SKIRT.id(),
-			ItemId.BLACK_PLATED_SKIRT.id(), ItemId.MITHRIL_PLATED_SKIRT.id(), ItemId.ADAMANTITE_PLATED_SKIRT.id(), ItemId.RUNE_SKIRT.id(),
-			ItemId.BRONZE_PLATE_MAIL_LEGS.id(), ItemId.IRON_PLATE_MAIL_LEGS.id(), ItemId.STEEL_PLATE_MAIL_LEGS.id(),
-			ItemId.BLACK_PLATE_MAIL_LEGS.id(), ItemId.MITHRIL_PLATE_MAIL_LEGS.id(), ItemId.ADAMANTITE_PLATE_MAIL_LEGS.id(), ItemId.RUNE_PLATE_MAIL_LEGS.id())) {
-			int newID = getNewID(item);
-			Item changedItem = new Item(newID);
-			String itemLower, changedItemLower;
-			itemLower = item.getDef(player.getWorld()).getName().toLowerCase();
-			changedItemLower = changedItem.getDef(player.getWorld()).getName().toLowerCase();
-			if (removeItem(player, item.getID(), 1)) {
-				if (itemLower.contains("top") || itemLower.contains("body")) {
-					message(player, npc, 1300, "You give Thrander a " + itemLower,
-							"Thrander hammers it for a bit");
-					player.message("Thrander gives you a " + changedItemLower);
-				} else if (item.getDef(player.getWorld()).getName().toLowerCase().contains("skirt")) {
-					String metal = itemLower.substring(0, itemLower.indexOf(' '));
-					message(player, npc, 1300, "You give Thrander a " + metal + " plated skirt",
-							"Thrander hammers it for a bit");
-					player.message("Thrander gives you some " + changedItemLower);
-				} else if (item.getDef(player.getWorld()).getName().toLowerCase().contains("legs")) {
-					String metal = itemLower.substring(0, itemLower.indexOf(' '));
-					message(player, npc, 1300, "You give Thrander some " + itemLower,
-							"Thrander hammers it for a bit");
-					player.message("Thrander gives you a " + metal + " plated skirt");
-				}
-				addItem(player, newID, 1);
+	public GameStateEvent onInvUseOnNpc(Player player, Npc npc, Item item) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (inArray(item.getID(), ItemId.BRONZE_PLATE_MAIL_TOP.id(), ItemId.IRON_PLATE_MAIL_TOP.id(), ItemId.STEEL_PLATE_MAIL_TOP.id(),
+						ItemId.BLACK_PLATE_MAIL_TOP.id(), ItemId.MITHRIL_PLATE_MAIL_TOP.id(), ItemId.ADAMANTITE_PLATE_MAIL_TOP.id(), ItemId.RUNE_PLATE_MAIL_TOP.id(),
+						ItemId.BRONZE_PLATE_MAIL_BODY.id(), ItemId.IRON_PLATE_MAIL_BODY.id(), ItemId.STEEL_PLATE_MAIL_BODY.id(),
+						ItemId.BLACK_PLATE_MAIL_BODY.id(), ItemId.MITHRIL_PLATE_MAIL_BODY.id(), ItemId.ADAMANTITE_PLATE_MAIL_BODY.id(), ItemId.RUNE_PLATE_MAIL_BODY.id(),
+						ItemId.BRONZE_PLATED_SKIRT.id(), ItemId.IRON_PLATED_SKIRT.id(), ItemId.STEEL_PLATED_SKIRT.id(),
+						ItemId.BLACK_PLATED_SKIRT.id(), ItemId.MITHRIL_PLATED_SKIRT.id(), ItemId.ADAMANTITE_PLATED_SKIRT.id(), ItemId.RUNE_SKIRT.id(),
+						ItemId.BRONZE_PLATE_MAIL_LEGS.id(), ItemId.IRON_PLATE_MAIL_LEGS.id(), ItemId.STEEL_PLATE_MAIL_LEGS.id(),
+						ItemId.BLACK_PLATE_MAIL_LEGS.id(), ItemId.MITHRIL_PLATE_MAIL_LEGS.id(), ItemId.ADAMANTITE_PLATE_MAIL_LEGS.id(), ItemId.RUNE_PLATE_MAIL_LEGS.id())) {
+						int newID = getNewID(item);
+						Item changedItem = new Item(newID);
+						String itemLower, changedItemLower;
+						itemLower = item.getDef(player.getWorld()).getName().toLowerCase();
+						changedItemLower = changedItem.getDef(player.getWorld()).getName().toLowerCase();
+						if (removeItem(player, item.getID(), 1)) {
+							if (itemLower.contains("top") || itemLower.contains("body")) {
+								message(player, npc, 1300, "You give Thrander a " + itemLower,
+									"Thrander hammers it for a bit");
+								player.message("Thrander gives you a " + changedItemLower);
+							} else if (item.getDef(player.getWorld()).getName().toLowerCase().contains("skirt")) {
+								String metal = itemLower.substring(0, itemLower.indexOf(' '));
+								message(player, npc, 1300, "You give Thrander a " + metal + " plated skirt",
+									"Thrander hammers it for a bit");
+								player.message("Thrander gives you some " + changedItemLower);
+							} else if (item.getDef(player.getWorld()).getName().toLowerCase().contains("legs")) {
+								String metal = itemLower.substring(0, itemLower.indexOf(' '));
+								message(player, npc, 1300, "You give Thrander some " + itemLower,
+									"Thrander hammers it for a bit");
+								player.message("Thrander gives you a " + metal + " plated skirt");
+							}
+							addItem(player, newID, 1);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	public int getNewID(Item item) {

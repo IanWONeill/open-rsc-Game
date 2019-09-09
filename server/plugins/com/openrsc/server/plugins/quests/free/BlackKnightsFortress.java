@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.free;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.event.rsc.impl.combat.AggroEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
@@ -65,10 +66,18 @@ public class BlackKnightsFortress implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		if (n.getID() == NpcId.SIR_AMIK_VARZE.id()) {
-			handleSirAmikVarze(p, n);
-		}
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.SIR_AMIK_VARZE.id()) {
+						handleSirAmikVarze(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void handleSirAmikVarze(final Player p, final Npc n) {
@@ -178,30 +187,39 @@ public class BlackKnightsFortress implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player player) {
-		switch (obj.getID()) {
-			case HOLE:
-				if (item.getID() == ItemId.CABBAGE.id() && player.getQuestStage(this) == 2) {
-					if (removeItem(player, ItemId.CABBAGE.id(), 1)) {
-						message(player,
-							"You drop a cabbage down the hole.",
-							"The cabbage lands in the cauldron below.",
-							"The mixture in the cauldron starts to froth and bubble.",
-							"You hear the witch groan in dismay.");
-						playerTalk(player, null,
-							"Right I think that's successfully sabotaged the secret weapon.");
-						player.updateQuestStage(this, 3);
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					switch (obj.getID()) {
+						case HOLE:
+							if (item.getID() == ItemId.CABBAGE.id() && player.getQuestStage(quest) == 2) {
+								if (removeItem(player, ItemId.CABBAGE.id(), 1)) {
+									message(player,
+										"You drop a cabbage down the hole.",
+										"The cabbage lands in the cauldron below.",
+										"The mixture in the cauldron starts to froth and bubble.",
+										"You hear the witch groan in dismay.");
+									playerTalk(player, null,
+										"Right I think that's successfully sabotaged the secret weapon.");
+									player.updateQuestStage(quest, 3);
+								}
+							} else if (item.getID() == ItemId.SPECIAL_DEFENSE_CABBAGE.id() && player.getQuestStage(quest) == 2) {
+								message(player,
+									"This is the wrong sort of cabbage!",
+									"You are meant to be hindering the witch.",
+									"Not helping her.");
+							} else {
+								playerTalk(player, null, "Why would I want to do that?");
+							}
+							break;
 					}
-				} else if (item.getID() == ItemId.SPECIAL_DEFENSE_CABBAGE.id() && player.getQuestStage(this) == 2) {
-					message(player,
-						"This is the wrong sort of cabbage!",
-						"You are meant to be hindering the witch.",
-						"Not helping her.");
-				} else {
-					playerTalk(player, null, "Why would I want to do that?");
-				}
-				break;
-		}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -222,40 +240,48 @@ public class BlackKnightsFortress implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onObjectAction(final GameObject obj, String command,
-							   final Player player) {
-		switch (obj.getID()) {
-			case LISTEN_GRILL:
-				if (player.getQuestStage(this) == 1) {
-					Npc blackKnight = getNearestNpc(player, NpcId.BLACK_KNIGHT_FORTRESS.id(), 20);
-					Npc witch = getNearestNpc(player, NpcId.WITCH_FORTRESS.id(), 20);
-					Npc greldo = getNearestNpc(player, NpcId.GRELDO.id(), 20);
-					if (witch == null || blackKnight == null || greldo == null) {
-						return;
+	public GameStateEvent onObjectAction(final GameObject obj, String command, final Player player) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					switch (obj.getID()) {
+						case LISTEN_GRILL:
+							if (player.getQuestStage(quest) == 1) {
+								Npc blackKnight = getNearestNpc(player, NpcId.BLACK_KNIGHT_FORTRESS.id(), 20);
+								Npc witch = getNearestNpc(player, NpcId.WITCH_FORTRESS.id(), 20);
+								Npc greldo = getNearestNpc(player, NpcId.GRELDO.id(), 20);
+								if (witch == null || blackKnight == null || greldo == null) {
+									return null;
+								}
+								npcTalk(player, blackKnight,
+									"So how's the secret weapon coming along?");
+								npcTalk(player,
+									witch,
+									"The invincibility potion is almost ready",
+									"It's taken me five years but it's almost ready",
+									"Greldo the Goblin here",
+									"Is just going to fetch the last ingredient for me",
+									"It's a specially grown cabbage",
+									"Grown by my cousin Helda who lives in Draynor Manor",
+									"The soil there is slightly magical",
+									"And gives the cabbages slight magic properties",
+									"Not to mention the trees",
+									"Now remember Greldo only a Draynor Manor cabbage will do",
+									"Don't get lazy and bring any old cabbage",
+									"That would entirely wreck the potion");
+								npcTalk(player, greldo, "Yeth Mithreth");
+								player.updateQuestStage(quest, 2);
+							} else {
+								player.message("I can't hear much right now");
+							}
+							break;
 					}
-					npcTalk(player, blackKnight,
-						"So how's the secret weapon coming along?");
-					npcTalk(player,
-						witch,
-						"The invincibility potion is almost ready",
-						"It's taken me five years but it's almost ready",
-						"Greldo the Goblin here",
-						"Is just going to fetch the last ingredient for me",
-						"It's a specially grown cabbage",
-						"Grown by my cousin Helda who lives in Draynor Manor",
-						"The soil there is slightly magical",
-						"And gives the cabbages slight magic properties",
-						"Not to mention the trees",
-						"Now remember Greldo only a Draynor Manor cabbage will do",
-						"Don't get lazy and bring any old cabbage",
-						"That would entirely wreck the potion");
-					npcTalk(player, greldo, "Yeth Mithreth");
-					player.updateQuestStage(this, 2);
-				} else {
-					player.message("I can't hear much right now");
-				}
-				break;
-		}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -274,106 +300,113 @@ public class BlackKnightsFortress implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onWallObjectAction(final GameObject obj, Integer click,
-								   final Player player) {
-		switch (obj.getID()) {
-			case DOOR_ENTRANCE:
-				if (obj.getLocation().equals(DOOR_LOCATION) && player.getX() <= 270) {
-					if (player.getInventory().wielding(ItemId.IRON_CHAIN_MAIL_BODY.id())
-						&& player.getInventory().wielding(ItemId.MEDIUM_BRONZE_HELMET.id())) {
-						doDoor(obj, player);
-						player.teleport(271, 441, false);
-					} else {
-						final Npc guard = getNearestNpc(player, NpcId.GUARD_FORTRESS.id(), 20);
-						if (guard != null) {
-							guard.resetPath();
-							guard.face(player);
-							player.face(guard);
-							npcTalk(player, guard, "Heh, you can't come in here",
-								"This is a high security military installation");
-							int option = showMenu(player, guard, "Yes but I work here", "Oh sorry", "So who does it belong to?");
-							if (option == 0) {
-								npcTalk(player,
-									guard,
-									"Well this is the guards entrance",
-									"And I might be new here",
-									"But I can tell you're not a guard",
-									"You're not even wearing proper guards uniform");
-								int sub_menu = showMenu(player, guard, "Pleaasse let me in",
-									"So what is this uniform?");
-								if (sub_menu == 0) {
-									npcTalk(player, guard,
-										"Go away, you're getting annoying");
-								} else if (sub_menu == 1) {
-									npcTalk(player,
-										guard,
-										"Well you can see me wearing it",
-										"It's iron chain mail and a medium bronze helmet");
+	public GameStateEvent onWallObjectAction(final GameObject obj, Integer click, final Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					switch (obj.getID()) {
+						case DOOR_ENTRANCE:
+							if (obj.getLocation().equals(DOOR_LOCATION) && player.getX() <= 270) {
+								if (player.getInventory().wielding(ItemId.IRON_CHAIN_MAIL_BODY.id())
+									&& player.getInventory().wielding(ItemId.MEDIUM_BRONZE_HELMET.id())) {
+									doDoor(obj, player);
+									player.teleport(271, 441, false);
+								} else {
+									final Npc guard = getNearestNpc(player, NpcId.GUARD_FORTRESS.id(), 20);
+									if (guard != null) {
+										guard.resetPath();
+										guard.face(player);
+										player.face(guard);
+										npcTalk(player, guard, "Heh, you can't come in here",
+											"This is a high security military installation");
+										int option = showMenu(player, guard, "Yes but I work here", "Oh sorry", "So who does it belong to?");
+										if (option == 0) {
+											npcTalk(player,
+												guard,
+												"Well this is the guards entrance",
+												"And I might be new here",
+												"But I can tell you're not a guard",
+												"You're not even wearing proper guards uniform");
+											int sub_menu = showMenu(player, guard, "Pleaasse let me in",
+												"So what is this uniform?");
+											if (sub_menu == 0) {
+												npcTalk(player, guard,
+													"Go away, you're getting annoying");
+											} else if (sub_menu == 1) {
+												npcTalk(player,
+													guard,
+													"Well you can see me wearing it",
+													"It's iron chain mail and a medium bronze helmet");
+											}
+										} else if (option == 1) {
+											npcTalk(player, guard,
+												"Don't let it happen again");
+										} else if (option == 2) {
+											npcTalk(player, guard,
+												"This fortress belongs to the order of black knights known as the Kinshra");
+										}
+									}
 								}
-							} else if (option == 1) {
-								npcTalk(player, guard,
-									"Don't let it happen again");
-							} else if (option == 2) {
-								npcTalk(player, guard,
-									"This fortress belongs to the order of black knights known as the Kinshra");
-							}
-						}
-					}
-				} else {
-					doDoor(obj, player);
-				}
-				break;
-			case 39:
-				if (obj.getLocation().equals(DOOR2_LOCATION)
-					&& player.getX() <= 274) {
-					final Npc guard = getNearestNpc(player, NpcId.GUARD_FORTRESS.id(), 20);
-					if (guard != null) {
-						guard.resetPath();
-						guard.face(player);
-						player.face(guard);
-						npcTalk(player, guard,
-							"I wouldn't go in there if I woz you",
-							"Those black knights are in an important meeting",
-							"They said they'd kill anyone who went in there");
-						int option = showMenu(player, guard, "Ok I won't", "I don't care I'm going in anyway");
-						if (option == 1) {
-							doDoor(obj, player);
-							Npc n = Functions.getNearestNpc(player, NpcId.BLACK_KNIGHT.id(), 7);
-							if (!n.isChasing()) {
-								n.setChasing(player);
-								new AggroEvent(n.getWorld(), n, player);
-							}
-						}
-					}
-				} else if (obj.getLocation().equals(DOOR2_LOCATION) && player.getX() <= 275) {
-					doDoor(obj, player);
-				}
-				break;
-			case 40:
-				if (obj.getLocation().equals(DOOR3_LOCATION)
-						&& player.getY() <= 442) {
-					Collection<Npc> npcs = Functions.getNpcsInArea(player, 5, NpcId.BLACK_KNIGHT.id());
-					int countNotAbleChase = 0;
-					if (npcs.size() == 0) {
-						doDoor(obj, player);
-					} else {
-						for (Npc n : npcs) {
-							if (!n.isChasing()) {
-								n.setChasing(player);
-								new AggroEvent(n.getWorld(), n, player);
 							} else {
-								countNotAbleChase++;
+								doDoor(obj, player);
 							}
-						}
-						if (countNotAbleChase >= npcs.size()) {
-							doDoor(obj, player);
-						}
+							break;
+						case 39:
+							if (obj.getLocation().equals(DOOR2_LOCATION)
+								&& player.getX() <= 274) {
+								final Npc guard = getNearestNpc(player, NpcId.GUARD_FORTRESS.id(), 20);
+								if (guard != null) {
+									guard.resetPath();
+									guard.face(player);
+									player.face(guard);
+									npcTalk(player, guard,
+										"I wouldn't go in there if I woz you",
+										"Those black knights are in an important meeting",
+										"They said they'd kill anyone who went in there");
+									int option = showMenu(player, guard, "Ok I won't", "I don't care I'm going in anyway");
+									if (option == 1) {
+										doDoor(obj, player);
+										Npc n = Functions.getNearestNpc(player, NpcId.BLACK_KNIGHT.id(), 7);
+										if (!n.isChasing()) {
+											n.setChasing(player);
+											new AggroEvent(n.getWorld(), n, player);
+										}
+									}
+								}
+							} else if (obj.getLocation().equals(DOOR2_LOCATION) && player.getX() <= 275) {
+								doDoor(obj, player);
+							}
+							break;
+						case 40:
+							if (obj.getLocation().equals(DOOR3_LOCATION)
+								&& player.getY() <= 442) {
+								Collection<Npc> npcs = Functions.getNpcsInArea(player, 5, NpcId.BLACK_KNIGHT.id());
+								int countNotAbleChase = 0;
+								if (npcs.size() == 0) {
+									doDoor(obj, player);
+								} else {
+									for (Npc n : npcs) {
+										if (!n.isChasing()) {
+											n.setChasing(player);
+											new AggroEvent(n.getWorld(), n, player);
+										} else {
+											countNotAbleChase++;
+										}
+									}
+									if (countNotAbleChase >= npcs.size()) {
+										doDoor(obj, player);
+									}
+								}
+							}
+							else if (obj.getLocation().equals(DOOR3_LOCATION) && player.getY() <= 443) {
+								doDoor(obj, player);
+							}
+							break;
 					}
-				}
-				else if (obj.getLocation().equals(DOOR3_LOCATION) && player.getY() <= 443) {
-					doDoor(obj, player);
-				}
-				break;
-		}
+
+					return null;
+				});
+			}
+		};
 	}
 }

@@ -4,6 +4,7 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -66,13 +67,21 @@ public class LegendsQuestSirRadimusErkle implements QuestInterface, TalkToNpcLis
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_HOUSE.id()) {
-			radimusInHouseDialogue(p, n, -1);
-		}
-		else if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_GUILD.id()) {
-			radimusInGuildDialogue(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_HOUSE.id()) {
+						radimusInHouseDialogue(p, n, -1);
+					}
+					else if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_GUILD.id()) {
+						radimusInGuildDialogue(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void radimusInGuildDialogue(Player p, Npc n, int cID) {
@@ -458,54 +467,62 @@ public class LegendsQuestSirRadimusErkle implements QuestInterface, TalkToNpcLis
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player p, Npc n, Item item) {
-		if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_HOUSE.id() && item.getID() == ItemId.GILDED_TOTEM_POLE.id()) {
-			if (p.getQuestStage(Quests.LEGENDS_QUEST) == 11) {
-				npcTalk(p, n, "Go through to the main Legends Guild and I will join you.");
-				return;
+	public GameStateEvent onInvUseOnNpc(Player p, Npc n, Item item) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_HOUSE.id() && item.getID() == ItemId.GILDED_TOTEM_POLE.id()) {
+						if (p.getQuestStage(Quests.LEGENDS_QUEST) == 11) {
+							npcTalk(p, n, "Go through to the main Legends Guild and I will join you.");
+							return null;
+						}
+						if (p.getQuestStage(Quests.LEGENDS_QUEST) == 10) {
+							npcTalk(p, n, (p.isMale() ? "Sir" : "Madam") + ", this is truly amazing...");
+							if (!hasItem(p, ItemId.RADIMUS_SCROLLS_COMPLETE.id())) {
+								npcTalk(p, n, "However, I need you to complete the map of the ,",
+									"Kharazi Jungle before your quest is complete.");
+							} else {
+								message(p, n, 1300, "Radimus Erkle orders some guards to take the totem pole,",
+									"into the main Legends Hall.");
+								removeItem(p, item.getID(), 1);
+								npcTalk(p, n, "That will take pride of place in the Legends Guild ",
+									"As a reminder of your quest to gain entry.",
+									"And so that many other great adventurers can admire your bravery.",
+									"Well, it seems that you have completed the tasks I set you.",
+									"That map of the Kharazi jungle will be very helpful in future.",
+									"Congratulations, welcome to the Legends Guild.",
+									"Go through to the main Legends Guild building ",
+									"and I will join you shortly.");
+								p.updateQuestStage(Quests.LEGENDS_QUEST, 11);
+							}
+						} else {
+							p.message("You have not completed this quest - submitting bug abuse.");
+						}
+					}
+					else if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_HOUSE.id() && item.getID() == ItemId.TOTEM_POLE.id()) {
+						npcTalk(p, n, "Hmmm, well, it is very impressive.",
+							"Especially since it looks very heavy...",
+							"However, it lacks a certain authenticity,",
+							"my guess is that you made it.",
+							"But I'm not sure why.",
+							"We would like to have a really nice display object",
+							"to put on display in the Legends Guild main hall.",
+							"Do you think you could get something more authentic ?");
+					}
+					else if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_HOUSE.id() && item.getID() == ItemId.RADIMUS_SCROLLS_COMPLETE.id()) {
+						npcTalk(p, n, "Well done " + (p.isMale() ? "Sir" : "Madam") + ", very well done...",
+							"However, you'll probably need it while you search",
+							"for natives of the Kharazi tribe in the Kharazi jungle.",
+							"Remember, we want a very special token of friendship from them.",
+							"To place in the Legends Guild.",
+							"I'll take the map off your hands once we get the ",
+							"proof that you have met the natives.");
+					}
+
+					return null;
+				});
 			}
-			if (p.getQuestStage(Quests.LEGENDS_QUEST) == 10) {
-				npcTalk(p, n, (p.isMale() ? "Sir" : "Madam") + ", this is truly amazing...");
-				if (!hasItem(p, ItemId.RADIMUS_SCROLLS_COMPLETE.id())) {
-					npcTalk(p, n, "However, I need you to complete the map of the ,",
-						"Kharazi Jungle before your quest is complete.");
-				} else {
-					message(p, n, 1300, "Radimus Erkle orders some guards to take the totem pole,",
-						"into the main Legends Hall.");
-					removeItem(p, item.getID(), 1);
-					npcTalk(p, n, "That will take pride of place in the Legends Guild ",
-						"As a reminder of your quest to gain entry.",
-						"And so that many other great adventurers can admire your bravery.",
-						"Well, it seems that you have completed the tasks I set you.",
-						"That map of the Kharazi jungle will be very helpful in future.",
-						"Congratulations, welcome to the Legends Guild.",
-						"Go through to the main Legends Guild building ",
-						"and I will join you shortly.");
-					p.updateQuestStage(Quests.LEGENDS_QUEST, 11);
-				}
-			} else {
-				p.message("You have not completed this quest - submitting bug abuse.");
-			}
-		}
-		else if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_HOUSE.id() && item.getID() == ItemId.TOTEM_POLE.id()) {
-			npcTalk(p, n, "Hmmm, well, it is very impressive.",
-					"Especially since it looks very heavy...",
-					"However, it lacks a certain authenticity,",
-					"my guess is that you made it.",
-					"But I'm not sure why.",
-					"We would like to have a really nice display object",
-					"to put on display in the Legends Guild main hall.",
-					"Do you think you could get something more authentic ?");
-		}
-		else if (n.getID() == NpcId.SIR_RADIMUS_ERKLE_HOUSE.id() && item.getID() == ItemId.RADIMUS_SCROLLS_COMPLETE.id()) {
-			npcTalk(p, n, "Well done " + (p.isMale() ? "Sir" : "Madam") + ", very well done...",
-				"However, you'll probably need it while you search",
-				"for natives of the Kharazi tribe in the Kharazi jungle.",
-				"Remember, we want a very special token of friendship from them.",
-				"To place in the Legends Guild.",
-				"I'll take the map off your hands once we get the ",
-				"proof that you have met the natives.");
-		}
+		};
 	}
 
 	class RadimusInHouse {

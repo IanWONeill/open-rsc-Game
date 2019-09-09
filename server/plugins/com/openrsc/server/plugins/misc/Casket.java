@@ -19,8 +19,8 @@ public class Casket implements InvActionListener, InvActionExecutiveListener {
 	}
 
 	@Override
-	public void onInvAction(Item item, Player p, String command) {
-		p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Process Casket") {
+	public GameStateEvent onInvAction(Item item, Player p, String command) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.CASKET.id()) {
@@ -79,6 +79,6 @@ public class Casket implements InvActionListener, InvActionExecutiveListener {
 					return null;
 				});
 			}
-		});
+		};
 	}
 }

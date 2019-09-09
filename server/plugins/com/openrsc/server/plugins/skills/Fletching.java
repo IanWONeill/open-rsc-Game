@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.skills;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.custom.BatchEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.ItemArrowHeadDef;
 import com.openrsc.server.external.ItemBowStringDef;
 import com.openrsc.server.external.ItemDartTipDef;
@@ -365,12 +366,20 @@ public class Fletching implements InvUseOnItemExecutiveListener, InvUseOnItemLis
 	}
 
 	@Override
-	public void onInvUseOnItem(Player player, Item item1, Item item2) {
-		if (item1.getID() == com.openrsc.server.constants.ItemId.KNIFE.id() && DataConversions.inArray(logIds, item2.getID())) {
-			doLogCut(player, item1, item2);
-		} else if (item2.getID() == com.openrsc.server.constants.ItemId.KNIFE.id() && DataConversions.inArray(logIds, item1.getID())) {
-			doLogCut(player, item2, item1);
-		}
+	public GameStateEvent onInvUseOnItem(Player player, Item item1, Item item2) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item1.getID() == com.openrsc.server.constants.ItemId.KNIFE.id() && DataConversions.inArray(logIds, item2.getID())) {
+						doLogCut(player, item1, item2);
+					} else if (item2.getID() == com.openrsc.server.constants.ItemId.KNIFE.id() && DataConversions.inArray(logIds, item1.getID())) {
+						doLogCut(player, item2, item1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 }

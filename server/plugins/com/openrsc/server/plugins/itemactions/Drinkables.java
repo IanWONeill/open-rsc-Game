@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.itemactions;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.InvActionListener;
@@ -19,192 +20,200 @@ public class Drinkables implements InvActionListener, InvActionExecutiveListener
 	}
 
 	@Override
-	public void onInvAction(Item item, Player player, String command) {
-		if (player.cantConsume()) {
-			return;
-		}
-		int id = item.getID();
-		player.setConsumeTimer(1); // drink speed is same as tick speed setting
-		if (id == ItemId.GUJUO_POTION.id())
-			handleGujouPotion(player);
+	public GameStateEvent onInvAction(Item item, Player player, String command) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (player.cantConsume()) {
+						return null;
+					}
+					int id = item.getID();
+					player.setConsumeTimer(1); // drink speed is same as tick speed setting
+					if (id == ItemId.GUJUO_POTION.id())
+						handleGujouPotion(player);
 
-		else if (id == ItemId.BRANDY.id() || id == ItemId.VODKA.id()
-			|| id == ItemId.GIN.id() || id == ItemId.WHISKY.id()) {
-			handleSpirits(player, item);
+					else if (id == ItemId.BRANDY.id() || id == ItemId.VODKA.id()
+						|| id == ItemId.GIN.id() || id == ItemId.WHISKY.id()) {
+						handleSpirits(player, item);
 
-		} else if (id == ItemId.HALF_COCKTAIL_GLASS.id() || id == ItemId.FULL_COCKTAIL_GLASS.id()
-			|| id == ItemId.ODD_LOOKING_COCKTAIL.id()) {
-			handleCocktail(player, item);
+					} else if (id == ItemId.HALF_COCKTAIL_GLASS.id() || id == ItemId.FULL_COCKTAIL_GLASS.id()
+						|| id == ItemId.ODD_LOOKING_COCKTAIL.id()) {
+						handleCocktail(player, item);
 
-		} else if (id == ItemId.FRUIT_BLAST.id() || id == ItemId.BLURBERRY_BARMAN_FRUIT_BLAST.id()
-			|| id == ItemId.PINEAPPLE_PUNCH.id() || id == ItemId.BLURBERRY_BARMAN_PINEAPPLE_PUNCH.id()) {
-			handleFruitCocktail(player, item);
+					} else if (id == ItemId.FRUIT_BLAST.id() || id == ItemId.BLURBERRY_BARMAN_FRUIT_BLAST.id()
+						|| id == ItemId.PINEAPPLE_PUNCH.id() || id == ItemId.BLURBERRY_BARMAN_PINEAPPLE_PUNCH.id()) {
+						handleFruitCocktail(player, item);
 
-		} else if (id == ItemId.BLURBERRY_SPECIAL.id() || id == ItemId.BLURBERRY_BARMAN_BLURBERRY_SPECIAL.id()
-			|| id == ItemId.WIZARD_BLIZZARD.id() || id == ItemId.BLURBERRY_BARMAN_WIZARD_BLIZZARD.id()
-			|| id == ItemId.SGG.id() || id == ItemId.BLURBERRY_BARMAN_SGG.id()
-			|| id == ItemId.CHOCOLATE_SATURDAY.id() || id == ItemId.BLURBERRY_BARMAN_CHOCOLATE_SATURDAY.id()
-			|| id == ItemId.DRUNK_DRAGON.id() || id == ItemId.BLURBERRY_BARMAN_DRUNK_DRAGON.id()) {
-			handleSpecialCocktail(player, item);
+					} else if (id == ItemId.BLURBERRY_SPECIAL.id() || id == ItemId.BLURBERRY_BARMAN_BLURBERRY_SPECIAL.id()
+						|| id == ItemId.WIZARD_BLIZZARD.id() || id == ItemId.BLURBERRY_BARMAN_WIZARD_BLIZZARD.id()
+						|| id == ItemId.SGG.id() || id == ItemId.BLURBERRY_BARMAN_SGG.id()
+						|| id == ItemId.CHOCOLATE_SATURDAY.id() || id == ItemId.BLURBERRY_BARMAN_CHOCOLATE_SATURDAY.id()
+						|| id == ItemId.DRUNK_DRAGON.id() || id == ItemId.BLURBERRY_BARMAN_DRUNK_DRAGON.id()) {
+						handleSpecialCocktail(player, item);
 
-		} else if (id == ItemId.BAD_WINE.id())
-			handleBadWine(player, item);
+					} else if (id == ItemId.BAD_WINE.id())
+						handleBadWine(player, item);
 
-		else if (id == ItemId.HALF_FULL_WINE_JUG.id() || id == ItemId.WINE.id())
-			handleWine(player, item);
+					else if (id == ItemId.HALF_FULL_WINE_JUG.id() || id == ItemId.WINE.id())
+						handleWine(player, item);
 
-		else if (id == ItemId.CHOCOLATY_MILK.id())
-			handleChocolatyMilk(player, item);
+					else if (id == ItemId.CHOCOLATY_MILK.id())
+						handleChocolatyMilk(player, item);
 
-		else if (id == ItemId.CUP_OF_TEA.id())
-			handleTea(player, item);
+					else if (id == ItemId.CUP_OF_TEA.id())
+						handleTea(player, item);
 
-		else if (id == ItemId.BEER.id())
-			handleBeer(player, item);
+					else if (id == ItemId.BEER.id())
+						handleBeer(player, item);
 
-		else if (id == ItemId.GREENMANS_ALE.id())
-			handleGreenmansAle(player, item);
+					else if (id == ItemId.GREENMANS_ALE.id())
+						handleGreenmansAle(player, item);
 
-		else if (id == ItemId.WIZARDS_MIND_BOMB.id())
-			handleWizardsMindBomb(player, item);
+					else if (id == ItemId.WIZARDS_MIND_BOMB.id())
+						handleWizardsMindBomb(player, item);
 
-		else if (id == ItemId.DWARVEN_STOUT.id())
-			handleDwarvenStout(player, item);
+					else if (id == ItemId.DWARVEN_STOUT.id())
+						handleDwarvenStout(player, item);
 
-		else if (id == ItemId.ASGARNIAN_ALE.id())
-			handleAsgarnianAle(player, item);
+					else if (id == ItemId.ASGARNIAN_ALE.id())
+						handleAsgarnianAle(player, item);
 
-		else if (id == ItemId.DRAGON_BITTER.id())
-			handleDragonBitter(player, item);
-		
-		else if (id == ItemId.GROG.id())
-			handleGrog(player, item);
+					else if (id == ItemId.DRAGON_BITTER.id())
+						handleDragonBitter(player, item);
 
-		else if (id == ItemId.POISON_CHALICE.id())
-			handlePoisonChalice(player, item);
+					else if (id == ItemId.GROG.id())
+						handleGrog(player, item);
 
-		else if (id == ItemId.FULL_STRENGTH_POTION.id())
-			useNormalPotion(player, item, 2, 10, 2, ItemId.THREE_STRENGTH_POTION.id(), 3);
+					else if (id == ItemId.POISON_CHALICE.id())
+						handlePoisonChalice(player, item);
 
-		else if (id == ItemId.THREE_STRENGTH_POTION.id())
-			useNormalPotion(player, item, 2, 10, 2, ItemId.TWO_STRENGTH_POTION.id(), 2);
+					else if (id == ItemId.FULL_STRENGTH_POTION.id())
+						useNormalPotion(player, item, 2, 10, 2, ItemId.THREE_STRENGTH_POTION.id(), 3);
 
-		else if (id == ItemId.TWO_STRENGTH_POTION.id())
-			useNormalPotion(player, item, 2, 10, 2, ItemId.ONE_STRENGTH_POTION.id(), 1);
+					else if (id == ItemId.THREE_STRENGTH_POTION.id())
+						useNormalPotion(player, item, 2, 10, 2, ItemId.TWO_STRENGTH_POTION.id(), 2);
 
-		else if (id == ItemId.ONE_STRENGTH_POTION.id())
-			useNormalPotion(player, item, 2, 10, 2, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_STRENGTH_POTION.id())
+						useNormalPotion(player, item, 2, 10, 2, ItemId.ONE_STRENGTH_POTION.id(), 1);
 
-		else if (id == ItemId.FULL_ATTACK_POTION.id())
-			useNormalPotion(player, item, 0, 10, 2, 475, 2);
+					else if (id == ItemId.ONE_STRENGTH_POTION.id())
+						useNormalPotion(player, item, 2, 10, 2, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_ATTACK_POTION.id())
-			useNormalPotion(player, item, 0, 10, 2, 476, 1);
+					else if (id == ItemId.FULL_ATTACK_POTION.id())
+						useNormalPotion(player, item, 0, 10, 2, 475, 2);
 
-		else if (id == ItemId.ONE_ATTACK_POTION.id())
-			useNormalPotion(player, item, 0, 10, 2, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_ATTACK_POTION.id())
+						useNormalPotion(player, item, 0, 10, 2, 476, 1);
 
-		else if (id == ItemId.FULL_STAT_RESTORATION_POTION.id())
-			useStatRestorePotion(player, item, 478, 2);
+					else if (id == ItemId.ONE_ATTACK_POTION.id())
+						useNormalPotion(player, item, 0, 10, 2, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_STAT_RESTORATION_POTION.id())
-			useStatRestorePotion(player, item, 479, 1);
+					else if (id == ItemId.FULL_STAT_RESTORATION_POTION.id())
+						useStatRestorePotion(player, item, 478, 2);
 
-		else if (id == ItemId.ONE_STAT_RESTORATION_POTION.id())
-			useStatRestorePotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_STAT_RESTORATION_POTION.id())
+						useStatRestorePotion(player, item, 479, 1);
 
-		else if (id == ItemId.FULL_DEFENSE_POTION.id())
-			useNormalPotion(player, item, 1, 10, 2, 481, 2);
+					else if (id == ItemId.ONE_STAT_RESTORATION_POTION.id())
+						useStatRestorePotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_DEFENSE_POTION.id())
-			useNormalPotion(player, item, 1, 10, 2, 482, 1);
+					else if (id == ItemId.FULL_DEFENSE_POTION.id())
+						useNormalPotion(player, item, 1, 10, 2, 481, 2);
 
-		else if (id == ItemId.ONE_DEFENSE_POTION.id())
-			useNormalPotion(player, item, 1, 10, 2, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_DEFENSE_POTION.id())
+						useNormalPotion(player, item, 1, 10, 2, 482, 1);
 
-		else if (id == ItemId.FULL_RESTORE_PRAYER_POTION.id())
-			usePrayerPotion(player, item, 484, 2);
+					else if (id == ItemId.ONE_DEFENSE_POTION.id())
+						useNormalPotion(player, item, 1, 10, 2, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_RESTORE_PRAYER_POTION.id())
-			usePrayerPotion(player, item, 485, 1);
+					else if (id == ItemId.FULL_RESTORE_PRAYER_POTION.id())
+						usePrayerPotion(player, item, 484, 2);
 
-		else if (id == ItemId.ONE_RESTORE_PRAYER_POTION.id())
-			usePrayerPotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_RESTORE_PRAYER_POTION.id())
+						usePrayerPotion(player, item, 485, 1);
 
-		else if (id == ItemId.FULL_SUPER_ATTACK_POTION.id())
-			useNormalPotion(player, item, 0, 15, 4, 487, 2);
+					else if (id == ItemId.ONE_RESTORE_PRAYER_POTION.id())
+						usePrayerPotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_SUPER_ATTACK_POTION.id())
-			useNormalPotion(player, item, 0, 15, 4, 488, 1);
+					else if (id == ItemId.FULL_SUPER_ATTACK_POTION.id())
+						useNormalPotion(player, item, 0, 15, 4, 487, 2);
 
-		else if (id == ItemId.ONE_SUPER_ATTACK_POTION.id())
-			useNormalPotion(player, item, 0, 15, 4, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_SUPER_ATTACK_POTION.id())
+						useNormalPotion(player, item, 0, 15, 4, 488, 1);
 
-		else if (id == ItemId.FULL_FISHING_POTION.id())
-			useFishingPotion(player, item, 490, 2);
+					else if (id == ItemId.ONE_SUPER_ATTACK_POTION.id())
+						useNormalPotion(player, item, 0, 15, 4, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_FISHING_POTION.id())
-			useFishingPotion(player, item, 491, 1);
+					else if (id == ItemId.FULL_FISHING_POTION.id())
+						useFishingPotion(player, item, 490, 2);
 
-		else if (id == ItemId.ONE_FISHING_POTION.id())
-			useFishingPotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_FISHING_POTION.id())
+						useFishingPotion(player, item, 491, 1);
 
-		else if (id == ItemId.FULL_SUPER_STRENGTH_POTION.id())
-			useNormalPotion(player, item, 2, 15, 4, 493, 2);
+					else if (id == ItemId.ONE_FISHING_POTION.id())
+						useFishingPotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_SUPER_STRENGTH_POTION.id())
-			useNormalPotion(player, item, 2, 15, 4, 494, 1);
+					else if (id == ItemId.FULL_SUPER_STRENGTH_POTION.id())
+						useNormalPotion(player, item, 2, 15, 4, 493, 2);
 
-		else if (id == ItemId.ONE_SUPER_STRENGTH_POTION.id())
-			useNormalPotion(player, item, 2, 15, 4, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_SUPER_STRENGTH_POTION.id())
+						useNormalPotion(player, item, 2, 15, 4, 494, 1);
 
-		else if (id == ItemId.FULL_SUPER_DEFENSE_POTION.id())
-			useNormalPotion(player, item, 1, 15, 4, 496, 2);
+					else if (id == ItemId.ONE_SUPER_STRENGTH_POTION.id())
+						useNormalPotion(player, item, 2, 15, 4, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_SUPER_DEFENSE_POTION.id())
-			useNormalPotion(player, item, 1, 15, 4, 497, 1);
+					else if (id == ItemId.FULL_SUPER_DEFENSE_POTION.id())
+						useNormalPotion(player, item, 1, 15, 4, 496, 2);
 
-		else if (id == ItemId.ONE_SUPER_DEFENSE_POTION.id())
-			useNormalPotion(player, item, 1, 15, 4, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_SUPER_DEFENSE_POTION.id())
+						useNormalPotion(player, item, 1, 15, 4, 497, 1);
 
-		else if (id == ItemId.FULL_RANGING_POTION.id())
-			useNormalPotion(player, item, 4, 10, 2, 499, 2);
+					else if (id == ItemId.ONE_SUPER_DEFENSE_POTION.id())
+						useNormalPotion(player, item, 1, 15, 4, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_RANGING_POTION.id())
-			useNormalPotion(player, item, 4, 10, 2, 500, 1);
+					else if (id == ItemId.FULL_RANGING_POTION.id())
+						useNormalPotion(player, item, 4, 10, 2, 499, 2);
 
-		else if (id == ItemId.ONE_RANGING_POTION.id())
-			useNormalPotion(player, item, 4, 10, 2, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_RANGING_POTION.id())
+						useNormalPotion(player, item, 4, 10, 2, 500, 1);
 
-		else if (id == ItemId.FULL_CURE_POISON_POTION.id())
-			useCurePotion(player, item, 567, 2);
+					else if (id == ItemId.ONE_RANGING_POTION.id())
+						useNormalPotion(player, item, 4, 10, 2, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_CURE_POISON_POTION.id())
-			useCurePotion(player, item, 568, 1);
+					else if (id == ItemId.FULL_CURE_POISON_POTION.id())
+						useCurePotion(player, item, 567, 2);
 
-		else if (id == ItemId.ONE_CURE_POISON_POTION.id())
-			useCurePotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_CURE_POISON_POTION.id())
+						useCurePotion(player, item, 568, 1);
 
-		else if (id == ItemId.FULL_POISON_ANTIDOTE.id())
-			usePoisonAntidotePotion(player, item, 570, 2);
+					else if (id == ItemId.ONE_CURE_POISON_POTION.id())
+						useCurePotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_POISON_ANTIDOTE.id())
-			usePoisonAntidotePotion(player, item, 571, 1);
+					else if (id == ItemId.FULL_POISON_ANTIDOTE.id())
+						usePoisonAntidotePotion(player, item, 570, 2);
 
-		else if (id == ItemId.ONE_POISON_ANTIDOTE.id())
-			usePoisonAntidotePotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_POISON_ANTIDOTE.id())
+						usePoisonAntidotePotion(player, item, 571, 1);
 
-		else if (id == ItemId.FULL_POTION_OF_ZAMORAK.id())
-			useZamorakPotion(player, item, 964, 2);
+					else if (id == ItemId.ONE_POISON_ANTIDOTE.id())
+						usePoisonAntidotePotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
 
-		else if (id == ItemId.TWO_POTION_OF_ZAMORAK.id())
-			useZamorakPotion(player, item, 965, 1);
+					else if (id == ItemId.FULL_POTION_OF_ZAMORAK.id())
+						useZamorakPotion(player, item, 964, 2);
 
-		else if (id == ItemId.ONE_POTION_OF_ZAMORAK.id())
-			useZamorakPotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
+					else if (id == ItemId.TWO_POTION_OF_ZAMORAK.id())
+						useZamorakPotion(player, item, 965, 1);
 
-		else
-			player.message("Nothing interesting happens");
+					else if (id == ItemId.ONE_POTION_OF_ZAMORAK.id())
+						useZamorakPotion(player, item, ItemId.EMPTY_VIAL.id(), 0);
+
+					else
+						player.message("Nothing interesting happens");
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void useFishingPotion(Player player, final Item item, final int newItem, final int left) {

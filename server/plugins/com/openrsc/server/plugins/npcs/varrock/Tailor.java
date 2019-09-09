@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.varrock;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -41,20 +42,28 @@ public final class Tailor implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Now you look like someone who goes to a lot of fancy dress parties");
-		playerTalk(p, n, "Errr... what are you saying exactly?");
-		npcTalk(p, n, "I'm just saying that perhaps you would like to peruse my selection of garments");
-		int opt = showMenu(p, n, false, //do not send over
-			"I think I might just leave the perusing for now thanks",
-			"OK,lets see what you've got then");
-		if (opt == 0) {
-			playerTalk(p, n, "I think I might just leave the perusing for now thanks");
-		} else if (opt == 1) {
-			playerTalk(p, n, "OK,let's see what you've got then");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Now you look like someone who goes to a lot of fancy dress parties");
+					playerTalk(p, n, "Errr... what are you saying exactly?");
+					npcTalk(p, n, "I'm just saying that perhaps you would like to peruse my selection of garments");
+					int opt = showMenu(p, n, false, //do not send over
+						"I think I might just leave the perusing for now thanks",
+						"OK,lets see what you've got then");
+					if (opt == 0) {
+						playerTalk(p, n, "I think I might just leave the perusing for now thanks");
+					} else if (opt == 1) {
+						playerTalk(p, n, "OK,let's see what you've got then");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 }

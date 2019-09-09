@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.itemactions.pets;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.InvActionListener;
@@ -17,16 +18,24 @@ public class BabyBlueDragonCrystal implements InvActionListener, InvActionExecut
 	}
 
 	@Override
-	public void onInvAction(Item item, Player player, String command) {
-		//if (getConfig().DEBUG)
-		System.out.println("Pet item clicked");
-		int id = item.getID();
+	public GameStateEvent onInvAction(Item item, Player player, String command) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					//if (getConfig().DEBUG)
+					System.out.println("Pet item clicked");
+					int id = item.getID();
 
-		if (id == ItemId.A_RED_CRYSTAL.id())
-			if (player.getWorld().getServer().getConfig().WANT_PETS)
-				handleBabyBlueDragon(player, item, command);
-			else
-				player.message("Nothing interesting happens");
+					if (id == ItemId.A_RED_CRYSTAL.id())
+						if (player.getWorld().getServer().getConfig().WANT_PETS)
+							handleBabyBlueDragon(player, item, command);
+						else
+							player.message("Nothing interesting happens");
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void handleBabyBlueDragon(Player player, Item item, String command) {
@@ -46,12 +55,20 @@ public class BabyBlueDragonCrystal implements InvActionListener, InvActionExecut
 	}
 
 	@Override
-	public void onPlayerLogin(Player player) {
-		if (player.getInventory().hasItemId(ItemId.A_GLOWING_RED_CRYSTAL.id())) {
-			if (player.getInventory().remove(new Item(ItemId.A_GLOWING_RED_CRYSTAL.id())) != -1) {
-				player.getInventory().remove(new Item(ItemId.A_GLOWING_RED_CRYSTAL.id()));
-				player.getInventory().add(new Item(ItemId.A_RED_CRYSTAL.id()));
+	public GameStateEvent onPlayerLogin(Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (player.getInventory().hasItemId(ItemId.A_GLOWING_RED_CRYSTAL.id())) {
+						if (player.getInventory().remove(new Item(ItemId.A_GLOWING_RED_CRYSTAL.id())) != -1) {
+							player.getInventory().remove(new Item(ItemId.A_GLOWING_RED_CRYSTAL.id()));
+							player.getInventory().add(new Item(ItemId.A_RED_CRYSTAL.id()));
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 }

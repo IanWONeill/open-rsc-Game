@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.misc;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
@@ -20,15 +21,23 @@ public class Hopper implements InvUseOnObjectListener, InvUseOnObjectExecutiveLi
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player player) {
-		if (obj.getAttribute("contains_item", null) != null) {
-			player.message("There is already grain in the hopper");
-			return;
-		}
-		showBubble(player, item);
-		obj.setAttribute("contains_item", item.getID());
-		removeItem(player, item);
-		player.message("You put the grain in the hopper");
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getAttribute("contains_item", null) != null) {
+						player.message("There is already grain in the hopper");
+						return null;
+					}
+					showBubble(player, item);
+					obj.setAttribute("contains_item", item.getID());
+					removeItem(player, item);
+					player.message("You put the grain in the hopper");
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -37,28 +46,36 @@ public class Hopper implements InvUseOnObjectListener, InvUseOnObjectExecutiveLi
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		message(player, 500, "You operate the hopper");
-		player.playSound("mechanical");
-		int contains = obj.getAttribute("contains_item", -1);
-		if (contains != ItemId.GRAIN.id()) {
-			player.message("Nothing interesting happens");
-			return;
-		}
-		player.message("The grain slides down the chute");
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					message(player, 500, "You operate the hopper");
+					player.playSound("mechanical");
+					int contains = obj.getAttribute("contains_item", -1);
+					if (contains != ItemId.GRAIN.id()) {
+						player.message("Nothing interesting happens");
+						return null;
+					}
+					player.message("The grain slides down the chute");
 
-		int offY = 0;
-		/* Chute in Chef's guild has offsetY -2 from calculated */
-		if (obj.getX() == 179 && obj.getY() == 2371) {
-			offY = -2;
-		}
+					int offY = 0;
+					/* Chute in Chef's guild has offsetY -2 from calculated */
+					if (obj.getX() == 179 && obj.getY() == 2371) {
+						offY = -2;
+					}
 
-		if (obj.getID() == 246) {
-			createGroundItem(player.getWorld(), ItemId.FLOUR.id(), 1, 162, 3533);
-		} else {
-			createGroundItem(player.getWorld(), ItemId.FLOUR.id(), 1, obj.getX(), Formulae.getNewY(Formulae.getNewY(obj.getY(), false), false) + offY);
-		}
-		obj.removeAttribute("contains_item");
+					if (obj.getID() == 246) {
+						createGroundItem(player.getWorld(), ItemId.FLOUR.id(), 1, 162, 3533);
+					} else {
+						createGroundItem(player.getWorld(), ItemId.FLOUR.id(), 1, obj.getX(), Formulae.getNewY(Formulae.getNewY(obj.getY(), false), false) + offY);
+					}
+					obj.removeAttribute("contains_item");
+
+					return null;
+				});
+			}
+		};
 	}
 
 }

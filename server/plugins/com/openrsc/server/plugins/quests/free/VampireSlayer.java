@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -186,55 +187,72 @@ public class VampireSlayer implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		if (n.getID() == NpcId.MORGAN.id()) {
-			morganDialogue(p, n);
-		} else if (n.getID() == NpcId.DR_HARLOW.id()) {
-			harlowDialogue(p, n);
-		}
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.MORGAN.id()) {
+						morganDialogue(p, n);
+					} else if (n.getID() == NpcId.DR_HARLOW.id()) {
+						harlowDialogue(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		if ((obj.getID() == COUNT_DRAYNOR_COFFIN_OPEN || obj.getID() == COUNT_DRAYNOR_COFFIN_CLOSED) && obj.getY() == 3380) {
-			if (command.equalsIgnoreCase("open")) {
-				openGenericObject(obj, player, COUNT_DRAYNOR_COFFIN_OPEN, "You open the coffin");
-			} else if (command.equalsIgnoreCase("close")) {
-				closeGenericObject(obj, player, COUNT_DRAYNOR_COFFIN_CLOSED, "You close the coffin");
-			} else {
-				if (player.getQuestStage(this) == -1) {
-					player.message("There's a pillow in here");
-					return;
-				} else {
-					for (Npc npc : player.getRegion().getNpcs()) {
-						if (npc.getID() == NpcId.COUNT_DRAYNOR.id() && npc.getAttribute("spawnedFor", null).equals(player)) {
-							player.message("There's nothing there.");
-							return;
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if ((obj.getID() == COUNT_DRAYNOR_COFFIN_OPEN || obj.getID() == COUNT_DRAYNOR_COFFIN_CLOSED) && obj.getY() == 3380) {
+						if (command.equalsIgnoreCase("open")) {
+							openGenericObject(obj, player, COUNT_DRAYNOR_COFFIN_OPEN, "You open the coffin");
+						} else if (command.equalsIgnoreCase("close")) {
+							closeGenericObject(obj, player, COUNT_DRAYNOR_COFFIN_CLOSED, "You close the coffin");
+						} else {
+							if (player.getQuestStage(quest) == -1) {
+								player.message("There's a pillow in here");
+								return null;
+							} else {
+								for (Npc npc : player.getRegion().getNpcs()) {
+									if (npc.getID() == NpcId.COUNT_DRAYNOR.id() && npc.getAttribute("spawnedFor", null).equals(player)) {
+										player.message("There's nothing there.");
+										return null;
+									}
+								}
+
+								final Npc n = spawnNpc(NpcId.COUNT_DRAYNOR.id(), 206, 3381, 1000 * 60 * 5, player);
+								n.setShouldRespawn(false);
+								player.message("A vampire jumps out of the coffin");
+								return null;
+							}
 						}
+					} else if ((obj.getID() == GARLIC_CUPBOARD_OPEN || obj.getID() == GARLIC_CUPBOARD_CLOSED) && obj.getY() == 1562) {
+						if (command.equalsIgnoreCase("open")) {
+							openCupboard(obj, player, GARLIC_CUPBOARD_OPEN);
+						} else if (command.equalsIgnoreCase("close")) {
+							closeCupboard(obj, player, GARLIC_CUPBOARD_CLOSED);
+						} else {
+							player.message("You search the cupboard");
+							if (!player.getInventory().hasItemId(ItemId.GARLIC.id())) {
+								player.message("You find a clove of garlic that you take");
+								player.getInventory().add(new Item(ItemId.GARLIC.id()));
+							} else {
+								player.message("The cupboard is empty");
+							}
+						}
+						return null;
 					}
 
-					final Npc n = spawnNpc(NpcId.COUNT_DRAYNOR.id(), 206, 3381, 1000 * 60 * 5, player);
-					n.setShouldRespawn(false);
-					player.message("A vampire jumps out of the coffin");
-					return;
-				}
+					return null;
+				});
 			}
-		} else if ((obj.getID() == GARLIC_CUPBOARD_OPEN || obj.getID() == GARLIC_CUPBOARD_CLOSED) && obj.getY() == 1562) {
-			if (command.equalsIgnoreCase("open")) {
-				openCupboard(obj, player, GARLIC_CUPBOARD_OPEN);
-			} else if (command.equalsIgnoreCase("close")) {
-				closeCupboard(obj, player, GARLIC_CUPBOARD_CLOSED);
-			} else {
-				player.message("You search the cupboard");
-				if (!player.getInventory().hasItemId(ItemId.GARLIC.id())) {
-					player.message("You find a clove of garlic that you take");
-					player.getInventory().add(new Item(ItemId.GARLIC.id()));
-				} else {
-					player.message("The cupboard is empty");
-				}
-			}
-			return;
-		}
+		};
 	}
 
 	@Override
@@ -255,22 +273,31 @@ public class VampireSlayer implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPlayerKilledNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.COUNT_DRAYNOR.id()) {
-			if (p.getInventory().wielding(ItemId.STAKE.id()) && p.getInventory().hasItemId(ItemId.HAMMER.id())) {
-				p.getInventory().remove(p.getInventory().getLastIndexById(ItemId.STAKE.id()));
-				p.message("You hammer the stake in to the vampires chest!");
-				n.killedBy(p);
-				n.remove();
-				// Completed Vampire Slayer Quest.
-				if (p.getQuestStage(this) == 2) {
-					p.sendQuestComplete(Quests.VAMPIRE_SLAYER);
-				}
-			} else {
-				n.getSkills().setLevel(Skills.HITS, 35);
-				p.message("The vampire seems to regenerate");
+	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.COUNT_DRAYNOR.id()) {
+						if (p.getInventory().wielding(ItemId.STAKE.id()) && p.getInventory().hasItemId(ItemId.HAMMER.id())) {
+							p.getInventory().remove(p.getInventory().getLastIndexById(ItemId.STAKE.id()));
+							p.message("You hammer the stake in to the vampires chest!");
+							n.killedBy(p);
+							n.remove();
+							// Completed Vampire Slayer Quest.
+							if (p.getQuestStage(quest) == 2) {
+								p.sendQuestComplete(Quests.VAMPIRE_SLAYER);
+							}
+						} else {
+							n.getSkills().setLevel(Skills.HITS, 35);
+							p.message("The vampire seems to regenerate");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.edgeville;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -37,13 +38,21 @@ public class OziachsRunePlateShop implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		playerTalk(p, n, "I have slain the dragon");
-		npcTalk(p, n, "Well done");
-		final int option = showMenu(p, n, "Can I buy a rune plate mail body now please?", "Thank you");
-		if (option == 0) {
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					playerTalk(p, n, "I have slain the dragon");
+					npcTalk(p, n, "Well done");
+					final int option = showMenu(p, n, "Can I buy a rune plate mail body now please?", "Thank you");
+					if (option == 0) {
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 }

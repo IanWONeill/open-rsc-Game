@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.quests.members.legendsquest.npcs;
 
 import com.openrsc.server.constants.*;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -25,10 +26,18 @@ public class LegendsQuestEchnedZekin implements TalkToNpcListener, TalkToNpcExec
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		if (n.getID() == NpcId.ECHNED_ZEKIN.id()) {
-			echnedDialogue(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.ECHNED_ZEKIN.id()) {
+						echnedDialogue(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void holyForceSpell(Player p, Npc n) {

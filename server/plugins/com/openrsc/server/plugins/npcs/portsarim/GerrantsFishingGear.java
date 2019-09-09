@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.portsarim;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -42,49 +43,56 @@ public final class GerrantsFishingGear implements
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Welcome you can buy any fishing equipment at my store",
-			"We'll also buy anything you catch off you");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Welcome you can buy any fishing equipment at my store",
+						"We'll also buy anything you catch off you");
 
-		String[] options;
-		if (p.getQuestStage(Quests.HEROS_QUEST) >= 1) {
-			options = new String[]{"Let's see what you've got then",
-				"Sorry, I'm not interested",
-				"I want to find out how to catch a lava eel"};
-		} else {
-			options = new String[]{"Let's see what you've got then",
-				"Sorry, I'm not interested"};
-		}
-		int option = showMenu(p, n, false, options);
-		if (option == 0) {
-			playerTalk(p, n, "Let's see what you've got then");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		} else if (option == 1) {
-			playerTalk(p, n, "Sorry,I'm not interested");
-		} else if (option == 2) {
-			playerTalk(p, n, "I want to find out how to catch a lava eel");
-			npcTalk(p,
-				n,
-				"Lava eels eh?",
-				"That's a tricky one that is",
-				"I wouldn't even know where find them myself",
-				"Probably in some lava somewhere",
-				"You'll also need a lava proof fishing line",
-				"The method for this would be take an ordinary fishing rod",
-				"And cover it with fire proof blamish oil");
-			// check no Blaimish snail slime, oil and rod to re-issue
-			if (!hasItem(p, ItemId.BLAMISH_SNAIL_SLIME.id()) && !hasItem(p, ItemId.BLAMISH_OIL.id()) && !hasItem(p, ItemId.OILY_FISHING_ROD.id())) {
-				npcTalk(p, n, "Now I may have a jar of Blamish snail slime",
-					"I wonder where I put it");
-				p.message("Gerrant searches about a bit");
-				npcTalk(p, n, "Aha here it is");
-				p.message("Gerrant passes you a small jar");
-				addItem(p, ItemId.BLAMISH_SNAIL_SLIME.id(), 1);
-				npcTalk(p, n,
-					"You'll need to mix this with some of the Harralander herb and water");
+					String[] options;
+					if (p.getQuestStage(Quests.HEROS_QUEST) >= 1) {
+						options = new String[]{"Let's see what you've got then",
+							"Sorry, I'm not interested",
+							"I want to find out how to catch a lava eel"};
+					} else {
+						options = new String[]{"Let's see what you've got then",
+							"Sorry, I'm not interested"};
+					}
+					int option = showMenu(p, n, false, options);
+					if (option == 0) {
+						playerTalk(p, n, "Let's see what you've got then");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					} else if (option == 1) {
+						playerTalk(p, n, "Sorry,I'm not interested");
+					} else if (option == 2) {
+						playerTalk(p, n, "I want to find out how to catch a lava eel");
+						npcTalk(p,
+							n,
+							"Lava eels eh?",
+							"That's a tricky one that is",
+							"I wouldn't even know where find them myself",
+							"Probably in some lava somewhere",
+							"You'll also need a lava proof fishing line",
+							"The method for this would be take an ordinary fishing rod",
+							"And cover it with fire proof blamish oil");
+						// check no Blaimish snail slime, oil and rod to re-issue
+						if (!hasItem(p, ItemId.BLAMISH_SNAIL_SLIME.id()) && !hasItem(p, ItemId.BLAMISH_OIL.id()) && !hasItem(p, ItemId.OILY_FISHING_ROD.id())) {
+							npcTalk(p, n, "Now I may have a jar of Blamish snail slime",
+								"I wonder where I put it");
+							p.message("Gerrant searches about a bit");
+							npcTalk(p, n, "Aha here it is");
+							p.message("Gerrant passes you a small jar");
+							addItem(p, ItemId.BLAMISH_SNAIL_SLIME.id(), 1);
+							npcTalk(p, n,
+								"You'll need to mix this with some of the Harralander herb and water");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
-
 }

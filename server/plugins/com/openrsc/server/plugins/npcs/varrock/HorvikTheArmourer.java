@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.varrock;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -39,17 +40,25 @@ public final class HorvikTheArmourer implements
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Hello, do you need any help?");
-		int option = showMenu(p, n,
-			"No thanks. I'm just looking around",
-			"Do you want to trade?");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Hello, do you need any help?");
+					int option = showMenu(p, n,
+						"No thanks. I'm just looking around",
+						"Do you want to trade?");
 
-		if (option == 1) {
-			npcTalk(p, n, "Yes, I have a fine selection of armour");
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		}
+					if (option == 1) {
+						npcTalk(p, n, "Yes, I have a fine selection of armour");
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 }

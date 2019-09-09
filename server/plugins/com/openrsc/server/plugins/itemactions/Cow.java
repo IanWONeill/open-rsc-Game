@@ -18,8 +18,8 @@ public class Cow implements InvUseOnNpcListener, InvUseOnNpcExecutiveListener {
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player player, Npc npc, Item item) {
-		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0, "Milk Cow") {
+	public GameStateEvent onInvUseOnNpc(Player player, Npc npc, Item item) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					npc.resetPath();
@@ -37,6 +37,6 @@ public class Cow implements InvUseOnNpcListener, InvUseOnNpcExecutiveListener {
 					return null;
 				});
 			}
-		});
+		};
 	}
 }

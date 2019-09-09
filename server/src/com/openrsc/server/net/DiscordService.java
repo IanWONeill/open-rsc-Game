@@ -88,7 +88,7 @@ public class DiscordService implements Runnable{
 
 	public void monitoringSendServerBehind(String message) {
 		try {
-			monitoringSendToDiscord(message + "\r\n" + getServer().buildProfilingDebugInformation(false));
+			monitoringSendToDiscord(message + "\r\n" + getServer().getGameEventHandler().buildProfilingDebugInformation(false));
 		} catch(Exception e) {
 			LOGGER.catching(e);
 		}

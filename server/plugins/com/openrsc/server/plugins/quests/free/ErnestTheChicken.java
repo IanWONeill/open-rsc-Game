@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.free;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Cache;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -57,37 +58,46 @@ public class ErnestTheChicken implements QuestInterface,
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		if (obj.getID() == QuestObjects.FOUNTAIN && item.getID() == ItemId.POISONED_FISH_FOOD.id()) {
-			message(p, "You pour the poisoned fish food into the fountain",
-				"You see the pirhanas eating the food",
-				"The pirhanas drop dead and float to the surface");
-			removeItem(p, ItemId.POISONED_FISH_FOOD.id(), 1);
-			if (!p.getCache().hasKey("poisoned_fountain")) {
-				p.getCache().store("poisoned_fountain", true);
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == QuestObjects.FOUNTAIN && item.getID() == ItemId.POISONED_FISH_FOOD.id()) {
+						message(p, "You pour the poisoned fish food into the fountain",
+							"You see the pirhanas eating the food",
+							"The pirhanas drop dead and float to the surface");
+						removeItem(p, ItemId.POISONED_FISH_FOOD.id(), 1);
+						if (!p.getCache().hasKey("poisoned_fountain")) {
+							p.getCache().store("poisoned_fountain", true);
+						}
+					} else if (obj.getID() == QuestObjects.FOUNTAIN
+						&& item.getID() == ItemId.FISH_FOOD.id()) {
+						message(p, "You pour the fish food into the fountain",
+							"You see the pirhanas eating the food",
+							"The pirhanas seem hungrier than ever");
+						removeItem(p, ItemId.FISH_FOOD.id(), 1);
+					}
+					//nothing happens every other item
+					else if (obj.getID() == QuestObjects.FOUNTAIN) {
+						message(p, "Nothing interesting happens");
+					}
+					if (obj.getID() == QuestObjects.COMPOST
+						&& item.getID() == ItemId.SPADE.id()) {
+						if (!hasItem(p, ItemId.CLOSET_KEY.id()) && p.getQuestStage(quest) > 0) {
+							message(p, "You dig through the compost heap",
+								"You find a small key");
+							addItem(p, ItemId.CLOSET_KEY.id(), 1);
+						} else {
+							message(p, "You dig through the compost heap",
+								"You find nothing of interest");
+						}
+					}
+
+					return null;
+				});
 			}
-		} else if (obj.getID() == QuestObjects.FOUNTAIN
-			&& item.getID() == ItemId.FISH_FOOD.id()) {
-			message(p, "You pour the fish food into the fountain",
-				"You see the pirhanas eating the food",
-				"The pirhanas seem hungrier than ever");
-			removeItem(p, ItemId.FISH_FOOD.id(), 1);
-		}
-		//nothing happens every other item
-		else if (obj.getID() == QuestObjects.FOUNTAIN) {
-			message(p, "Nothing interesting happens");
-		}
-		if (obj.getID() == QuestObjects.COMPOST
-			&& item.getID() == ItemId.SPADE.id()) {
-			if (!hasItem(p, ItemId.CLOSET_KEY.id()) && p.getQuestStage(this) > 0) {
-				message(p, "You dig through the compost heap",
-					"You find a small key");
-				addItem(p, ItemId.CLOSET_KEY.id(), 1);
-			} else {
-				message(p, "You dig through the compost heap",
-					"You find nothing of interest");
-			}
-		}
+		};
 	}
 
 	@Override
@@ -115,57 +125,65 @@ public class ErnestTheChicken implements QuestInterface,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		switch (obj.getID()) {
-			case QuestObjects.LADDER:
-				if (p.getCache().hasKey("LeverA") || p.getCache().hasKey("LeverB")
-					|| p.getCache().hasKey("LeverC")
-					|| p.getCache().hasKey("LeverD")
-					|| p.getCache().hasKey("LeverE")
-					|| p.getCache().hasKey("LeverF")) {
-					p.getCache().remove("LeverA");
-					p.getCache().remove("LeverB");
-					p.getCache().remove("LeverC");
-					p.getCache().remove("LeverD");
-					p.getCache().remove("LeverE");
-					p.getCache().remove("LeverF");
-				}
-				p.message("You climb up the ladder");
-				p.teleport(223, 554, false);
-				break;
-			case QuestObjects.FOUNTAIN:
-				if (p.getCache().hasKey("poisoned_fountain")) {
-					if (!hasItem(p, ItemId.PRESSURE_GAUGE.id(), 1)) {
-						playerTalk(p, null,
-							"There seems to be a pressure gauge in here",
-							"There are also some dead fish");
-						p.message("you get the pressure gauge from the fountain");
-						addItem(p, ItemId.PRESSURE_GAUGE.id(), 1);
-					} else {
-						p.message("It's full of dead fish");
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					switch (obj.getID()) {
+						case QuestObjects.LADDER:
+							if (p.getCache().hasKey("LeverA") || p.getCache().hasKey("LeverB")
+								|| p.getCache().hasKey("LeverC")
+								|| p.getCache().hasKey("LeverD")
+								|| p.getCache().hasKey("LeverE")
+								|| p.getCache().hasKey("LeverF")) {
+								p.getCache().remove("LeverA");
+								p.getCache().remove("LeverB");
+								p.getCache().remove("LeverC");
+								p.getCache().remove("LeverD");
+								p.getCache().remove("LeverE");
+								p.getCache().remove("LeverF");
+							}
+							p.message("You climb up the ladder");
+							p.teleport(223, 554, false);
+							break;
+						case QuestObjects.FOUNTAIN:
+							if (p.getCache().hasKey("poisoned_fountain")) {
+								if (!hasItem(p, ItemId.PRESSURE_GAUGE.id(), 1)) {
+									playerTalk(p, null,
+										"There seems to be a pressure gauge in here",
+										"There are also some dead fish");
+									p.message("you get the pressure gauge from the fountain");
+									addItem(p, ItemId.PRESSURE_GAUGE.id(), 1);
+								} else {
+									p.message("It's full of dead fish");
+								}
+							} else {
+								playerTalk(p, null,
+									"There seems to be a pressure gauge in here",
+									"There are a lot of Pirhanas in there though",
+									"I can't get the gauge out");
+							}
+							break;
+						case QuestObjects.COMPOST:
+							p.message("I'm not looking through that with my hands");
+							break;
+						case QuestObjects.LEVERA:
+						case QuestObjects.LEVERB:
+						case QuestObjects.LEVERC:
+						case QuestObjects.LEVERD:
+						case QuestObjects.LEVERE:
+						case QuestObjects.LEVERF:
+							if (command.equalsIgnoreCase("pull"))
+								doLever(p, obj.getID());
+							else if (command.equalsIgnoreCase("inspect"))
+								inspectLever(p, obj.getID());
+							break;
 					}
-				} else {
-					playerTalk(p, null,
-						"There seems to be a pressure gauge in here",
-						"There are a lot of Pirhanas in there though",
-						"I can't get the gauge out");
-				}
-				break;
-			case QuestObjects.COMPOST:
-				p.message("I'm not looking through that with my hands");
-				break;
-			case QuestObjects.LEVERA:
-			case QuestObjects.LEVERB:
-			case QuestObjects.LEVERC:
-			case QuestObjects.LEVERD:
-			case QuestObjects.LEVERE:
-			case QuestObjects.LEVERF:
-				if (command.equalsIgnoreCase("pull"))
-					doLever(p, obj.getID());
-				else if (command.equalsIgnoreCase("inspect"))
-					inspectLever(p, obj.getID());
-				break;
-		}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	public void inspectLever(Player p, int objectID) {
@@ -222,17 +240,25 @@ public class ErnestTheChicken implements QuestInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		switch (NpcId.getById(n.getID())) {
-			case VERONICA:
-				veronicaDialogue(p, n, -1);
-				break;
-			case PROFESSOR_ODDENSTEIN:
-				oddensteinDialogue(p, n, -1);
-				break;
-			default:
-				break;
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					switch (NpcId.getById(n.getID())) {
+						case VERONICA:
+							veronicaDialogue(p, n, -1);
+							break;
+						case PROFESSOR_ODDENSTEIN:
+							oddensteinDialogue(p, n, -1);
+							break;
+						default:
+							break;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	public void oddensteinDialogue(Player p, Npc n, int cID) {
@@ -460,166 +486,174 @@ public class ErnestTheChicken implements QuestInterface,
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		Cache c = p.getCache();
-		switch (obj.getID()) {
-			case 35:
-				//only allow is player is stuck, otherwise promote using key
-				if (p.getX() == 211 && p.getY() == 545 && !hasItem(p, ItemId.CLOSET_KEY.id())) {
-					doDoor(obj, p);
-					p.message("You go through the door");
-				} else {
-					p.message("The door is locked");
-				}
-				break;
-			case 36:
-				if (p.getY() >= 553) {
-					doDoor(obj, p);
-					sleep(3000);
-					p.message("The door slams behind you!");
-				} else {
-					p.message("The door won't open");
-				}
-				break;
-			case 29:
-				if (c.hasKey("LeverA")
-					&& c.hasKey("LeverB")
-					&& c.hasKey("LeverC")
-					&& c.hasKey("LeverD")
-					&& c.hasKey("LeverE")
-					&& c.hasKey("LeverF")
-					&& !c.getBoolean("LeverA")
-					&& !c.getBoolean("LeverB")
-					&& c.getBoolean("LeverC")
-					&& c.getBoolean("LeverD")
-					&& !c.getBoolean("LeverE")
-					&& c.getBoolean("LeverF")) {
-					doDoor(obj, p);
-				} else
-					p.message("The door is locked");
-				break;
-			case 28:
-				if (c.hasKey("LeverD") && c.getBoolean("LeverD"))
-					doDoor(obj, p);
-				else
-					p.message("The door is locked");
-				break;
-			case 25:
-				if (c.hasKey("LeverA")
-					&& c.hasKey("LeverB")
-					&& c.hasKey("LeverC")
-					&& c.hasKey("LeverD")
-					&& c.hasKey("LeverE")
-					&& c.hasKey("LeverF")
-					&& !c.getBoolean("LeverA")
-					&& !c.getBoolean("LeverB")
-					&& !c.getBoolean("LeverC")
-					&& c.getBoolean("LeverD")
-					&& c.getBoolean("LeverE")
-					&& c.getBoolean("LeverF")) {
-					doDoor(obj, p);
-				} else if (
-					c.hasKey("LeverA")
-						&& c.hasKey("LeverB")
-						&& c.hasKey("LeverC")
-						&& c.hasKey("LeverD")
-						&& c.hasKey("LeverE")
-						&& c.hasKey("LeverF")
-						&& !c.getBoolean("LeverA")
-						&& !c.getBoolean("LeverB")
-						&& c.getBoolean("LeverC")
-						&& c.getBoolean("LeverD")
-						&& c.getBoolean("LeverE")
-						&& c.getBoolean("LeverF")) {
-					doDoor(obj, p);
-				} else
-					p.message("The door is locked");
-				break;
-			case 26:
-				if (c.hasKey("LeverF")
-					&& c.hasKey("LeverD")
-					&& c.hasKey("LeverB")
-					&& c.getBoolean("LeverF")
-					&& c.getBoolean("LeverD")
-					&& !c.getBoolean("LeverB"))
-					doDoor(obj, p);
-				else
-					p.message("The door is locked");
-				break;
-			case 27:
-				if (c.hasKey("LeverA")
-					&& c.hasKey("LeverB")
-					&& c.hasKey("LeverD")
-					&& c.getBoolean("LeverA")
-					&& c.getBoolean("LeverB")
-					&& c.getBoolean("LeverD"))
-					doDoor(obj, p);
-				else
-					p.message("The door is locked");
-				break;
-			case 31:// Need to make Lever work xD haha brb
-				if (c.hasKey("LeverD")
-					&& c.hasKey("LeverB")
-					&& c.hasKey("LeverF")
-					&& c.getBoolean("LeverD")
-					&& !c.getBoolean("LeverB")
-					&& !c.getBoolean("LeverF")) // easiet
-					doDoor(obj, p);
-				else
-					p.message("The door is locked");
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					Cache c = p.getCache();
+					switch (obj.getID()) {
+						case 35:
+							//only allow is player is stuck, otherwise promote using key
+							if (p.getX() == 211 && p.getY() == 545 && !hasItem(p, ItemId.CLOSET_KEY.id())) {
+								doDoor(obj, p);
+								p.message("You go through the door");
+							} else {
+								p.message("The door is locked");
+							}
+							break;
+						case 36:
+							if (p.getY() >= 553) {
+								doDoor(obj, p);
+								sleep(3000);
+								p.message("The door slams behind you!");
+							} else {
+								p.message("The door won't open");
+							}
+							break;
+						case 29:
+							if (c.hasKey("LeverA")
+								&& c.hasKey("LeverB")
+								&& c.hasKey("LeverC")
+								&& c.hasKey("LeverD")
+								&& c.hasKey("LeverE")
+								&& c.hasKey("LeverF")
+								&& !c.getBoolean("LeverA")
+								&& !c.getBoolean("LeverB")
+								&& c.getBoolean("LeverC")
+								&& c.getBoolean("LeverD")
+								&& !c.getBoolean("LeverE")
+								&& c.getBoolean("LeverF")) {
+								doDoor(obj, p);
+							} else
+								p.message("The door is locked");
+							break;
+						case 28:
+							if (c.hasKey("LeverD") && c.getBoolean("LeverD"))
+								doDoor(obj, p);
+							else
+								p.message("The door is locked");
+							break;
+						case 25:
+							if (c.hasKey("LeverA")
+								&& c.hasKey("LeverB")
+								&& c.hasKey("LeverC")
+								&& c.hasKey("LeverD")
+								&& c.hasKey("LeverE")
+								&& c.hasKey("LeverF")
+								&& !c.getBoolean("LeverA")
+								&& !c.getBoolean("LeverB")
+								&& !c.getBoolean("LeverC")
+								&& c.getBoolean("LeverD")
+								&& c.getBoolean("LeverE")
+								&& c.getBoolean("LeverF")) {
+								doDoor(obj, p);
+							} else if (
+								c.hasKey("LeverA")
+									&& c.hasKey("LeverB")
+									&& c.hasKey("LeverC")
+									&& c.hasKey("LeverD")
+									&& c.hasKey("LeverE")
+									&& c.hasKey("LeverF")
+									&& !c.getBoolean("LeverA")
+									&& !c.getBoolean("LeverB")
+									&& c.getBoolean("LeverC")
+									&& c.getBoolean("LeverD")
+									&& c.getBoolean("LeverE")
+									&& c.getBoolean("LeverF")) {
+								doDoor(obj, p);
+							} else
+								p.message("The door is locked");
+							break;
+						case 26:
+							if (c.hasKey("LeverF")
+								&& c.hasKey("LeverD")
+								&& c.hasKey("LeverB")
+								&& c.getBoolean("LeverF")
+								&& c.getBoolean("LeverD")
+								&& !c.getBoolean("LeverB"))
+								doDoor(obj, p);
+							else
+								p.message("The door is locked");
+							break;
+						case 27:
+							if (c.hasKey("LeverA")
+								&& c.hasKey("LeverB")
+								&& c.hasKey("LeverD")
+								&& c.getBoolean("LeverA")
+								&& c.getBoolean("LeverB")
+								&& c.getBoolean("LeverD"))
+								doDoor(obj, p);
+							else
+								p.message("The door is locked");
+							break;
+						case 31:// Need to make Lever work xD haha brb
+							if (c.hasKey("LeverD")
+								&& c.hasKey("LeverB")
+								&& c.hasKey("LeverF")
+								&& c.getBoolean("LeverD")
+								&& !c.getBoolean("LeverB")
+								&& !c.getBoolean("LeverF")) // easiet
+								doDoor(obj, p);
+							else
+								p.message("The door is locked");
 
-				break;
-			case 32:// first door on the right
-				if (c.hasKey("LeverA")
-					&& c.hasKey("LeverB")
-					&& c.hasKey("LeverC")
-					&& c.hasKey("LeverD")
-					&& c.hasKey("LeverE")
-					&& c.hasKey("LeverF")
-					&& c.getBoolean("LeverA")
-					&& c.getBoolean("LeverB")
-					&& !c.getBoolean("LeverC")
-					&& !c.getBoolean("LeverD")
-					&& !c.getBoolean("LeverE")
-					&& !c.getBoolean("LeverF")) {
-					doDoor(obj, p);
-				} else
-					p.message("The door is locked");
-				break;
-			case 33:// second door from the right
-				if (c.hasKey("LeverC")
-					&& c.hasKey("LeverD")
-					&& !c.getBoolean("LeverC")
-					&& c.getBoolean("LeverD")) {
-					doDoor(obj, p);
-				} else if (
-					c.hasKey("LeverA")
-						&& c.hasKey("LeverB")
-						&& c.hasKey("LeverC")
-						&& c.hasKey("LeverD")
-						&& c.hasKey("LeverE")
-						&& c.hasKey("LeverF")
-						&& !c.getBoolean("LeverA")
-						&& !c.getBoolean("LeverB")
-						&& c.getBoolean("LeverC")
-						&& c.getBoolean("LeverD")
-						&& !c.getBoolean("LeverE")
-						&& c.getBoolean("LeverF")) {
-					doDoor(obj, p);
-				} else
-					p.message("The door is locked");
-				break;
-		}
-		if (obj.getID() == 30 && obj.getX() == 226 && obj.getY() == 3378) {
-			if (c.hasKey("LeverF")
-				&& c.hasKey("LeverE")
-				&& c.getBoolean("LeverF")
-				&& !c.getBoolean("LeverE")) {
-				doDoor(obj, p);
-			} else {
-				p.message("The door is locked");
+							break;
+						case 32:// first door on the right
+							if (c.hasKey("LeverA")
+								&& c.hasKey("LeverB")
+								&& c.hasKey("LeverC")
+								&& c.hasKey("LeverD")
+								&& c.hasKey("LeverE")
+								&& c.hasKey("LeverF")
+								&& c.getBoolean("LeverA")
+								&& c.getBoolean("LeverB")
+								&& !c.getBoolean("LeverC")
+								&& !c.getBoolean("LeverD")
+								&& !c.getBoolean("LeverE")
+								&& !c.getBoolean("LeverF")) {
+								doDoor(obj, p);
+							} else
+								p.message("The door is locked");
+							break;
+						case 33:// second door from the right
+							if (c.hasKey("LeverC")
+								&& c.hasKey("LeverD")
+								&& !c.getBoolean("LeverC")
+								&& c.getBoolean("LeverD")) {
+								doDoor(obj, p);
+							} else if (
+								c.hasKey("LeverA")
+									&& c.hasKey("LeverB")
+									&& c.hasKey("LeverC")
+									&& c.hasKey("LeverD")
+									&& c.hasKey("LeverE")
+									&& c.hasKey("LeverF")
+									&& !c.getBoolean("LeverA")
+									&& !c.getBoolean("LeverB")
+									&& c.getBoolean("LeverC")
+									&& c.getBoolean("LeverD")
+									&& !c.getBoolean("LeverE")
+									&& c.getBoolean("LeverF")) {
+								doDoor(obj, p);
+							} else
+								p.message("The door is locked");
+							break;
+					}
+					if (obj.getID() == 30 && obj.getX() == 226 && obj.getY() == 3378) {
+						if (c.hasKey("LeverF")
+							&& c.hasKey("LeverE")
+							&& c.getBoolean("LeverF")
+							&& !c.getBoolean("LeverE")) {
+							doDoor(obj, p);
+						} else {
+							p.message("The door is locked");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -628,13 +662,21 @@ public class ErnestTheChicken implements QuestInterface,
 	}
 
 	@Override
-	public void onInvUseOnItem(Player player, Item item1, Item item2) {
-		if (Functions.compareItemsIds(item1, item2, ItemId.FISH_FOOD.id(), ItemId.POISON.id())) {
-			removeItem(player, ItemId.FISH_FOOD.id(), 1);
-			removeItem(player, ItemId.POISON.id(), 1);
-			addItem(player, ItemId.POISONED_FISH_FOOD.id(), 1);
-			player.message("You poison the fish food");
-		}
+	public GameStateEvent onInvUseOnItem(Player player, Item item1, Item item2) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (Functions.compareItemsIds(item1, item2, ItemId.FISH_FOOD.id(), ItemId.POISON.id())) {
+						removeItem(player, ItemId.FISH_FOOD.id(), 1);
+						removeItem(player, ItemId.POISON.id(), 1);
+						addItem(player, ItemId.POISONED_FISH_FOOD.id(), 1);
+						player.message("You poison the fish food");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -644,13 +686,21 @@ public class ErnestTheChicken implements QuestInterface,
 	}
 
 	@Override
-	public void onInvUseOnWallObject(GameObject obj, Item item, Player player) {
-		if (item.getID() == ItemId.CLOSET_KEY.id() && obj.getID() == 35) {
-			doDoor(obj, player);
-			player.message("You unlock the door");
-			player.message("You go through the door");
-			showBubble(player, item);
-		}
+	public GameStateEvent onInvUseOnWallObject(GameObject obj, Item item, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.CLOSET_KEY.id() && obj.getID() == 35) {
+						doDoor(obj, player);
+						player.message("You unlock the door");
+						player.message("You go through the door");
+						showBubble(player, item);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	final class QuestObjects {

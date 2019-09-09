@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.alkharid;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -45,48 +46,55 @@ public final class GemTrader implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		if (n.getID() == NpcId.GEM_TRADER.id()) {
-			npcTalk(p, n, "good day to you " + ((p.isMale()) ? "sir"
-				: "madam"), "Would you be interested in buying some gems?");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.GEM_TRADER.id()) {
+						npcTalk(p, n, "good day to you " + ((p.isMale()) ? "sir"
+							: "madam"), "Would you be interested in buying some gems?");
 
-			final String[] options;
-			if (p.getQuestStage(Quests.FAMILY_CREST) <= 2 || p.getQuestStage(Quests.FAMILY_CREST) >= 5) {
-				options = new String[]{
-					"Yes please",
-					"No thankyou"
-				};
-			} else {
-				options = new String[]{
-					"Yes please",
-					"No thankyou",
-					"I'm in search of a man named adam fitzharmon"
-				};
-			}
-			int option = showMenu(p, n, false, options);
+						final String[] options;
+						if (p.getQuestStage(Quests.FAMILY_CREST) <= 2 || p.getQuestStage(Quests.FAMILY_CREST) >= 5) {
+							options = new String[]{
+								"Yes please",
+								"No thankyou"
+							};
+						} else {
+							options = new String[]{
+								"Yes please",
+								"No thankyou",
+								"I'm in search of a man named adam fitzharmon"
+							};
+						}
+						int option = showMenu(p, n, false, options);
 
-			if (option == 0) {
-				playerTalk(p, n, "Yes please");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-			} else if (option == 1) {
-				playerTalk(p, n, "No thankyou");
-			} else if (option == 2) {
-				playerTalk(p, n, "I'm in search of a man named Adam Fitzharmon");
-				npcTalk(p,
-					n,
-					"Fitzharmon eh?",
-					"Thats the name of a Varrocian noble family if I'm not mistaken",
-					"I have seen a man of that persuasion about the place as of late",
-					"Wearing a poncey yellow cape",
-					"Came to my store, said he was after jewelry made from the perfect gold",
-					"Whatever that means",
-					"He's round about the desert still, looking for the perfect gold",
-					"He'll be somewhere where he might get some gold I'd wager",
-					"He might even be desperate enough to brave the scorpions");
-				p.updateQuestStage(Quests.FAMILY_CREST, 4);
+						if (option == 0) {
+							playerTalk(p, n, "Yes please");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						} else if (option == 1) {
+							playerTalk(p, n, "No thankyou");
+						} else if (option == 2) {
+							playerTalk(p, n, "I'm in search of a man named Adam Fitzharmon");
+							npcTalk(p,
+								n,
+								"Fitzharmon eh?",
+								"Thats the name of a Varrocian noble family if I'm not mistaken",
+								"I have seen a man of that persuasion about the place as of late",
+								"Wearing a poncey yellow cape",
+								"Came to my store, said he was after jewelry made from the perfect gold",
+								"Whatever that means",
+								"He's round about the desert still, looking for the perfect gold",
+								"He'll be somewhere where he might get some gold I'd wager",
+								"He might even be desperate enough to brave the scorpions");
+							p.updateQuestStage(Quests.FAMILY_CREST, 4);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
-
 }

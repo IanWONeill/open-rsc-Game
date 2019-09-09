@@ -65,8 +65,8 @@ public class UndergroundPassObstaclesMap1 implements ObjectActionListener, Objec
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String cmd, Player p) {
-		p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Underground Pass Obstacles Map 1") {
+	public GameStateEvent onObjectAction(GameObject obj, String cmd, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == UNDERGROUND_CAVE) {
@@ -269,7 +269,7 @@ public class UndergroundPassObstaclesMap1 implements ObjectActionListener, Objec
 					return invoke(7, 1);
 				});
 			}
-		});
+		};
 	}
 
 	boolean succeed(Player player, int req) {

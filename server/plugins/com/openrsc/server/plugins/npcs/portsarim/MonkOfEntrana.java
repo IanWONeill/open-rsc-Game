@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.npcs.portsarim;
 
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
@@ -58,64 +59,79 @@ public final class MonkOfEntrana implements ObjectActionExecutiveListener, Objec
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		if (n.getID() == NpcId.MONK_OF_ENTRANA_PORTSARIM.id()) {
-			npcTalk(p, n, "Are you looking to take passage to our holy island?",
-					"If so your weapons and armour must be left behind");
-				final Menu defaultMenu = new Menu();
-				defaultMenu.addOption(new Option("No I don't wish to go") {
-					@Override
-					public void action() {
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.MONK_OF_ENTRANA_PORTSARIM.id()) {
+						npcTalk(p, n, "Are you looking to take passage to our holy island?",
+							"If so your weapons and armour must be left behind");
+						final Menu defaultMenu = new Menu();
+						defaultMenu.addOption(new Option("No I don't wish to go") {
+							@Override
+							public void action() {
+							}
+						});
+						defaultMenu.addOption(new Option("Yes, Okay I'm ready to go") {
+							@Override
+							public void action() {
+								message(p, "The monk quickly searches you");
+								if (CAN_GO(p)) {
+									npcTalk(p, n, "Sorry we cannow allow you on to our island",
+										"Make sure you are not carrying weapons or armour please");
+								} else {
+									message(p, "You board the ship");
+									p.teleport(418, 570, false);
+									sleep(2200);
+									p.message("The ship arrives at Entrana");
+								}
+							}
+						});
+						defaultMenu.showMenu(p);
 					}
-				});
-				defaultMenu.addOption(new Option("Yes, Okay I'm ready to go") {
-					@Override
-					public void action() {
-						message(p, "The monk quickly searches you");
-						if (CAN_GO(p)) {
-							npcTalk(p, n, "Sorry we cannow allow you on to our island",
-								"Make sure you are not carrying weapons or armour please");
-						} else {
-							message(p, "You board the ship");
-							p.teleport(418, 570, false);
-							sleep(2200);
-							p.message("The ship arrives at Entrana");
-						}
+					else if (n.getID() == NpcId.MONK_OF_ENTRANA_UNRELEASED.id()) {
+						npcTalk(p, n, "Are you looking to take passage back to port sarim?");
+						final Menu defaultMenu = new Menu();
+						defaultMenu.addOption(new Option("No I don't wish to go") {
+							@Override
+							public void action() {
+							}
+						});
+						defaultMenu.addOption(new Option("Yes, Okay I'm ready to go") {
+							@Override
+							public void action() {
+								message(p, "You board the ship");
+								p.teleport(264, 660, false);
+								sleep(2200);
+								p.message("The ship arrives at Port Sarim");
+							}
+						});
+						defaultMenu.showMenu(p);
+						return null;
 					}
+
+					return null;
 				});
-				defaultMenu.showMenu(p);
-		}
-		else if (n.getID() == NpcId.MONK_OF_ENTRANA_UNRELEASED.id()) {
-			npcTalk(p, n, "Are you looking to take passage back to port sarim?");
-			final Menu defaultMenu = new Menu();
-			defaultMenu.addOption(new Option("No I don't wish to go") {
-				@Override
-				public void action() {
-				}
-			});
-			defaultMenu.addOption(new Option("Yes, Okay I'm ready to go") {
-				@Override
-				public void action() {
-					message(p, "You board the ship");
-					p.teleport(264, 660, false);
-					sleep(2200);
-					p.message("The ship arrives at Port Sarim");
-				}
-			});
-			defaultMenu.showMenu(p);
-			return;
-		}
+			}
+		};
 	}
 	
 	@Override
-	public void onObjectAction(GameObject arg0, String arg1, Player p) {
-		Npc monk = getNearestNpc(p, NpcId.MONK_OF_ENTRANA_PORTSARIM.id(), 10);
-		if (monk != null) {
-			monk.initializeTalkScript(p);
-		} else {
-			p.message("I need to speak to the monk before boarding the ship.");
-		}
+	public GameStateEvent onObjectAction(GameObject arg0, String arg1, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					Npc monk = getNearestNpc(p, NpcId.MONK_OF_ENTRANA_PORTSARIM.id(), 10);
+					if (monk != null) {
+						monk.initializeTalkScript(p);
+					} else {
+						p.message("I need to speak to the monk before boarding the ship.");
+					}
 
+					return null;
+				});
+			}
+		};
 	}
 	
 	@Override

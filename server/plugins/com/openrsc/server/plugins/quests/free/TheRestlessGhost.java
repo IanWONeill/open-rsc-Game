@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.free;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
@@ -285,49 +286,75 @@ public class TheRestlessGhost implements QuestInterface, PickupExecutiveListener
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		if (n.getID() == NpcId.GHOST_RESTLESS.id()) {
-			ghostDialogue(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.GHOST_RESTLESS.id()) {
+						ghostDialogue(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player player) {
-		if (obj.getID() == GHOST_COFFIN_OPEN || obj.getID() == GHOST_COFFIN_CLOSED) {
-			if (command.equalsIgnoreCase("open")) {
-				openGenericObject(obj, player, GHOST_COFFIN_OPEN, "You open the coffin");
-			} else if (command.equalsIgnoreCase("close")) {
-				closeGenericObject(obj, player, GHOST_COFFIN_CLOSED, "You close the coffin");
-			} else {
-				if (player.getQuestStage(this) > 0) {
-					player.message("There's a skeleton without a skull in here");
-				} else if (player.getQuestStage(this) == -1) {
-					player.message("Theres a nice and complete skeleton in here!");
-				} else {
-					player.message("You search the coffin and find some human remains");
-				}
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == GHOST_COFFIN_OPEN || obj.getID() == GHOST_COFFIN_CLOSED) {
+						if (command.equalsIgnoreCase("open")) {
+							openGenericObject(obj, player, GHOST_COFFIN_OPEN, "You open the coffin");
+						} else if (command.equalsIgnoreCase("close")) {
+							closeGenericObject(obj, player, GHOST_COFFIN_CLOSED, "You close the coffin");
+						} else {
+							if (player.getQuestStage(quest) > 0) {
+								player.message("There's a skeleton without a skull in here");
+							} else if (player.getQuestStage(quest) == -1) {
+								player.message("Theres a nice and complete skeleton in here!");
+							} else {
+								player.message("You search the coffin and find some human remains");
+							}
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player player) {
-		if (obj.getID() == GHOST_COFFIN_OPEN && player.getQuestStage(this) == 3
-			&& item.getID() == ItemId.QUEST_SKULL.id()) {
-			spawnNpc(player.getWorld(), NpcId.GHOST_RESTLESS.id(), 102, 675, 30);
-			message(player, "You put the skull in the coffin");
-			removeItem(player, ItemId.QUEST_SKULL.id(), 1);
-			//on completion cache key no longer needed
-			player.getCache().remove("tried_grab_skull");
-			Npc npc = getNearestNpc(player, NpcId.GHOST_RESTLESS.id(), 8);
-			if (npc != null) {
-				npc.remove();
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == GHOST_COFFIN_OPEN && player.getQuestStage(quest) == 3
+						&& item.getID() == ItemId.QUEST_SKULL.id()) {
+						spawnNpc(player.getWorld(), NpcId.GHOST_RESTLESS.id(), 102, 675, 30);
+						message(player, "You put the skull in the coffin");
+						removeItem(player, ItemId.QUEST_SKULL.id(), 1);
+						//on completion cache key no longer needed
+						player.getCache().remove("tried_grab_skull");
+						Npc npc = getNearestNpc(player, NpcId.GHOST_RESTLESS.id(), 8);
+						if (npc != null) {
+							npc.remove();
+						}
+						message(player, "The ghost has vanished",
+							"You think you hear a faint voice in the air", "Thank you");
+						player.sendQuestComplete(Quests.THE_RESTLESS_GHOST);
+						return null;
+					}
+
+					return null;
+				});
 			}
-			message(player, "The ghost has vanished",
-				"You think you hear a faint voice in the air", "Thank you");
-			player.sendQuestComplete(Quests.THE_RESTLESS_GHOST);
-			return;
-		}
+		};
 	}
 
 	@Override
@@ -353,44 +380,52 @@ public class TheRestlessGhost implements QuestInterface, PickupExecutiveListener
 	}
 
 	@Override
-	public void onPickup(Player p, GroundItem i) {
-		Npc skeleton = getNearestNpc(p, NpcId.SKELETON_RESTLESS.id(), 10);
-		if (i.getID() == ItemId.QUEST_SKULL.id()) {
-			// spawn-place
-			if (i.getX() == 218 && i.getY() == 3521) {
-				if (p.getQuestStage(Quests.THE_RESTLESS_GHOST) != 3) {
-					playerTalk(p, null, "That skull is scary", "I've got no reason to take it", "I think I'll leave it alone");
-					return;
-				} else if (!p.getCache().hasKey("tried_grab_skull")) {
-					p.getCache().store("tried_grab_skull", true);
-					p.getWorld().unregisterItem(i);
-					addItem(p, ItemId.QUEST_SKULL.id(), 1);
-					if (skeleton == null) {
-						//spawn skeleton and give message
-						p.message("Out of nowhere a skeleton appears");
-						skeleton = spawnNpc(p.getWorld(), NpcId.SKELETON_RESTLESS.id(), 217, 3520, 100);
-						skeleton.setChasing(p);
-					} else {
-						skeleton.setChasing(p);
+	public GameStateEvent onPickup(Player p, GroundItem i) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					Npc skeleton = getNearestNpc(p, NpcId.SKELETON_RESTLESS.id(), 10);
+					if (i.getID() == ItemId.QUEST_SKULL.id()) {
+						// spawn-place
+						if (i.getX() == 218 && i.getY() == 3521) {
+							if (p.getQuestStage(Quests.THE_RESTLESS_GHOST) != 3) {
+								playerTalk(p, null, "That skull is scary", "I've got no reason to take it", "I think I'll leave it alone");
+								return null;
+							} else if (!p.getCache().hasKey("tried_grab_skull")) {
+								p.getCache().store("tried_grab_skull", true);
+								p.getWorld().unregisterItem(i);
+								addItem(p, ItemId.QUEST_SKULL.id(), 1);
+								if (skeleton == null) {
+									//spawn skeleton and give message
+									p.message("Out of nowhere a skeleton appears");
+									skeleton = spawnNpc(p.getWorld(), NpcId.SKELETON_RESTLESS.id(), 217, 3520, 100);
+									skeleton.setChasing(p);
+								} else {
+									skeleton.setChasing(p);
+								}
+
+							}
+							// allow if player had at least one time tried grab skull
+							else {
+								p.getWorld().unregisterItem(i);
+								addItem(p, ItemId.QUEST_SKULL.id(), 1);
+							}
+
+						}
+						// allow wild if post-quest
+						else if (p.getQuestStage(Quests.THE_RESTLESS_GHOST) == -1 && i.getY() <= 425) {
+							p.getWorld().unregisterItem(i);
+							addItem(p, ItemId.QUEST_SKULL.id(), 1);
+						} else {
+							playerTalk(p, null, "That skull is scary", "I've got no reason to take it", "I think I'll leave it alone");
+							return null;
+						}
 					}
 
-				}
-				// allow if player had at least one time tried grab skull
-				else {
-					p.getWorld().unregisterItem(i);
-					addItem(p, ItemId.QUEST_SKULL.id(), 1);
-				}
-
+					return null;
+				});
 			}
-			// allow wild if post-quest
-			else if (p.getQuestStage(Quests.THE_RESTLESS_GHOST) == -1 && i.getY() <= 425) {
-				p.getWorld().unregisterItem(i);
-				addItem(p, ItemId.QUEST_SKULL.id(), 1);
-			} else {
-				playerTalk(p, null, "That skull is scary", "I've got no reason to take it", "I think I'll leave it alone");
-				return;
-			}
-		}
+		};
 	}
 
 	class Ghost {

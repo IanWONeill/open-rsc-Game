@@ -1,9 +1,9 @@
 package com.openrsc.server.plugins.npcs.draynor;
 
-import com.openrsc.server.constants.Constants;
-import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -20,54 +20,62 @@ public final class Ned implements TalkToNpcExecutiveListener, TalkToNpcListener 
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Why hello there, me friends call me Ned",
-			"I was a man of the sea, but its past me now",
-			"Could I be making or selling you some Rope?"
-		);
-		String[] menu = new String[]{ // Default Menu
-			"Yes, I would like some Rope",
-			"No thanks Ned, I don't need any"
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Why hello there, me friends call me Ned",
+						"I was a man of the sea, but its past me now",
+						"Could I be making or selling you some Rope?"
+					);
+					String[] menu = new String[]{ // Default Menu
+						"Yes, I would like some Rope",
+						"No thanks Ned, I don't need any"
+					};
+					if (p.getQuestStage(Quests.DRAGON_SLAYER) == 2 && !p.getCache().hasKey("ned_hired")) {
+						if (p.getQuestStage(Quests.PRINCE_ALI_RESCUE) == 2) {
+							menu = new String[]{ // Dragon Slayer + Prince Ali Rescue
+								"You're a sailor? Could you take me to the Isle of Crandor",
+								"Yes, I would like some Rope",
+								"Ned, could you make other things from wool?",
+								"No thanks Ned, I don't need any"
+							};
+							int choice = showMenu(p, n, menu);
+							makeChoice(p, n, choice);
+						} else {
+							menu = new String[]{ // Dragon Slayer
+								"You're a sailor? Could you take me to the Isle of Crandor",
+								"Yes, I would like some Rope",
+								"No thanks Ned, I don't need any"
+							};
+							int choice = showMenu(p, n, menu);
+							if (choice >= 2)
+								makeChoice(p, n, 3);
+							else
+								makeChoice(p, n, choice);
+						}
+					} else if (p.getQuestStage(Quests.PRINCE_ALI_RESCUE) == 2) {
+						menu = new String[]{ // Prince Ali Rescue
+							"Yes, I would like some Rope",
+							"Ned, could you make other things from wool?",
+							"No thanks Ned, I don't need any"
+						};
+						int choice = showMenu(p, n, menu);
+						if (choice >= 0) {
+							makeChoice(p, n, choice + 1);
+						}
+					} else {
+						int choice = showMenu(p, n, menu);
+						if (choice == 0)
+							makeChoice(p, n, 1);
+						else if (choice == 1)
+							makeChoice(p, n, 3);
+					}
+
+					return null;
+				});
+			}
 		};
-		if (p.getQuestStage(Quests.DRAGON_SLAYER) == 2 && !p.getCache().hasKey("ned_hired")) {
-			if (p.getQuestStage(Quests.PRINCE_ALI_RESCUE) == 2) {
-				menu = new String[]{ // Dragon Slayer + Prince Ali Rescue
-					"You're a sailor? Could you take me to the Isle of Crandor",
-					"Yes, I would like some Rope",
-					"Ned, could you make other things from wool?",
-					"No thanks Ned, I don't need any"
-				};
-				int choice = showMenu(p, n, menu);
-				makeChoice(p, n, choice);
-			} else {
-				menu = new String[]{ // Dragon Slayer
-					"You're a sailor? Could you take me to the Isle of Crandor",
-					"Yes, I would like some Rope",
-					"No thanks Ned, I don't need any"
-				};
-				int choice = showMenu(p, n, menu);
-				if (choice >= 2)
-					makeChoice(p, n, 3);
-				else
-					makeChoice(p, n, choice);
-			}
-		} else if (p.getQuestStage(Quests.PRINCE_ALI_RESCUE) == 2) {
-			menu = new String[]{ // Prince Ali Rescue
-				"Yes, I would like some Rope",
-				"Ned, could you make other things from wool?",
-				"No thanks Ned, I don't need any"
-			};
-			int choice = showMenu(p, n, menu);
-			if (choice >= 0) {
-				makeChoice(p, n, choice + 1);
-			}
-		} else {
-			int choice = showMenu(p, n, menu);
-			if (choice == 0)
-				makeChoice(p, n, 1);
-			else if (choice == 1)
-				makeChoice(p, n, 3);
-		}
 	}
 
 	public void makeChoice(Player p, Npc n, int option) {

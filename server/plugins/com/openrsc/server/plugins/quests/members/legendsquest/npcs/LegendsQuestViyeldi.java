@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.members.legendsquest.npcs;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -19,34 +20,42 @@ public class LegendsQuestViyeldi implements TalkToNpcListener, TalkToNpcExecutiv
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.VIYELDI.id()) {
-			switch (p.getQuestStage(Quests.LEGENDS_QUEST)) {
-				case 7:
-					message(p, n, 1300, "The headless, spirit of Viyeldi animates and walks towards you.");
-					if (!p.getCache().hasKey("killed_viyeldi")) {
-						message(p, n, 1300, "And starts talking to you in a shrill, excited voice...");
-						npcTalk(p, n, "Beware adventurer, lest thee loses they head in search of source.",
-							"Bravery has thee been tested and not found wanting..");
-						message(p, n, 1300, "The spirit wavers slightly and then stands proud...");
-						npcTalk(p, n, "But perilous danger waits for thee,",
-							"Tojalon, Senay and Devere makes three,",
-							"None hold malice but will test your might,",
-							"Pray that you do not lose this fight,",
-							"If however, you win this day,",
-							"Take heart that see the source you may,",
-							"Through dragons eye will you gain new heart,",
-							"To see the source and then depart.");
-					} else {
-						p.message("Viyeldi falls silent...");
-						sleep(7000);
-						p.message("...and the clothes slump to the floor.");
-						if (n != null)
-							n.remove();
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.VIYELDI.id()) {
+						switch (p.getQuestStage(Quests.LEGENDS_QUEST)) {
+							case 7:
+								message(p, n, 1300, "The headless, spirit of Viyeldi animates and walks towards you.");
+								if (!p.getCache().hasKey("killed_viyeldi")) {
+									message(p, n, 1300, "And starts talking to you in a shrill, excited voice...");
+									npcTalk(p, n, "Beware adventurer, lest thee loses they head in search of source.",
+										"Bravery has thee been tested and not found wanting..");
+									message(p, n, 1300, "The spirit wavers slightly and then stands proud...");
+									npcTalk(p, n, "But perilous danger waits for thee,",
+										"Tojalon, Senay and Devere makes three,",
+										"None hold malice but will test your might,",
+										"Pray that you do not lose this fight,",
+										"If however, you win this day,",
+										"Take heart that see the source you may,",
+										"Through dragons eye will you gain new heart,",
+										"To see the source and then depart.");
+								} else {
+									p.message("Viyeldi falls silent...");
+									sleep(7000);
+									p.message("...and the clothes slump to the floor.");
+									if (n != null)
+										n.remove();
+								}
+								break;
+						}
 					}
-					break;
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -55,22 +64,30 @@ public class LegendsQuestViyeldi implements TalkToNpcListener, TalkToNpcExecutiv
 	}
 
 	@Override
-	public void onPickup(Player p, GroundItem i) {
-		if (i.getID() == ItemId.A_BLUE_WIZARDS_HAT.id() && i.getX() == 426 && i.getY() == 3708) {
-			p.teleport(i.getX(), i.getY());
-			message(p, 1300, "Your hand passes through the hat as if it wasn't there.");
-			if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 8) {
-				return;
+	public GameStateEvent onPickup(Player p, GroundItem i) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (i.getID() == ItemId.A_BLUE_WIZARDS_HAT.id() && i.getX() == 426 && i.getY() == 3708) {
+						p.teleport(i.getX(), i.getY());
+						message(p, 1300, "Your hand passes through the hat as if it wasn't there.");
+						if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 8) {
+							return null;
+						}
+						p.teleport(i.getX(), i.getY() - 1);
+						message(p, 1300, "Instantly the clothes begin to animate and then walk towards you.");
+						Npc n = getNearestNpc(p, NpcId.VIYELDI.id(), 3);
+						if (n == null)
+							n = spawnNpc(p.getWorld(), NpcId.VIYELDI.id(), i.getX(), i.getY(), 60000);
+						if (n != null) {
+							n.initializeTalkScript(p);
+						}
+					}
+
+					return null;
+				});
 			}
-			p.teleport(i.getX(), i.getY() - 1);
-			message(p, 1300, "Instantly the clothes begin to animate and then walk towards you.");
-			Npc n = getNearestNpc(p, NpcId.VIYELDI.id(), 3);
-			if (n == null)
-				n = spawnNpc(p.getWorld(), NpcId.VIYELDI.id(), i.getX(), i.getY(), 60000);
-			if (n != null) {
-				n.initializeTalkScript(p);
-			}
-		}
+		};
 	}
 
 	@Override
@@ -79,10 +96,18 @@ public class LegendsQuestViyeldi implements TalkToNpcListener, TalkToNpcExecutiv
 	}
 
 	@Override
-	public void onPlayerAttackNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.VIYELDI.id()) {
-			attackViyeldi(p, n);
-		}
+	public GameStateEvent onPlayerAttackNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.VIYELDI.id()) {
+						attackViyeldi(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void attackViyeldi(Player p, Npc n) {
@@ -115,10 +140,18 @@ public class LegendsQuestViyeldi implements TalkToNpcListener, TalkToNpcExecutiv
 	}
 
 	@Override
-	public void onPlayerMageNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.VIYELDI.id()) {
-			attackViyeldi(p, n);
-		}
+	public GameStateEvent onPlayerMageNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.VIYELDI.id()) {
+						attackViyeldi(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -127,9 +160,17 @@ public class LegendsQuestViyeldi implements TalkToNpcListener, TalkToNpcExecutiv
 	}
 
 	@Override
-	public void onPlayerRangeNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.VIYELDI.id()) {
-			attackViyeldi(p, n);
-		}
+	public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.VIYELDI.id()) {
+						attackViyeldi(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 }

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.yanille;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -25,18 +26,25 @@ public final class Frenita implements ShopInterface,
 		new Item(ItemId.POT_OF_FLOUR.id(), 8));
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		npcTalk(p, n, "Would you like to buy some cooking equipment");
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Would you like to buy some cooking equipment");
 
-		int option = showMenu(p, n, "Yes please", "No thankyou");
-		switch (option) {
+					int option = showMenu(p, n, "Yes please", "No thankyou");
+					switch (option) {
 
-			case 0:
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-				break;
-		}
+						case 0:
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+							break;
+					}
 
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

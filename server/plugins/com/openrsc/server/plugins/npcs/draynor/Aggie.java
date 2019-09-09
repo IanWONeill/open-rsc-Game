@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.npcs.draynor;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -27,8 +28,16 @@ public final class Aggie implements TalkToNpcListener,
 	private static final int HAPPY = 11;
 
 	@Override
-	public void onTalkToNpc(Player player, final Npc npc) {
-		aggieDialogue(player, npc, -1);
+	public GameStateEvent onTalkToNpc(Player player, final Npc npc) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					aggieDialogue(player, npc, -1);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	public void aggieDialogue(Player p, Npc n, int cID) {

@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.listeners.action;
 
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 
@@ -16,5 +17,5 @@ public interface InvActionListener {
 	 * @param item
 	 * @param player
 	 */
-	public void onInvAction(Item item, Player player, String command);
+	public GameStateEvent onInvAction(Item item, Player player, String command);
 }

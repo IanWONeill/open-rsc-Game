@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.falador;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -13,21 +14,29 @@ import static com.openrsc.server.plugins.Functions.*;
 public class MakeOverMage implements TalkToNpcListener,
 	TalkToNpcExecutiveListener {
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		npcTalk(p, n, "Are you happy with your looks?",
-			"If not I can change them for the cheap cheap price",
-			"Of 3000 coins");
-		int opt = showMenu(p, n, "I'm happy with how I look thank you",
-			"Yes change my looks please");
-		if (opt == 1) {
-			if (!hasItem(p, ItemId.COINS.id(), 3000)) {
-				playerTalk(p, n, "I'll just go get the cash");
-			} else {
-				removeItem(p, ItemId.COINS.id(), 3000);
-				p.setChangingAppearance(true);
-				ActionSender.sendAppearanceScreen(p);
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Are you happy with your looks?",
+						"If not I can change them for the cheap cheap price",
+						"Of 3000 coins");
+					int opt = showMenu(p, n, "I'm happy with how I look thank you",
+						"Yes change my looks please");
+					if (opt == 1) {
+						if (!hasItem(p, ItemId.COINS.id(), 3000)) {
+							playerTalk(p, n, "I'll just go get the cash");
+						} else {
+							removeItem(p, ItemId.COINS.id(), 3000);
+							p.setChangingAppearance(true);
+							ActionSender.sendAppearanceScreen(p);
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override

@@ -1,9 +1,9 @@
 package com.openrsc.server.plugins.npcs.varrock;
 
-import com.openrsc.server.constants.Constants;
-import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -18,94 +18,102 @@ public class ManPhoenix implements TalkToNpcExecutiveListener,
 	TalkToNpcListener {
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		Npc man = getNearestNpc(p, NpcId.STRAVEN.id(), 20);
-		if (isBlackArmGang(p)) {
-			if (man != null) {
-				npcTalk(p, man, "hey get away from there",
-					"Black arm dog");
-				man.setChasing(p);
-			}
-		} else if (p.getQuestStage(Quests.HEROS_QUEST) >= 1 && isPhoenixGang(p)) {
-			if (!hasItem(p, ItemId.MASTER_THIEF_ARMBAND.id()) && p.getCache().hasKey("armband")) {
-				playerTalk(p, n, "I have lost my master thief armband");
-				npcTalk(p, n, "You need to be more careful", "Ah well", "Have this spare");
-				addItem(p, ItemId.MASTER_THIEF_ARMBAND.id(), 1);
-				return;
-			} else if (hasItem(p, ItemId.CANDLESTICK.id()) && !p.getCache().hasKey("armband")) {
-				playerTalk(p, n, "I have retrieved a candlestick");
-				npcTalk(p, n, "Hmm not a bad job",
-					"Let's see it, make sure it's genuine");
-				p.message("You hand Straven the candlestick");
-				removeItem(p, ItemId.CANDLESTICK.id(), 1);
-				playerTalk(p, n, "So is this enough to get me a master thieves armband?");
-				npcTalk(p, n, "Hmm I dunno",
-					"I suppose I'm in a generous mood today");
-				p.message("Straven hands you a master thief armband");
-				addItem(p, ItemId.MASTER_THIEF_ARMBAND.id(), 1);
-				p.getCache().store("armband", true);
-				return;
-			}
-			playerTalk(p, n, "How would I go about getting a master thieves armband?");
-			npcTalk(p, n, "Ooh tricky stuff, took me years to get that rank",
-				"Well what some of aspiring thieves in our gang are working on right now",
-				"Is to steal some very valuable rare candlesticks",
-				"From scarface Pete - the pirate leader on Karamja",
-				"His security is good enough and the target valuable enough",
-				"That might be enough to get you the rank",
-				"Go talk to our man Alfonse the waiter in the shrimp and parrot",
-				"Use the secret word gherkin to show you're one of us");
-			p.getCache().store("pheonix_mission", true);
-			p.getCache().store("pheonix_alf", true);
-		} else if (!p.getBank().hasItemId(ItemId.PHOENIX_GANG_WEAPON_KEY.id()) && !hasItem(p, ItemId.PHOENIX_GANG_WEAPON_KEY.id()) &&
-				(p.getQuestStage(Quests.SHIELD_OF_ARRAV) >= 5 || p.getQuestStage(Quests.SHIELD_OF_ARRAV) < 0)
-				&& isPhoenixGang(p)) {
-			npcTalk(p, n, "Greetings fellow gang member");
-			playerTalk(p, n, "I have lost the key you gave me");
-			npcTalk(p, n, "You need to be more careful",
-				"We don't want that key falling into the wrong hands",
-				"Ah well",
-				"Have this spare");
-			addItem(p, ItemId.PHOENIX_GANG_WEAPON_KEY.id(), 1);
-			message(p, "Straven hands you a key");
-		} else if ((p.getQuestStage(Quests.SHIELD_OF_ARRAV) == 4 && isPhoenixGang(p))
-				|| (p.getCache().hasKey("arrav_mission") && (p.getCache().getInt("arrav_mission") & 2) == PHOENIX_MISSION)) {
-			npcTalk(p, n, "Hows your little mission going?");
-			if (p.getInventory().hasItemId(ItemId.SCROLL.id())) {
-				playerTalk(p, n, "I have the intelligence report");
-				npcTalk(p, n, "Lets see it then");
-				message(p, "You hand over the report");
-				removeItem(p, ItemId.SCROLL.id(), 1);
-				message(p, "The man reads the report");
-				npcTalk(p, n, "Yes this is very good",
-					"Ok you can join the phoenix gang",
-					"I am Straven, one of the gang leaders");
-				playerTalk(p, n, "Nice to meet you");
-				npcTalk(p, n, "Here is a key");
-				message(p, "Straven hands you a key");
-				addItem(p, ItemId.PHOENIX_GANG_WEAPON_KEY.id(), 1);
-				npcTalk(p, n, "It will let you enter our weapon supply area",
-					"Round the front of this building");
-				p.updateQuestStage(Quests.SHIELD_OF_ARRAV, 5);
-				if (p.getCache().hasKey("arrav_mission")) {
-					p.getCache().remove("arrav_mission");
-				}
-				if (p.getCache().hasKey("spoken_tramp")) {
-					p.getCache().remove("spoken_tramp");
-				}
-			} else {
-				playerTalk(p, n, "I haven't managed to find the report yet");
-				npcTalk(p, n,
-					"You need to kill Jonny the beard",
-					"Who should be in the blue moon inn");
-			}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					Npc man = getNearestNpc(p, NpcId.STRAVEN.id(), 20);
+					if (isBlackArmGang(p)) {
+						if (man != null) {
+							npcTalk(p, man, "hey get away from there",
+								"Black arm dog");
+							man.setChasing(p);
+						}
+					} else if (p.getQuestStage(Quests.HEROS_QUEST) >= 1 && isPhoenixGang(p)) {
+						if (!hasItem(p, ItemId.MASTER_THIEF_ARMBAND.id()) && p.getCache().hasKey("armband")) {
+							playerTalk(p, n, "I have lost my master thief armband");
+							npcTalk(p, n, "You need to be more careful", "Ah well", "Have this spare");
+							addItem(p, ItemId.MASTER_THIEF_ARMBAND.id(), 1);
+							return null;
+						} else if (hasItem(p, ItemId.CANDLESTICK.id()) && !p.getCache().hasKey("armband")) {
+							playerTalk(p, n, "I have retrieved a candlestick");
+							npcTalk(p, n, "Hmm not a bad job",
+								"Let's see it, make sure it's genuine");
+							p.message("You hand Straven the candlestick");
+							removeItem(p, ItemId.CANDLESTICK.id(), 1);
+							playerTalk(p, n, "So is this enough to get me a master thieves armband?");
+							npcTalk(p, n, "Hmm I dunno",
+								"I suppose I'm in a generous mood today");
+							p.message("Straven hands you a master thief armband");
+							addItem(p, ItemId.MASTER_THIEF_ARMBAND.id(), 1);
+							p.getCache().store("armband", true);
+							return null;
+						}
+						playerTalk(p, n, "How would I go about getting a master thieves armband?");
+						npcTalk(p, n, "Ooh tricky stuff, took me years to get that rank",
+							"Well what some of aspiring thieves in our gang are working on right now",
+							"Is to steal some very valuable rare candlesticks",
+							"From scarface Pete - the pirate leader on Karamja",
+							"His security is good enough and the target valuable enough",
+							"That might be enough to get you the rank",
+							"Go talk to our man Alfonse the waiter in the shrimp and parrot",
+							"Use the secret word gherkin to show you're one of us");
+						p.getCache().store("pheonix_mission", true);
+						p.getCache().store("pheonix_alf", true);
+					} else if (!p.getBank().hasItemId(ItemId.PHOENIX_GANG_WEAPON_KEY.id()) && !hasItem(p, ItemId.PHOENIX_GANG_WEAPON_KEY.id()) &&
+						(p.getQuestStage(Quests.SHIELD_OF_ARRAV) >= 5 || p.getQuestStage(Quests.SHIELD_OF_ARRAV) < 0)
+						&& isPhoenixGang(p)) {
+						npcTalk(p, n, "Greetings fellow gang member");
+						playerTalk(p, n, "I have lost the key you gave me");
+						npcTalk(p, n, "You need to be more careful",
+							"We don't want that key falling into the wrong hands",
+							"Ah well",
+							"Have this spare");
+						addItem(p, ItemId.PHOENIX_GANG_WEAPON_KEY.id(), 1);
+						message(p, "Straven hands you a key");
+					} else if ((p.getQuestStage(Quests.SHIELD_OF_ARRAV) == 4 && isPhoenixGang(p))
+						|| (p.getCache().hasKey("arrav_mission") && (p.getCache().getInt("arrav_mission") & 2) == PHOENIX_MISSION)) {
+						npcTalk(p, n, "Hows your little mission going?");
+						if (p.getInventory().hasItemId(ItemId.SCROLL.id())) {
+							playerTalk(p, n, "I have the intelligence report");
+							npcTalk(p, n, "Lets see it then");
+							message(p, "You hand over the report");
+							removeItem(p, ItemId.SCROLL.id(), 1);
+							message(p, "The man reads the report");
+							npcTalk(p, n, "Yes this is very good",
+								"Ok you can join the phoenix gang",
+								"I am Straven, one of the gang leaders");
+							playerTalk(p, n, "Nice to meet you");
+							npcTalk(p, n, "Here is a key");
+							message(p, "Straven hands you a key");
+							addItem(p, ItemId.PHOENIX_GANG_WEAPON_KEY.id(), 1);
+							npcTalk(p, n, "It will let you enter our weapon supply area",
+								"Round the front of this building");
+							p.updateQuestStage(Quests.SHIELD_OF_ARRAV, 5);
+							if (p.getCache().hasKey("arrav_mission")) {
+								p.getCache().remove("arrav_mission");
+							}
+							if (p.getCache().hasKey("spoken_tramp")) {
+								p.getCache().remove("spoken_tramp");
+							}
+						} else {
+							playerTalk(p, n, "I haven't managed to find the report yet");
+							npcTalk(p, n,
+								"You need to kill Jonny the beard",
+								"Who should be in the blue moon inn");
+						}
 
-		} else if (p.getQuestStage(Quests.SHIELD_OF_ARRAV) == 5
-			|| p.getQuestStage(Quests.SHIELD_OF_ARRAV) < 0 || p.getQuestStage(Quests.HEROS_QUEST) == -1) {
-			memberOfPhoenixConversation(p, n);
-		} else if (p.getQuestStage(Quests.SHIELD_OF_ARRAV) <= 3) {
-			defaultConverstation(p, n);
-		}
+					} else if (p.getQuestStage(Quests.SHIELD_OF_ARRAV) == 5
+						|| p.getQuestStage(Quests.SHIELD_OF_ARRAV) < 0 || p.getQuestStage(Quests.HEROS_QUEST) == -1) {
+						memberOfPhoenixConversation(p, n);
+					} else if (p.getQuestStage(Quests.SHIELD_OF_ARRAV) <= 3) {
+						defaultConverstation(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void memberOfPhoenixConversation(final Player p, final Npc n) {

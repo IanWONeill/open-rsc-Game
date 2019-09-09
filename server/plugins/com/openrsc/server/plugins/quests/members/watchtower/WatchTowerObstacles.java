@@ -68,8 +68,8 @@ public class WatchTowerObstacles implements ObjectActionListener, ObjectActionEx
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		p.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(p.getWorld(), p, 0, "Watch Tower Obstacles") {
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == COMPLETED_QUEST_LADDER) {
@@ -399,7 +399,7 @@ public class WatchTowerObstacles implements ObjectActionListener, ObjectActionEx
 					return null;
 				});
 			}
-		});
+		};
 	}
 
 	@Override
@@ -408,100 +408,108 @@ public class WatchTowerObstacles implements ObjectActionListener, ObjectActionEx
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		if (inArray(obj.getID(), CAVE_EXITS)) { // 6 WEBS!!
-			if (obj.getID() == CAVE_EXITS[0]) {
-				p.teleport(648, 769);
-			} else if (obj.getID() == CAVE_EXITS[1]) {
-				p.teleport(638, 777);
-			} else if (obj.getID() == CAVE_EXITS[2]) {
-				p.teleport(629, 777);
-			} else if (obj.getID() == CAVE_EXITS[3]) {
-				p.teleport(631, 789);
-			} else if (obj.getID() == CAVE_EXITS[4]) {
-				p.teleport(624, 807);
-			} else if (obj.getID() == CAVE_EXITS[5]) {
-				p.teleport(645, 812);
-			}
-		}
-		else if (obj.getID() == BATTLEMENT) {
-			playerTalk(p, null, "What's this ?",
-				"The bridge is out - i'll need to find another way in",
-				"I can see a ladder up there coming out of a hole",
-				"Maybe I should check out some of these tunnels around here...");
-		}
-		else if (obj.getID() == SOUTH_WEST_BATTLEMENT) {
-			Npc ogre_guard = getNearestNpc(p, NpcId.OGRE_GUARD_BATTLEMENT.id(), 5);
-			if (p.getX() <= 664) {
-				p.teleport(p.getX() + 1, p.getY());
-			} else {
-				if (p.getCache().hasKey("has_ogre_gift")) {
-					npcTalk(p, ogre_guard, "It's that creature again",
-						"This time we will let it go...");
-					p.teleport(p.getX() - 1, p.getY());
-					p.message("You climb over the battlement");
-				} else if (p.getCache().hasKey("get_ogre_gift") || p.getQuestStage(Quests.WATCHTOWER) == -1) {
-					if (ogre_guard != null) {
-						npcTalk(p, ogre_guard, "Stop creature!... Oh its you",
-							"Well what have you got for us then ?");
-						if (p.getQuestStage(Quests.WATCHTOWER) == -1) {
-							playerTalk(p, ogre_guard, "I didn't bring anything");
-							npcTalk(p, ogre_guard, "Didn't bring anything!",
-								"In that case shove off!");
-							p.message("The guard pushes you out of the city");
-							p.teleport(635, 774);
-							return;
-						}
-						if (hasItem(p, ItemId.ROCK_CAKE.id())) {
-							playerTalk(p, ogre_guard, "How about this ?");
-							p.message("You give the guard a rock cake");
-							removeItem(p, ItemId.ROCK_CAKE.id(), 1);
-							npcTalk(p, ogre_guard, "Well well, looks at this",
-								"My favourite, rock cake!",
-								"Okay we will let it through");
-							p.teleport(663, 812);
-							p.message("You climb over the battlement");
-							p.getCache().remove("get_ogre_gift");
-							p.getCache().store("has_ogre_gift", true);
-						} else {
-							playerTalk(p, ogre_guard, "I didn't bring anything");
-							npcTalk(p, ogre_guard, "Didn't bring anything!",
-								"In that case shove off!");
-							p.message("The guard pushes you out of the city");
-							p.teleport(635, 774);
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (inArray(obj.getID(), CAVE_EXITS)) { // 6 WEBS!!
+						if (obj.getID() == CAVE_EXITS[0]) {
+							p.teleport(648, 769);
+						} else if (obj.getID() == CAVE_EXITS[1]) {
+							p.teleport(638, 777);
+						} else if (obj.getID() == CAVE_EXITS[2]) {
+							p.teleport(629, 777);
+						} else if (obj.getID() == CAVE_EXITS[3]) {
+							p.teleport(631, 789);
+						} else if (obj.getID() == CAVE_EXITS[4]) {
+							p.teleport(624, 807);
+						} else if (obj.getID() == CAVE_EXITS[5]) {
+							p.teleport(645, 812);
 						}
 					}
-				} else {
-					if (ogre_guard != null) {
-						npcTalk(p, ogre_guard, "Oi! where do you think you are going ?",
-							"You are for the cooking pot!");
-						int menu = showMenu(p, ogre_guard,
-							"But I am a friend to ogres...",
-							"Not if I can help it");
-						if (menu == 0) {
-							npcTalk(p, ogre_guard, "Prove it to us with a gift",
-								"Get us something from the market");
-							playerTalk(p, ogre_guard, "Like what ?");
-							npcTalk(p, ogre_guard, "Surprise us...");
-							p.getCache().store("get_ogre_gift", true);
-						} else if (menu == 1) {
-							npcTalk(p, ogre_guard, "You can help by being tonight's dinner...",
-								"Or you can go away, now what shall it be ?");
-							int subMenu = showMenu(p, ogre_guard,
-								"Okay, okay i'm going",
-								"I tire of ogres, prepare to die!");
-							if (subMenu == 0) {
-								npcTalk(p, ogre_guard, "back to whence you came");
-								p.teleport(635, 774);
-							} else if (subMenu == 1) {
-								npcTalk(p, ogre_guard, "Grrrrr!");
-								ogre_guard.startCombat(p);
+					else if (obj.getID() == BATTLEMENT) {
+						playerTalk(p, null, "What's this ?",
+							"The bridge is out - i'll need to find another way in",
+							"I can see a ladder up there coming out of a hole",
+							"Maybe I should check out some of these tunnels around here...");
+					}
+					else if (obj.getID() == SOUTH_WEST_BATTLEMENT) {
+						Npc ogre_guard = getNearestNpc(p, NpcId.OGRE_GUARD_BATTLEMENT.id(), 5);
+						if (p.getX() <= 664) {
+							p.teleport(p.getX() + 1, p.getY());
+						} else {
+							if (p.getCache().hasKey("has_ogre_gift")) {
+								npcTalk(p, ogre_guard, "It's that creature again",
+									"This time we will let it go...");
+								p.teleport(p.getX() - 1, p.getY());
+								p.message("You climb over the battlement");
+							} else if (p.getCache().hasKey("get_ogre_gift") || p.getQuestStage(Quests.WATCHTOWER) == -1) {
+								if (ogre_guard != null) {
+									npcTalk(p, ogre_guard, "Stop creature!... Oh its you",
+										"Well what have you got for us then ?");
+									if (p.getQuestStage(Quests.WATCHTOWER) == -1) {
+										playerTalk(p, ogre_guard, "I didn't bring anything");
+										npcTalk(p, ogre_guard, "Didn't bring anything!",
+											"In that case shove off!");
+										p.message("The guard pushes you out of the city");
+										p.teleport(635, 774);
+										return null;
+									}
+									if (hasItem(p, ItemId.ROCK_CAKE.id())) {
+										playerTalk(p, ogre_guard, "How about this ?");
+										p.message("You give the guard a rock cake");
+										removeItem(p, ItemId.ROCK_CAKE.id(), 1);
+										npcTalk(p, ogre_guard, "Well well, looks at this",
+											"My favourite, rock cake!",
+											"Okay we will let it through");
+										p.teleport(663, 812);
+										p.message("You climb over the battlement");
+										p.getCache().remove("get_ogre_gift");
+										p.getCache().store("has_ogre_gift", true);
+									} else {
+										playerTalk(p, ogre_guard, "I didn't bring anything");
+										npcTalk(p, ogre_guard, "Didn't bring anything!",
+											"In that case shove off!");
+										p.message("The guard pushes you out of the city");
+										p.teleport(635, 774);
+									}
+								}
+							} else {
+								if (ogre_guard != null) {
+									npcTalk(p, ogre_guard, "Oi! where do you think you are going ?",
+										"You are for the cooking pot!");
+									int menu = showMenu(p, ogre_guard,
+										"But I am a friend to ogres...",
+										"Not if I can help it");
+									if (menu == 0) {
+										npcTalk(p, ogre_guard, "Prove it to us with a gift",
+											"Get us something from the market");
+										playerTalk(p, ogre_guard, "Like what ?");
+										npcTalk(p, ogre_guard, "Surprise us...");
+										p.getCache().store("get_ogre_gift", true);
+									} else if (menu == 1) {
+										npcTalk(p, ogre_guard, "You can help by being tonight's dinner...",
+											"Or you can go away, now what shall it be ?");
+										int subMenu = showMenu(p, ogre_guard,
+											"Okay, okay i'm going",
+											"I tire of ogres, prepare to die!");
+										if (subMenu == 0) {
+											npcTalk(p, ogre_guard, "back to whence you came");
+											p.teleport(635, 774);
+										} else if (subMenu == 1) {
+											npcTalk(p, ogre_guard, "Grrrrr!");
+											ogre_guard.startCombat(p);
+										}
+									}
+								}
 							}
 						}
 					}
-				}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void randomizedChest(Player p, GameObject o) {

@@ -1,5 +1,8 @@
 package com.openrsc.server.plugins.npcs.dwarvenmine;
 
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
@@ -7,27 +10,32 @@ import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener
 
 import static com.openrsc.server.plugins.Functions.*;
 
-import com.openrsc.server.constants.ItemId;
-import com.openrsc.server.constants.NpcId;
-
 public class Thordur implements TalkToNpcExecutiveListener, TalkToNpcListener {
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		playerTalk(p, n, "Hello");
-		npcTalk(p, n, "Hello adventurer",
-				"What brings you to this place?");
-		int opts = showMenu(p, n, "I just wanted to come by and say Hi",
-				"Who are you?", "Do you like it here?");
-		if (opts == 0) {
-			thordurDialogue(p, n, WANTED_SAY_HI);
-		}
-		else if (opts == 1) {
-			thordurDialogue(p, n, WHO_ARE_YOU);
-		}
-		else if (opts == 2) {
-			thordurDialogue(p, n, LIKE_IT_HERE);
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					playerTalk(p, n, "Hello");
+					npcTalk(p, n, "Hello adventurer",
+						"What brings you to this place?");
+					int opts = showMenu(p, n, "I just wanted to come by and say Hi",
+						"Who are you?", "Do you like it here?");
+					if (opts == 0) {
+						thordurDialogue(p, n, WANTED_SAY_HI);
+					}
+					else if (opts == 1) {
+						thordurDialogue(p, n, WHO_ARE_YOU);
+					}
+					else if (opts == 2) {
+						thordurDialogue(p, n, LIKE_IT_HERE);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 	
 	private void thordurDialogue(Player p, Npc n, int cID) {

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.karamja;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -37,17 +38,24 @@ public final class ZamboRum implements ShopInterface,
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p,
-			n,
-			"Hey are you wanting to try some of my fine wines and spirits?",
-			"All brewed locally on Karamja island");
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p,
+						n,
+						"Hey are you wanting to try some of my fine wines and spirits?",
+						"All brewed locally on Karamja island");
 
-		int option = showMenu(p, n, "Yes please", "No thankyou");
-		if (option == 0) {
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		}
+					int option = showMenu(p, n, "Yes please", "No thankyou");
+					if (option == 0) {
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
-
 }

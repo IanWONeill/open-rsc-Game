@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.hemenster;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -41,15 +42,23 @@ public class FishingGuildGeneralShop implements
 	}
 
 	@Override
-	public void onTalkToNpc(final Player p, final Npc n) {
-		npcTalk(p, n, "Would you like to buy some fishing equipment",
-			"Or sell some fish");
-		final int option = showMenu(p, n, "Yes please",
-			"No thankyou");
-		if (option == 0) {
-			p.setAccessingShop(shop);
-			ActionSender.showShop(p, shop);
-		}
+	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Would you like to buy some fishing equipment",
+						"Or sell some fish");
+					final int option = showMenu(p, n, "Yes please",
+						"No thankyou");
+					if (option == 0) {
+						p.setAccessingShop(shop);
+						ActionSender.showShop(p, shop);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 }

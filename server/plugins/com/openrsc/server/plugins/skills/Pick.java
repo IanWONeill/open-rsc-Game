@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.skills;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.event.custom.BatchEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.ObjectActionListener;
@@ -40,21 +41,28 @@ public final class Pick implements ObjectActionExecutiveListener,
 	}
 
 	@Override
-	public void onObjectAction(final GameObject object, final String command,
-							   final Player player) {
-		switch (object.getID()) {
-			case 72: // Wheat
-				handleCropPickup(player, ItemId.GRAIN.id(), "You get some grain");
-				break;
-			case 191: // Potatos
-				handleCropPickup(player, ItemId.POTATO.id(), "You pick a potato");
-				break;
-			case 313: // Flax
-				handleCropPickup(player, ItemId.FLAX.id(), "You uproot a flax plant");
-				break;
-			default:
-				player.message("Nothing interesting happens");
-				break;
-		}
+	public GameStateEvent onObjectAction(final GameObject object, final String command, final Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					switch (object.getID()) {
+						case 72: // Wheat
+							handleCropPickup(player, ItemId.GRAIN.id(), "You get some grain");
+							break;
+						case 191: // Potatos
+							handleCropPickup(player, ItemId.POTATO.id(), "You pick a potato");
+							break;
+						case 313: // Flax
+							handleCropPickup(player, ItemId.FLAX.id(), "You uproot a flax plant");
+							break;
+						default:
+							player.message("Nothing interesting happens");
+							break;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 }

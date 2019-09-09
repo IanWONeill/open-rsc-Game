@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.grandtree;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -25,23 +26,31 @@ public final class GnomeWaiter implements ShopInterface,
 		new Item(ItemId.GNOME_WAITER_SPICE_CRUNCHIES.id(), 4));
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		playerTalk(p, n, "hello");
-		npcTalk(p, n, "good afternoon",
-			"can i tempt you with our new menu?");
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					playerTalk(p, n, "hello");
+					npcTalk(p, n, "good afternoon",
+						"can i tempt you with our new menu?");
 
-		int option = showMenu(p, n, "i'll take a look", "not really");
-		switch (option) {
-			case 0:
-				npcTalk(p, n, "i hope you like what you see");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-				break;
+					int option = showMenu(p, n, "i'll take a look", "not really");
+					switch (option) {
+						case 0:
+							npcTalk(p, n, "i hope you like what you see");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+							break;
 
-			case 1:
-				npcTalk(p, n, "ok then, enjoy your stay");
-				break;
-		}
+						case 1:
+							npcTalk(p, n, "ok then, enjoy your stay");
+							break;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

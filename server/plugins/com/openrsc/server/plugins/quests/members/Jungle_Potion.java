@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.members;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -961,10 +962,18 @@ public class Jungle_Potion implements QuestInterface, ObjectActionListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.TRUFITUS.id()) {
-			trufitisChat(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.TRUFITUS.id()) {
+						trufitisChat(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -979,74 +988,83 @@ public class Jungle_Potion implements QuestInterface, ObjectActionListener,
 	//herbs should only be obtainable if player is assigned to find them, must pass with
 	//Trufitus to drop trick, unless the player is on the legends quest (for snakes weed + ardrigal)
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (isObject(obj, QuestObjects.Snake_Jungle_Vine)) {
-			if (!atQuestStage(p, this, 1) && p.getQuestStage(Quests.LEGENDS_QUEST) == 0) {
-				p.message("Yep, it looks like a vine...");
-				return;
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (isObject(obj, QuestObjects.Snake_Jungle_Vine)) {
+						if (!atQuestStage(p, quest, 1) && p.getQuestStage(Quests.LEGENDS_QUEST) == 0) {
+							p.message("Yep, it looks like a vine...");
+							return null;
+						}
+						if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 1 && p.getQuestStage(Quests.LEGENDS_QUEST) <= 6) {
+							p.message("Yep, it looks like a vine...");
+							return null;
+						}
+						if (!hasItem(p, ItemId.UNIDENTIFIED_SNAKE_WEED.id())
+							&& !hasItem(p, ItemId.SNAKE_WEED.id()) && (p.getQuestStage(Quests.LEGENDS_QUEST) >= 6 ||
+							(!hasCacheKeySetTrue(p, "got_snake_weed") && atQuestStage(p, quest, 1)) )) {
+							message(p, "Small amounts of a herb are growing near this vine");
+							createGroundItem(ItemId.UNIDENTIFIED_SNAKE_WEED.id(), 1, obj.getX(), obj
+								.getY(), p);
+							if(atQuestStage(p, quest, 1)) {
+								p.getCache().store("got_snake_weed", true);
+							}
+						} else {
+							p.message("Yep, it looks like a vine...");
+						}
+					} else if (isObject(obj, QuestObjects.Ardrigal_Palm_Tree)) {
+						if (p.getQuestStage(quest) < 1 && p.getQuestStage(Quests.LEGENDS_QUEST) == 0) {
+							p.message("You find nothing of interest this time, sorry!");
+							return null;
+						}
+						if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 1 && p.getQuestStage(Quests.LEGENDS_QUEST) <= 6) {
+							p.message("You find nothing of interest this time, sorry!");
+							return null;
+						}
+						if (!hasItem(p, ItemId.UNIDENTIFIED_ARDRIGAL.id()) && !hasItem(p, ItemId.ARDRIGAL.id()) && (p.getQuestStage(Quests.LEGENDS_QUEST) >= 6 ||
+							(!hasCacheKeySetTrue(p, "got_ardigal") && atQuestStage(p, quest, 2)) )) {
+							message(p, "You find a herb plant growing at the base of the palm");
+							createGroundItem(ItemId.UNIDENTIFIED_ARDRIGAL.id(), 1, obj.getX(), obj.getY(), p);
+							if(atQuestStage(p, quest, 2)) {
+								p.getCache().store("got_ardigal", true);
+							}
+						} else {
+							p.message("You find nothing of interest this time, sorry!");
+						}
+					} else if (isObject(obj, QuestObjects.Sito_Scorched_Earth)) {
+						if (!hasItem(p, ItemId.UNIDENTIFIED_SITO_FOIL.id())
+							&& !hasItem(p, ItemId.SITO_FOIL.id())
+							&& !hasCacheKeySetTrue(p, "got_sito_foil")
+							&& atQuestStage(p, quest, 3)) {
+							message(p,
+								"A small herb plant is growing in the scorched soil.");
+							createGroundItem(ItemId.UNIDENTIFIED_SITO_FOIL.id(), 1, obj.getX(), obj
+								.getY(), p);
+							p.getCache().store("got_sito_foil", true);
+						} else {
+							p.message("You just find scorched earth.");
+						}
+					} else if (isObject(obj, QuestObjects.Volencia_Rocks)) {
+						if (!hasItem(p, ItemId.UNIDENTIFIED_VOLENCIA_MOSS.id())
+							&& !hasItem(p, ItemId.VOLENCIA_MOSS.id())
+							&& !hasCacheKeySetTrue(p, "got_volencia_moss")
+							&& atQuestStage(p, quest, 4)) {
+							message(p,
+								"Small amounts of herb moss are growing at the base of this rock");
+							createGroundItem(ItemId.UNIDENTIFIED_VOLENCIA_MOSS.id(), 1, obj.getX(), obj
+								.getY(), p);
+							p.getCache().store("got_volencia_moss", true);
+						} else {
+							p.message("You find nothing of interest.");
+						}
+					}
+
+					return null;
+				});
 			}
-			if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 1 && p.getQuestStage(Quests.LEGENDS_QUEST) <= 6) {
-				p.message("Yep, it looks like a vine...");
-				return;
-			}
-			if (!hasItem(p, ItemId.UNIDENTIFIED_SNAKE_WEED.id())
-				&& !hasItem(p, ItemId.SNAKE_WEED.id()) && (p.getQuestStage(Quests.LEGENDS_QUEST) >= 6 ||
-						(!hasCacheKeySetTrue(p, "got_snake_weed") && atQuestStage(p, this, 1)) )) {
-				message(p, "Small amounts of a herb are growing near this vine");
-				createGroundItem(ItemId.UNIDENTIFIED_SNAKE_WEED.id(), 1, obj.getX(), obj
-					.getY(), p);
-				if(atQuestStage(p, this, 1)) {
-					p.getCache().store("got_snake_weed", true);
-				}
-			} else {
-				p.message("Yep, it looks like a vine...");
-			}
-		} else if (isObject(obj, QuestObjects.Ardrigal_Palm_Tree)) {
-			if (p.getQuestStage(this) < 1 && p.getQuestStage(Quests.LEGENDS_QUEST) == 0) {
-				p.message("You find nothing of interest this time, sorry!");
-				return;
-			}
-			if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 1 && p.getQuestStage(Quests.LEGENDS_QUEST) <= 6) {
-				p.message("You find nothing of interest this time, sorry!");
-				return;
-			}
-			if (!hasItem(p, ItemId.UNIDENTIFIED_ARDRIGAL.id()) && !hasItem(p, ItemId.ARDRIGAL.id()) && (p.getQuestStage(Quests.LEGENDS_QUEST) >= 6 ||
-					(!hasCacheKeySetTrue(p, "got_ardigal") && atQuestStage(p, this, 2)) )) {
-				message(p, "You find a herb plant growing at the base of the palm");
-				createGroundItem(ItemId.UNIDENTIFIED_ARDRIGAL.id(), 1, obj.getX(), obj.getY(), p);
-				if(atQuestStage(p, this, 2)) {
-					p.getCache().store("got_ardigal", true);
-				}
-			} else {
-				p.message("You find nothing of interest this time, sorry!");
-			}
-		} else if (isObject(obj, QuestObjects.Sito_Scorched_Earth)) {
-			if (!hasItem(p, ItemId.UNIDENTIFIED_SITO_FOIL.id())
-				&& !hasItem(p, ItemId.SITO_FOIL.id()) 
-				&& !hasCacheKeySetTrue(p, "got_sito_foil")
-				&& atQuestStage(p, this, 3)) {
-				message(p,
-					"A small herb plant is growing in the scorched soil.");
-				createGroundItem(ItemId.UNIDENTIFIED_SITO_FOIL.id(), 1, obj.getX(), obj
-					.getY(), p);
-				p.getCache().store("got_sito_foil", true);
-			} else {
-				p.message("You just find scorched earth.");
-			}
-		} else if (isObject(obj, QuestObjects.Volencia_Rocks)) {
-			if (!hasItem(p, ItemId.UNIDENTIFIED_VOLENCIA_MOSS.id())
-				&& !hasItem(p, ItemId.VOLENCIA_MOSS.id()) 
-				&& !hasCacheKeySetTrue(p, "got_volencia_moss")
-				&& atQuestStage(p, this, 4)) {
-				message(p,
-					"Small amounts of herb moss are growing at the base of this rock");
-				createGroundItem(ItemId.UNIDENTIFIED_VOLENCIA_MOSS.id(), 1, obj.getX(), obj
-					.getY(), p);
-				p.getCache().store("got_volencia_moss", true);
-			} else {
-				p.message("You find nothing of interest.");
-			}
-		}
+		};
 	}
 
 	@Override
@@ -1056,20 +1074,29 @@ public class Jungle_Potion implements QuestInterface, ObjectActionListener,
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		if (isObject(obj, QuestObjects.Rogues_Purse_Wall)) {
-			if (!hasItem(p, ItemId.UNIDENTIFIED_ROGUES_PURSE.id())
-				&& !hasItem(p, ItemId.ROGUES_PURSE.id()) 
-				&& !hasCacheKeySetTrue(p, "got_rogues_purse")
-				&& atQuestStage(p, this, 5)) {
-				message(p,
-					"Small amounts of herb fungus are growing at the base of this cavern wall");
-				createGroundItem(ItemId.UNIDENTIFIED_ROGUES_PURSE.id(), 1, p.getX(),
-					p.getY(), p);
-				p.getCache().store("got_rogues_purse", true);
-			} else
-				p.message("You find nothing of interest.");
-		}
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (isObject(obj, QuestObjects.Rogues_Purse_Wall)) {
+						if (!hasItem(p, ItemId.UNIDENTIFIED_ROGUES_PURSE.id())
+							&& !hasItem(p, ItemId.ROGUES_PURSE.id())
+							&& !hasCacheKeySetTrue(p, "got_rogues_purse")
+							&& atQuestStage(p, quest, 5)) {
+							message(p,
+								"Small amounts of herb fungus are growing at the base of this cavern wall");
+							createGroundItem(ItemId.UNIDENTIFIED_ROGUES_PURSE.id(), 1, p.getX(),
+								p.getY(), p);
+							p.getCache().store("got_rogues_purse", true);
+						} else
+							p.message("You find nothing of interest.");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 	
 	private boolean hasCacheKeySetTrue(Player p, String key) {

@@ -1,15 +1,13 @@
 package com.openrsc.server.plugins.npcs.tutorial;
 
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
 
-import static com.openrsc.server.plugins.Functions.npcTalk;
-import static com.openrsc.server.plugins.Functions.playerTalk;
-import static com.openrsc.server.plugins.Functions.showMenu;
-
-import com.openrsc.server.constants.NpcId;
+import static com.openrsc.server.plugins.Functions.*;
 
 public class WildernessGuide implements TalkToNpcExecutiveListener, TalkToNpcListener {
 	/**
@@ -18,24 +16,32 @@ public class WildernessGuide implements TalkToNpcExecutiveListener, TalkToNpcLis
 	 */
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		npcTalk(p, n, "Hi are you someone who likes to fight other players?",
-			"Granted it has big risks",
-			"but it can be very rewarding too");
-		int menu = showMenu(p, n, "Yes I'm up for a bit of a fight", "I'd prefer to avoid that");
-		if (menu == 0) {
-			npcTalk(p, n, "Then the wilderness is the place for you",
-				"That is the area of the game where you can attack other players",
-				"Be careful though",
-				"Other players can be a lot more dangerous than monsters",
-				"they will be much more persistant in chasing after you",
-				"Especially when they hunt in groups");
-			optionsDialogue(p, n);
-		} else if (menu == 1) {
-			npcTalk(p, n, "Then don't stray into the wilderness",
-				"That is the area of the game where you can attack other players");
-			optionsDialogue(p, n);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Hi are you someone who likes to fight other players?",
+						"Granted it has big risks",
+						"but it can be very rewarding too");
+					int menu = showMenu(p, n, "Yes I'm up for a bit of a fight", "I'd prefer to avoid that");
+					if (menu == 0) {
+						npcTalk(p, n, "Then the wilderness is the place for you",
+							"That is the area of the game where you can attack other players",
+							"Be careful though",
+							"Other players can be a lot more dangerous than monsters",
+							"they will be much more persistant in chasing after you",
+							"Especially when they hunt in groups");
+						optionsDialogue(p, n);
+					} else if (menu == 1) {
+						npcTalk(p, n, "Then don't stray into the wilderness",
+							"That is the area of the game where you can attack other players");
+						optionsDialogue(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 	
 	private void optionsDialogue_where(Player p, Npc n) {

@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.quests.members.legendsquest.npcs;
 
 import com.openrsc.server.constants.*;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -764,13 +765,21 @@ public class LegendsQuestUngadulu implements TalkToNpcListener, TalkToNpcExecuti
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.UNGADULU.id()) {
-			ungaduluTalkToDialogue(p, n, -1);
-		}
-		else if (n.getID() == NpcId.EVIL_UNGADULU.id()) {
-			evilUngadulu(p, n);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.UNGADULU.id()) {
+						ungaduluTalkToDialogue(p, n, -1);
+					}
+					else if (n.getID() == NpcId.EVIL_UNGADULU.id()) {
+						evilUngadulu(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -779,27 +788,35 @@ public class LegendsQuestUngadulu implements TalkToNpcListener, TalkToNpcExecuti
 	}
 
 	@Override
-	public void onPlayerAttackNpc(Player p, Npc affectedmob) {
-		if (affectedmob.getID() == NpcId.UNGADULU.id()) {
-			p.message("You feel a strange force coming over you...");
-			p.message("You feel weakened....");
-			p.getSkills().setLevel(Skills.ATTACK, 0);
-			p.getSkills().setLevel(Skills.STRENGTH, 0);
-			if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 9 || p.getQuestStage(Quests.LEGENDS_QUEST) == -1) {
-				message(p, 1300, "The Shaman casts a debilitating spell on you..",
-					"You're sent reeling backwards through the flames..");
-				p.teleport(454, 3702);
-				p.damage(5);
-				npcTalk(p, affectedmob, "Think twice in future before attacking me..");
-				playerTalk(p, affectedmob, "Ughhh!");
-				return;
+	public GameStateEvent onPlayerAttackNpc(Player p, Npc affectedmob) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (affectedmob.getID() == NpcId.UNGADULU.id()) {
+						p.message("You feel a strange force coming over you...");
+						p.message("You feel weakened....");
+						p.getSkills().setLevel(Skills.ATTACK, 0);
+						p.getSkills().setLevel(Skills.STRENGTH, 0);
+						if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 9 || p.getQuestStage(Quests.LEGENDS_QUEST) == -1) {
+							message(p, 1300, "The Shaman casts a debilitating spell on you..",
+								"You're sent reeling backwards through the flames..");
+							p.teleport(454, 3702);
+							p.damage(5);
+							npcTalk(p, affectedmob, "Think twice in future before attacking me..");
+							playerTalk(p, affectedmob, "Ughhh!");
+							return null;
+						}
+						p.startCombat(affectedmob);
+					}
+					else if (affectedmob.getID() == NpcId.EVIL_UNGADULU.id()) {
+						p.message("A strange power stops you from attacking the Shaman.");
+						evilUngadulu(p, affectedmob);
+					}
+
+					return null;
+				});
 			}
-			p.startCombat(affectedmob);
-		}
-		else if (affectedmob.getID() == NpcId.EVIL_UNGADULU.id()) {
-			p.message("A strange power stops you from attacking the Shaman.");
-			evilUngadulu(p, affectedmob);
-		}
+		};
 	}
 	
 	@Override
@@ -808,27 +825,35 @@ public class LegendsQuestUngadulu implements TalkToNpcListener, TalkToNpcExecuti
 	}
 
 	@Override
-	public void onPlayerRangeNpc(Player p, Npc affectedmob) {
-		if (affectedmob.getID() == NpcId.UNGADULU.id()) {
-			p.message("You feel a strange force coming over you...");
-			p.message("You feel weakened....");
-			p.getSkills().setLevel(Skills.ATTACK, 0);
-			p.getSkills().setLevel(Skills.STRENGTH, 0);
-			if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 9 || p.getQuestStage(Quests.LEGENDS_QUEST) == -1) {
-				message(p, 1300, "The Shaman casts a debilitating spell on you..",
-					"You're sent reeling backwards through the flames..");
-				p.teleport(454, 3702);
-				p.damage(5);
-				npcTalk(p, affectedmob, "Think twice in future before attacking me..");
-				playerTalk(p, affectedmob, "Ughhh!");
-				return;
+	public GameStateEvent onPlayerRangeNpc(Player p, Npc affectedmob) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (affectedmob.getID() == NpcId.UNGADULU.id()) {
+						p.message("You feel a strange force coming over you...");
+						p.message("You feel weakened....");
+						p.getSkills().setLevel(Skills.ATTACK, 0);
+						p.getSkills().setLevel(Skills.STRENGTH, 0);
+						if (p.getQuestStage(Quests.LEGENDS_QUEST) >= 9 || p.getQuestStage(Quests.LEGENDS_QUEST) == -1) {
+							message(p, 1300, "The Shaman casts a debilitating spell on you..",
+								"You're sent reeling backwards through the flames..");
+							p.teleport(454, 3702);
+							p.damage(5);
+							npcTalk(p, affectedmob, "Think twice in future before attacking me..");
+							playerTalk(p, affectedmob, "Ughhh!");
+							return null;
+						}
+						p.startCombat(affectedmob);
+					}
+					else if (affectedmob.getID() == NpcId.EVIL_UNGADULU.id()) {
+						p.message("A strange power stops you from attacking the Shaman.");
+						evilUngadulu(p, affectedmob);
+					}
+
+					return null;
+				});
 			}
-			p.startCombat(affectedmob);
-		}
-		else if (affectedmob.getID() == NpcId.EVIL_UNGADULU.id()) {
-			p.message("A strange power stops you from attacking the Shaman.");
-			evilUngadulu(p, affectedmob);
-		}
+		};
 	}
 
 	@Override
@@ -837,20 +862,28 @@ public class LegendsQuestUngadulu implements TalkToNpcListener, TalkToNpcExecuti
 	}
 
 	@Override
-	public void onPlayerMageNpc(Player p, Npc affectedmob) {
-		if (affectedmob.getID() == NpcId.UNGADULU.id()) {
-			p.message("You feel a strange force coming over you...");
-			p.message("You feel weakened....");
-			p.getSkills().setLevel(Skills.ATTACK, 0);
-			p.getSkills().setLevel(Skills.STRENGTH, 0);
-			p.message("The spell fizzles and dies...");
-			p.message("Some sort of magical effect seems to be protecting the Shaman.");
-			return;
-		}
-		else if (affectedmob.getID() == NpcId.EVIL_UNGADULU.id()) {
-			p.message("A strange power stops you from attacking the Shaman.");
-			evilUngadulu(p, affectedmob);
-		}
+	public GameStateEvent onPlayerMageNpc(Player p, Npc affectedmob) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (affectedmob.getID() == NpcId.UNGADULU.id()) {
+						p.message("You feel a strange force coming over you...");
+						p.message("You feel weakened....");
+						p.getSkills().setLevel(Skills.ATTACK, 0);
+						p.getSkills().setLevel(Skills.STRENGTH, 0);
+						p.message("The spell fizzles and dies...");
+						p.message("Some sort of magical effect seems to be protecting the Shaman.");
+						return null;
+					}
+					else if (affectedmob.getID() == NpcId.EVIL_UNGADULU.id()) {
+						p.message("A strange power stops you from attacking the Shaman.");
+						evilUngadulu(p, affectedmob);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -859,17 +892,25 @@ public class LegendsQuestUngadulu implements TalkToNpcListener, TalkToNpcExecuti
 	}
 
 	@Override
-	public void onPlayerNpcRun(Player p, Npc n) {
-		if (n.getID() == NpcId.UNGADULU.id()) {
-			n.resetCombatEvent();
-			npcWalkFromPlayer(p, n);
-			sleep(650);
-			npcTalk(p, n, "Run then....run away....",
-				"Save yourself....");
-			p.getSkills().setLevel(Skills.ATTACK, (p.getSkills().getMaxStat(Skills.ATTACK) - 19) + p.getSkills().getLevel(Skills.ATTACK));
-			p.getSkills().setLevel(Skills.STRENGTH, (p.getSkills().getMaxStat(Skills.STRENGTH) - 19) + p.getSkills().getLevel(Skills.STRENGTH));
-			p.message("Strangely, you start to feel better.");
-		}
+	public GameStateEvent onPlayerNpcRun(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.UNGADULU.id()) {
+						n.resetCombatEvent();
+						npcWalkFromPlayer(p, n);
+						sleep(650);
+						npcTalk(p, n, "Run then....run away....",
+							"Save yourself....");
+						p.getSkills().setLevel(Skills.ATTACK, (p.getSkills().getMaxStat(Skills.ATTACK) - 19) + p.getSkills().getLevel(Skills.ATTACK));
+						p.getSkills().setLevel(Skills.STRENGTH, (p.getSkills().getMaxStat(Skills.STRENGTH) - 19) + p.getSkills().getLevel(Skills.STRENGTH));
+						p.message("Strangely, you start to feel better.");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -879,99 +920,107 @@ public class LegendsQuestUngadulu implements TalkToNpcListener, TalkToNpcExecuti
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player p, Npc npc, Item item) {
-		if (npc.getID() == NpcId.UNGADULU.id() && item.getID() == ItemId.DARK_DAGGER.id()) { // NOT KILLED VIEYLDY - dark dagger
-			message(p, npc, 1300, "You hand the dagger over to the Shaman.",
-				"The Shaman's face turns pale...");
-			if (p.getCache().hasKey("killed_viyeldi")) {
-				npcTalk(p, npc, "Oh dear Bwana, I sense something terrible has happened.",
-					"This dagger is a portent of some evil action...",
-					"Please, reveal to me anything that you have done",
-					"so that I might understand this better.");
-				int killed = showMenu(p, npc,
-					"I've killed Viyeldi.",
-					"Er, I can't think of anything.");
-				if (killed == 0) {
-					npcTalk(p, npc, "Poor Viyeldi',",
-						"He was the guardian of the dead hero's that protected the source.",
-						"Their tormented spirits will now be at the beck and",
-						"call of the one who gave you the dagger.");
-					if (hasItem(p, ItemId.HOLY_FORCE_SPELL.id())) {
-						npcTalk(p, npc, "Take the Holy Force spell I gave you and pray that you",
-							"can defeat this spirit before it's too late.");
-					} else {
+	public GameStateEvent onInvUseOnNpc(Player p, Npc npc, Item item) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (npc.getID() == NpcId.UNGADULU.id() && item.getID() == ItemId.DARK_DAGGER.id()) { // NOT KILLED VIEYLDY - dark dagger
+						message(p, npc, 1300, "You hand the dagger over to the Shaman.",
+							"The Shaman's face turns pale...");
+						if (p.getCache().hasKey("killed_viyeldi")) {
+							npcTalk(p, npc, "Oh dear Bwana, I sense something terrible has happened.",
+								"This dagger is a portent of some evil action...",
+								"Please, reveal to me anything that you have done",
+								"so that I might understand this better.");
+							int killed = showMenu(p, npc,
+								"I've killed Viyeldi.",
+								"Er, I can't think of anything.");
+							if (killed == 0) {
+								npcTalk(p, npc, "Poor Viyeldi',",
+									"He was the guardian of the dead hero's that protected the source.",
+									"Their tormented spirits will now be at the beck and",
+									"call of the one who gave you the dagger.");
+								if (hasItem(p, ItemId.HOLY_FORCE_SPELL.id())) {
+									npcTalk(p, npc, "Take the Holy Force spell I gave you and pray that you",
+										"can defeat this spirit before it's too late.");
+								} else {
+									addItem(p, ItemId.HOLY_FORCE_SPELL.id(), 1);
+									message(p, npc, 1300, "The wizened old Shaman hands over a piece of paper.");
+									npcTalk(p, npc, "Take this spell and pray that you can defeat",
+										"this evil spirit before it's too late.",
+										"The spell will force the spirit to reveal its true self.",
+										"And it will also be vulerable to normal attacks.");
+								}
+							} else if (killed == 1) {
+								npcTalk(p, npc, "Well, that is strange...",
+									"I sense a growing evil power since you visited the caves.");
+								p.message("The Wizened old Shaman mutters to himself and wanders off.");
+							}
+							return null;
+						}
+						npcTalk(p, npc, "This dagger has been made for one purpose only...",
+							"Praise the gods that you brought it to me.",
+							"I can make you a spell with this item which will force the spirit",
+							"to reveal its true self.",
+							"Once activated, you will be able to attack it like",
+							"a normal creature.");
+						removeItem(p, item.getID(), 1);
 						addItem(p, ItemId.HOLY_FORCE_SPELL.id(), 1);
-						message(p, npc, 1300, "The wizened old Shaman hands over a piece of paper.");
-						npcTalk(p, npc, "Take this spell and pray that you can defeat",
-							"this evil spirit before it's too late.",
-							"The spell will force the spirit to reveal its true self.",
+						message(p, npc, 1300, "The Shaman takes the dagger and gives you a folded piece of paper.");
+						npcTalk(p, npc, "Use this spell on the Spirit.",
+							"It will force the spirit to show it's true self.",
 							"And it will also be vulerable to normal attacks.");
 					}
-				} else if (killed == 1) {
-					npcTalk(p, npc, "Well, that is strange...",
-						"I sense a growing evil power since you visited the caves.");
-					p.message("The Wizened old Shaman mutters to himself and wanders off.");
-				}
-				return;
-			}
-			npcTalk(p, npc, "This dagger has been made for one purpose only...",
-				"Praise the gods that you brought it to me.",
-				"I can make you a spell with this item which will force the spirit",
-				"to reveal its true self.",
-				"Once activated, you will be able to attack it like",
-				"a normal creature.");
-			removeItem(p, item.getID(), 1);
-			addItem(p, ItemId.HOLY_FORCE_SPELL.id(), 1);
-			message(p, npc, 1300, "The Shaman takes the dagger and gives you a folded piece of paper.");
-			npcTalk(p, npc, "Use this spell on the Spirit.",
-				"It will force the spirit to show it's true self.",
-				"And it will also be vulerable to normal attacks.");
-		}
-		else if (npc.getID() == NpcId.UNGADULU.id() && item.getID() == ItemId.GLOWING_DARK_DAGGER.id()) { // KILLED VIYELDI - glowing dark dagger
-			message(p, npc, 1300, "You hand the dagger over to the Shaman.",
-				"The Shaman's face turns pale...");
-			npcTalk(p, npc, "Oh dear Bwana.",
-				"Poor Viyeldi's spirit is trapped inside this weapon.",
-				"No doubt the evil spirit that told you to kill Viyeldi,",
-				"is planning to use it for some vile purpose.",
-				"I will try to release Viyeldi's spirit from the dagger.",
-				"Here, you take this spell...");
-			removeItem(p, item.getID(), 1);
-			addItem(p, ItemId.HOLY_FORCE_SPELL.id(), 1);
-			message(p, npc, 1300, "The Shaman takes the dagger and gives you a folded piece of paper.");
-			npcTalk(p, npc, "Use this spell on the Spirit.",
-				"It will force the spirit to show it's true self.",
-				"And it will also be vulerable to normal attacks.");
-		}
-		else if (npc.getID() == NpcId.UNGADULU.id() && item.getID() == ItemId.BOOKING_OF_BINDING.id()) {
-			if (p.getQuestStage(Quests.LEGENDS_QUEST) == 3) {
-				message(p, npc, 1900, "You open the book of binding in front of Ungadulu.",
-					"A blinding light fills the room...",
-					"A supernatural light falls on Ungadulu...",
-					"And a mighty demon forms in front of you...");
-				Npc nez = spawnNpc(NpcId.NEZIKCHENED.id(), npc.getX(), npc.getY(), 60000 * 15, p);
-				if (nez != null) {
-					npcTalk(p, nez, "Curse you foul intruder...your faith will help you little here.");
-					nez.startCombat(p);
-					p.getSkills().setLevel(Skills.PRAYER, (int) Math.ceil((double) p.getSkills().getLevel(Skills.PRAYER) / 4));
-					message(p, 1300, "A sense of hopelessness fills your body...");
-					npcTalk(p, nez, "'Ere near to death ye comes now that ye has meddled in my dealings..");
-					if (p.getCache().hasKey("holy_water_neiz")) {
-						p.message("The holy water starts smoking on the Demons skin...");
-						npcTalk(p, nez, "Ahhhrhhhhhghhhh...it burns.....");
-						// silverlight effect may also be present
-						for (int i = 0; i < 3; i++) {
-							int currentStat = npc.getSkills().getLevel(i);
-							int newStat = currentStat - (int) (currentStat * 0.15);
-							npc.getSkills().setLevel(i, newStat);
+					else if (npc.getID() == NpcId.UNGADULU.id() && item.getID() == ItemId.GLOWING_DARK_DAGGER.id()) { // KILLED VIYELDI - glowing dark dagger
+						message(p, npc, 1300, "You hand the dagger over to the Shaman.",
+							"The Shaman's face turns pale...");
+						npcTalk(p, npc, "Oh dear Bwana.",
+							"Poor Viyeldi's spirit is trapped inside this weapon.",
+							"No doubt the evil spirit that told you to kill Viyeldi,",
+							"is planning to use it for some vile purpose.",
+							"I will try to release Viyeldi's spirit from the dagger.",
+							"Here, you take this spell...");
+						removeItem(p, item.getID(), 1);
+						addItem(p, ItemId.HOLY_FORCE_SPELL.id(), 1);
+						message(p, npc, 1300, "The Shaman takes the dagger and gives you a folded piece of paper.");
+						npcTalk(p, npc, "Use this spell on the Spirit.",
+							"It will force the spirit to show it's true self.",
+							"And it will also be vulerable to normal attacks.");
+					}
+					else if (npc.getID() == NpcId.UNGADULU.id() && item.getID() == ItemId.BOOKING_OF_BINDING.id()) {
+						if (p.getQuestStage(Quests.LEGENDS_QUEST) == 3) {
+							message(p, npc, 1900, "You open the book of binding in front of Ungadulu.",
+								"A blinding light fills the room...",
+								"A supernatural light falls on Ungadulu...",
+								"And a mighty demon forms in front of you...");
+							Npc nez = spawnNpc(NpcId.NEZIKCHENED.id(), npc.getX(), npc.getY(), 60000 * 15, p);
+							if (nez != null) {
+								npcTalk(p, nez, "Curse you foul intruder...your faith will help you little here.");
+								nez.startCombat(p);
+								p.getSkills().setLevel(Skills.PRAYER, (int) Math.ceil((double) p.getSkills().getLevel(Skills.PRAYER) / 4));
+								message(p, 1300, "A sense of hopelessness fills your body...");
+								npcTalk(p, nez, "'Ere near to death ye comes now that ye has meddled in my dealings..");
+								if (p.getCache().hasKey("holy_water_neiz")) {
+									p.message("The holy water starts smoking on the Demons skin...");
+									npcTalk(p, nez, "Ahhhrhhhhhghhhh...it burns.....");
+									// silverlight effect may also be present
+									for (int i = 0; i < 3; i++) {
+										int currentStat = npc.getSkills().getLevel(i);
+										int newStat = currentStat - (int) (currentStat * 0.15);
+										npc.getSkills().setLevel(i, newStat);
+									}
+								}
+							}
+						} else {
+							npcTalk(p, npc, "Ha, ha ha! There's no need to use that on me any more...",
+								"I'm cured now, remember...");
 						}
 					}
-				}
-			} else {
-				npcTalk(p, npc, "Ha, ha ha! There's no need to use that on me any more...",
-					"I'm cured now, remember...");
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	class Ungadulu {

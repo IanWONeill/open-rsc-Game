@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.SingleEvent;
 import com.openrsc.server.event.custom.BatchEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.ItemCraftingDef;
 import com.openrsc.server.external.ItemGemDef;
 import com.openrsc.server.model.container.Item;
@@ -46,49 +47,66 @@ public class Crafting implements InvUseOnItemListener,
 	};
 	
 	@Override
-	public void onInvUseOnItem(Player player, Item item1, Item item2) {
-		if (item1.getID() == ItemId.CHISEL.id()) {
-			doCutGem(player, item1, item2);
-		} else if (item2.getID() == ItemId.CHISEL.id()) {
-			doCutGem(player, item2, item1);
-		} else if (item1.getID() == ItemId.GLASSBLOWING_PIPE.id()) {
-			doGlassBlowing(player, item1, item2);
-		} else if (item2.getID() == ItemId.GLASSBLOWING_PIPE.id()) {
-			doGlassBlowing(player, item2, item1);
-		} else if (item1.getID() == ItemId.NEEDLE.id()) {
-			makeLeather(player, item1, item2);
-		} else if (item2.getID() == ItemId.NEEDLE.id()) {
-			makeLeather(player, item2, item1);
-		} else if (item1.getID() == ItemId.BALL_OF_WOOL.id()) {
-			useWool(player, item1, item2);
-		} else if (item2.getID() == ItemId.BALL_OF_WOOL.id()) {
-			useWool(player, item2, item1);
-		} else if ((item1.getID() == ItemId.BUCKET_OF_WATER.id() || item1.getID() == ItemId.JUG_OF_WATER.id() || item1.getID() == ItemId.BOWL_OF_WATER.id()) && useWater(player, item1, item2)) {
-			return;
-		} else if ((item2.getID() == ItemId.BUCKET_OF_WATER.id() || item2.getID() == ItemId.JUG_OF_WATER.id() || item2.getID() == ItemId.BOWL_OF_WATER.id()) && useWater(player, item2, item1)) {
-			return;
-		} else if (item1.getID() == ItemId.MOLTEN_GLASS.id() && item2.getID() == ItemId.LENS_MOULD.id() || item1.getID() == ItemId.LENS_MOULD.id() && item2.getID() == ItemId.MOLTEN_GLASS.id()) {
-			if (getCurrentLevel(player, Skills.CRAFTING) < 10) {
-				player.message("You need a crafting level of 10 to make the lens");
-				return;
+	public GameStateEvent onInvUseOnItem(Player player, Item item1, Item item2) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item1.getID() == ItemId.CHISEL.id()) {
+						doCutGem(player, item1, item2);
+					} else if (item2.getID() == ItemId.CHISEL.id()) {
+						doCutGem(player, item2, item1);
+					} else if (item1.getID() == ItemId.GLASSBLOWING_PIPE.id()) {
+						doGlassBlowing(player, item1, item2);
+					} else if (item2.getID() == ItemId.GLASSBLOWING_PIPE.id()) {
+						doGlassBlowing(player, item2, item1);
+					} else if (item1.getID() == ItemId.NEEDLE.id()) {
+						makeLeather(player, item1, item2);
+					} else if (item2.getID() == ItemId.NEEDLE.id()) {
+						makeLeather(player, item2, item1);
+					} else if (item1.getID() == ItemId.BALL_OF_WOOL.id()) {
+						useWool(player, item1, item2);
+					} else if (item2.getID() == ItemId.BALL_OF_WOOL.id()) {
+						useWool(player, item2, item1);
+					} else if ((item1.getID() == ItemId.BUCKET_OF_WATER.id() || item1.getID() == ItemId.JUG_OF_WATER.id() || item1.getID() == ItemId.BOWL_OF_WATER.id()) && useWater(player, item1, item2)) {
+						return null;
+					} else if ((item2.getID() == ItemId.BUCKET_OF_WATER.id() || item2.getID() == ItemId.JUG_OF_WATER.id() || item2.getID() == ItemId.BOWL_OF_WATER.id()) && useWater(player, item2, item1)) {
+						return null;
+					} else if (item1.getID() == ItemId.MOLTEN_GLASS.id() && item2.getID() == ItemId.LENS_MOULD.id() || item1.getID() == ItemId.LENS_MOULD.id() && item2.getID() == ItemId.MOLTEN_GLASS.id()) {
+						if (getCurrentLevel(player, Skills.CRAFTING) < 10) {
+							player.message("You need a crafting level of 10 to make the lens");
+							return null;
+						}
+						if (player.getInventory().remove(new Item(ItemId.MOLTEN_GLASS.id())) > -1) {
+							player.message("You pour the molten glass into the mould");
+							player.message("And clasp it together");
+							player.message("It produces a small convex glass disc");
+							player.getInventory().add(new Item(ItemId.LENS.id()));
+						}
+						return null;
+					}
+					player.message("Nothing interesting happens");
+
+					return null;
+				});
 			}
-			if (player.getInventory().remove(new Item(ItemId.MOLTEN_GLASS.id())) > -1) {
-				player.message("You pour the molten glass into the mould");
-				player.message("And clasp it together");
-				player.message("It produces a small convex glass disc");
-				player.getInventory().add(new Item(ItemId.LENS.id()));
-			}
-			return;
-		}
-		player.message("Nothing interesting happens");
+		};
 	}
 	
 	@Override
-	public void onInvUseOnObject(GameObject obj, final Item item, final Player player) {
+	public GameStateEvent onInvUseOnObject(GameObject obj, final Item item, final Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (!craftingChecks(obj, item, player)) {
+						return null;
+					}
 
-		if (!craftingChecks(obj, item, player)) return;
+					beginCrafting(item, player);
 
-		beginCrafting(item, player);
+					return null;
+				});
+			}
+		};
 	}
 	
 	private boolean craftingChecks(final GameObject obj, final Item item, final Player player) {

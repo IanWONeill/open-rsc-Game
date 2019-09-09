@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.misc;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
@@ -17,18 +18,26 @@ public class CoalTrucks implements ObjectActionExecutiveListener, ObjectActionLi
 	private static int COAL_TRUCK = 383;
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == COAL_TRUCK) {
-			if (p.getCache().hasKey("coal_truck") && p.getCache().getInt("coal_truck") > 0) {
-				p.setBusyTimer(1);
-				int coalLeft = p.getCache().getInt("coal_truck");
-				p.playerServerMessage(MessageType.QUEST, "You remove a piece of coal from the truck");
-				addItem(p, ItemId.COAL.id(), 1);
-				p.getCache().set("coal_truck", coalLeft - 1);
-			} else {
-				p.playerServerMessage(MessageType.QUEST, "there is no coal left in the truck\"");
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == COAL_TRUCK) {
+						if (p.getCache().hasKey("coal_truck") && p.getCache().getInt("coal_truck") > 0) {
+							p.setBusyTimer(1);
+							int coalLeft = p.getCache().getInt("coal_truck");
+							p.playerServerMessage(MessageType.QUEST, "You remove a piece of coal from the truck");
+							addItem(p, ItemId.COAL.id(), 1);
+							p.getCache().set("coal_truck", coalLeft - 1);
+						} else {
+							p.playerServerMessage(MessageType.QUEST, "there is no coal left in the truck\"");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -42,26 +51,34 @@ public class CoalTrucks implements ObjectActionExecutiveListener, ObjectActionLi
 	}
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		if (obj.getID() == COAL_TRUCK && item.getID() == ItemId.COAL.id()) {
-			p.setBusy(true);
-			int coalAmount = p.getInventory().countId(ItemId.COAL.id());
-			for (int i = 0; i < coalAmount; i++) {
-				if (p.getCache().hasKey("coal_truck")) {
-					if (p.getCache().getInt("coal_truck") >= 120) {
-						p.message("The coal truck is full");
-						break;
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == COAL_TRUCK && item.getID() == ItemId.COAL.id()) {
+						p.setBusy(true);
+						int coalAmount = p.getInventory().countId(ItemId.COAL.id());
+						for (int i = 0; i < coalAmount; i++) {
+							if (p.getCache().hasKey("coal_truck")) {
+								if (p.getCache().getInt("coal_truck") >= 120) {
+									p.message("The coal truck is full");
+									break;
+								}
+								int coalDeposited = p.getCache().getInt("coal_truck");
+								p.getCache().set("coal_truck", coalDeposited + 1);
+							} else {
+								p.getCache().set("coal_truck", coalAmount);
+							}
+							p.playerServerMessage(MessageType.QUEST, "You put a piece of coal in the truck");
+							removeItem(p, ItemId.COAL.id(), 1);
+							sleep(50);
+						}
+						p.setBusy(false);
 					}
-					int coalDeposited = p.getCache().getInt("coal_truck");
-					p.getCache().set("coal_truck", coalDeposited + 1);
-				} else {
-					p.getCache().set("coal_truck", coalAmount);
-				}
-				p.playerServerMessage(MessageType.QUEST, "You put a piece of coal in the truck");
-				removeItem(p, ItemId.COAL.id(), 1);
-				sleep(50);
+
+					return null;
+				});
 			}
-			p.setBusy(false);
-		}
+		};
 	}
 }

@@ -1,9 +1,12 @@
 package com.openrsc.server.event.rsc;
 
+import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.world.World;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class GameNotifyEvent {
+public abstract class GameNotifyEvent extends GameTickEvent {
 
 	private GameStateEvent parentEvent;
 	private final Map<String, Object> inObjects = new ConcurrentHashMap<>();
@@ -12,8 +15,9 @@ public class GameNotifyEvent {
 	private int returnDelay;
 	private boolean triggered = false;
 
-	public void poll() {}
-
+	public GameNotifyEvent(World world, Mob owner, int ticks, String descriptor) {
+		super(world, owner, ticks, descriptor);
+	}
 
 	public void setParentEvent(GameStateEvent event) {
 		this.parentEvent = event;

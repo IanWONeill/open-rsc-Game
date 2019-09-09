@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.npcs;
 
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.CerterDef;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -20,20 +21,27 @@ public class Certer implements TalkToNpcListener, TalkToNpcExecutiveListener {
 	//sidney smith is in its own file
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					// Forester (Log certer; custom)
+					if ((n.getID() == NpcId.FORESTER.id())
+						&& !p.getWorld().getServer().getConfig().WANT_WOODCUTTING_GUILD) {
+						return null;
+					}
 
-		// Forester (Log certer; custom)
-		if ((n.getID() == NpcId.FORESTER.id())
-			&& !p.getWorld().getServer().getConfig().WANT_WOODCUTTING_GUILD) {
-			return;
-		}
+					final CerterDef certerDef = p.getWorld().getServer().getEntityHandler().getCerterDef(n.getID());
+					if (certerDef == null) {
+						return null;
+					}
 
-		final CerterDef certerDef = p.getWorld().getServer().getEntityHandler().getCerterDef(n.getID());
-		if (certerDef == null) {
-			return;
-		}
-		
-		beginCertExchange(certerDef, p, n);
+					beginCertExchange(certerDef, p, n);
+
+					return null;
+				});
+			}
+		};
 	}
 	
 	private void beginCertExchange(CerterDef certerDef, Player p, Npc n) {

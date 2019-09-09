@@ -1,5 +1,8 @@
 package com.openrsc.server.plugins.npcs.shilo;
 
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -10,18 +13,23 @@ import com.openrsc.server.plugins.listeners.executive.WallObjectActionExecutiveL
 
 import static com.openrsc.server.plugins.Functions.*;
 
-import com.openrsc.server.constants.ItemId;
-import com.openrsc.server.constants.NpcId;
-
 public class Yohnus implements TalkToNpcExecutiveListener, TalkToNpcListener, WallObjectActionListener, WallObjectActionExecutiveListener {
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.YOHNUS.id()) {
-			playerTalk(p, n, "Hello");
-			npcTalk(p, n, "Hello Bwana, can I help you in anyway?");
-			yohnusChat(p, n);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.YOHNUS.id()) {
+						playerTalk(p, n, "Hello");
+						npcTalk(p, n, "Hello Bwana, can I help you in anyway?");
+						yohnusChat(p, n);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void yohnusChat(Player p, Npc n) {
@@ -55,19 +63,27 @@ public class Yohnus implements TalkToNpcExecutiveListener, TalkToNpcListener, Wa
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		if (obj.getID() == 165) {
-			if (p.getY() <= 844) {
-				p.teleport(400, 845);
-				return;
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 165) {
+						if (p.getY() <= 844) {
+							p.teleport(400, 845);
+							return null;
+						}
+						Npc yohnus = getNearestNpc(p, NpcId.YOHNUS.id(), 5);
+						if (yohnus != null) {
+							npcTalk(p, yohnus, "Sorry but the blacksmiths is closed.",
+								"But I can let you use the furnace at the cost",
+								"of 20 gold pieces.");
+							yohnusChat(p, yohnus);
+						}
+					}
+
+					return null;
+				});
 			}
-			Npc yohnus = getNearestNpc(p, NpcId.YOHNUS.id(), 5);
-			if (yohnus != null) {
-				npcTalk(p, yohnus, "Sorry but the blacksmiths is closed.",
-					"But I can let you use the furnace at the cost",
-					"of 20 gold pieces.");
-				yohnusChat(p, yohnus);
-			}
-		}
+		};
 	}
 }

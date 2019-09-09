@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.ardougne.east;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -21,30 +22,38 @@ public class FurMerchant implements ShopInterface, TalkToNpcExecutiveListener, T
 	private final Shop shop = new Shop(false, 15000, 120, 95, 2, new Item(ItemId.FUR.id(), 3), new Item(ItemId.GREY_WOLF_FUR.id(), 3));
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (p.getCache().hasKey("furStolen") && (Instant.now().getEpochSecond() < p.getCache().getLong("furStolen") + 1200)) {
-			npcTalk(p, n, "Do you really think I'm going to buy something",
-				"That you have just stolen from me",
-				"guards guards");
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (p.getCache().hasKey("furStolen") && (Instant.now().getEpochSecond() < p.getCache().getLong("furStolen") + 1200)) {
+						npcTalk(p, n, "Do you really think I'm going to buy something",
+							"That you have just stolen from me",
+							"guards guards");
 
-			Npc attacker = getNearestNpc(p, NpcId.KNIGHT.id(), 5); // Knight first
-			if (attacker == null)
-				attacker = getNearestNpc(p, NpcId.GUARD_ARDOUGNE.id(), 5); // Guard second
+						Npc attacker = getNearestNpc(p, NpcId.KNIGHT.id(), 5); // Knight first
+						if (attacker == null)
+							attacker = getNearestNpc(p, NpcId.GUARD_ARDOUGNE.id(), 5); // Guard second
 
-			if (attacker != null)
-				attacker.setChasing(p);
+						if (attacker != null)
+							attacker.setChasing(p);
 
-		} else {
-			npcTalk(p, n, "would you like to do some fur trading?");
-			int menu = showMenu(p, n, false, "yes please", "No thank you");
-			if (menu == 0) {
-				playerTalk(p, n, "Yes please");
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-			} else if (menu == 1) {
-				playerTalk(p, n, "No thank you");
+					} else {
+						npcTalk(p, n, "would you like to do some fur trading?");
+						int menu = showMenu(p, n, false, "yes please", "No thank you");
+						if (menu == 0) {
+							playerTalk(p, n, "Yes please");
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+						} else if (menu == 1) {
+							playerTalk(p, n, "No thank you");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	// WHEN STEALING AND CAUGHT BY A MERCHANT ("Hey thats mine");

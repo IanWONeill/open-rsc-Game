@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.quests.members;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -373,16 +374,24 @@ public class ScorpionCatcher implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.SEER.id()) {
-			seerDialogue(p, n, -1);
-		}
-		else if (n.getID() == NpcId.VELRAK_THE_EXPLORER.id()) {
-			velrakDialogue(p, n, -1);
-		}
-		else if (n.getID() == NpcId.THORMAC_THE_SORCEROR.id()) {
-			thormacDialogue(p, n, -1);
-		}
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.SEER.id()) {
+						seerDialogue(p, n, -1);
+					}
+					else if (n.getID() == NpcId.VELRAK_THE_EXPLORER.id()) {
+						velrakDialogue(p, n, -1);
+					}
+					else if (n.getID() == NpcId.THORMAC_THE_SORCEROR.id()) {
+						thormacDialogue(p, n, -1);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -410,104 +419,112 @@ public class ScorpionCatcher implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnNpc(Player p, Npc n, Item i) {
+	public GameStateEvent onInvUseOnNpc(Player p, Npc n, Item i) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (p.getQuestStage(quest) == 2) {
 
-		if (p.getQuestStage(this) == 2) {
+						List<Integer> cages = new ArrayList<Integer>(Arrays.asList(
+							ItemId.SCORPION_CAGE_NONE.id(), ItemId.SCORPION_CAGE_ONE.id(), ItemId.SCORPION_CAGE_TWO.id(), ItemId.SCORPION_CAGE_THREE.id(),
+							ItemId.SCORPION_CAGE_ONE_TWO.id(), ItemId.SCORPION_CAGE_ONE_THREE.id(), ItemId.SCORPION_CAGE_TWO_THREE.id()
+						));
 
-			List<Integer> cages = new ArrayList<Integer>(Arrays.asList(
-				ItemId.SCORPION_CAGE_NONE.id(), ItemId.SCORPION_CAGE_ONE.id(), ItemId.SCORPION_CAGE_TWO.id(), ItemId.SCORPION_CAGE_THREE.id(),
-				ItemId.SCORPION_CAGE_ONE_TWO.id(), ItemId.SCORPION_CAGE_ONE_THREE.id(), ItemId.SCORPION_CAGE_TWO_THREE.id()
-			));
+						int itemId = i.getID();
 
-			int itemId = i.getID();
+						if (!cages.contains(itemId)) {
+							p.message("Nothing interesting happens");
+							return null;
+						}
 
-			if (!cages.contains(itemId)) {
-				p.message("Nothing interesting happens");
-				return;
+						int toRemove = ItemId.NOTHING.id();
+						int toAdd = ItemId.NOTHING.id();
+
+						// Taverly scorpion
+						if (n.getID() == NpcId.KHARID_SCORPION_TAVERLEY.id()) {
+							switch (ItemId.getById(itemId)) {
+								case SCORPION_CAGE_NONE:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_ONE.id();
+									break;
+								case SCORPION_CAGE_TWO:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_ONE_TWO.id();
+									break;
+								case SCORPION_CAGE_THREE:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_ONE_THREE.id();
+									break;
+								case SCORPION_CAGE_TWO_THREE:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_ONE_TWO_THREE.id();
+									break;
+								default:
+									break;
+							}
+						}
+
+						// Barbarian scorpion
+						else if (n.getID() == NpcId.KHARID_SCORPION_BARBARIAN.id()) {
+							switch (ItemId.getById(itemId)) {
+								case SCORPION_CAGE_NONE:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_TWO.id();
+									break;
+								case SCORPION_CAGE_ONE:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_ONE_TWO.id();
+									break;
+								case SCORPION_CAGE_THREE:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_TWO_THREE.id();
+									break;
+								case SCORPION_CAGE_ONE_THREE:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_ONE_TWO_THREE.id();
+									break;
+								default:
+									break;
+							}
+						}
+
+						// Monastery scorpion
+						else if (n.getID() == NpcId.KHARID_SCORPION_MONASTERY.id()) {
+							switch (ItemId.getById(itemId)) {
+								case SCORPION_CAGE_NONE:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_THREE.id();
+									break;
+								case SCORPION_CAGE_ONE:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_ONE_THREE.id();
+									break;
+								case SCORPION_CAGE_TWO:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_TWO_THREE.id();
+									break;
+								case SCORPION_CAGE_ONE_TWO:
+									toRemove = itemId;
+									toAdd = ItemId.SCORPION_CAGE_ONE_TWO_THREE.id();
+									break;
+								default:
+									break;
+							}
+						}
+
+						p.message("You catch a scorpion");
+
+						if (toRemove > -1) removeItem(p, toRemove, 1);
+						if (toAdd > -1) addItem(p, toAdd, 1);
+						temporaryRemoveNpc(n);
+					} else
+						p.message("Talk to Seer before you attempt catching this scorpion");
+
+					return null;
+				});
 			}
-
-			int toRemove = ItemId.NOTHING.id();
-			int toAdd = ItemId.NOTHING.id();
-
-			// Taverly scorpion
-			if (n.getID() == NpcId.KHARID_SCORPION_TAVERLEY.id()) {
-				switch (ItemId.getById(itemId)) {
-					case SCORPION_CAGE_NONE:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_ONE.id();
-						break;
-					case SCORPION_CAGE_TWO:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_ONE_TWO.id();
-						break;
-					case SCORPION_CAGE_THREE:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_ONE_THREE.id();
-						break;
-					case SCORPION_CAGE_TWO_THREE:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_ONE_TWO_THREE.id();
-						break;
-					default:
-						break;
-				}
-			}
-
-			// Barbarian scorpion
-			else if (n.getID() == NpcId.KHARID_SCORPION_BARBARIAN.id()) {
-				switch (ItemId.getById(itemId)) {
-					case SCORPION_CAGE_NONE:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_TWO.id();
-						break;
-					case SCORPION_CAGE_ONE:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_ONE_TWO.id();
-						break;
-					case SCORPION_CAGE_THREE:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_TWO_THREE.id();
-						break;
-					case SCORPION_CAGE_ONE_THREE:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_ONE_TWO_THREE.id();
-						break;
-					default:
-						break;
-				}
-			}
-
-			// Monastery scorpion
-			else if (n.getID() == NpcId.KHARID_SCORPION_MONASTERY.id()) {
-				switch (ItemId.getById(itemId)) {
-					case SCORPION_CAGE_NONE:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_THREE.id();
-						break;
-					case SCORPION_CAGE_ONE:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_ONE_THREE.id();
-						break;
-					case SCORPION_CAGE_TWO:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_TWO_THREE.id();
-						break;
-					case SCORPION_CAGE_ONE_TWO:
-						toRemove = itemId;
-						toAdd = ItemId.SCORPION_CAGE_ONE_TWO_THREE.id();
-						break;
-					default:
-						break;
-				}
-			}
-
-			p.message("You catch a scorpion");
-
-			if (toRemove > -1) removeItem(p, toRemove, 1);
-			if (toAdd > -1) addItem(p, toAdd, 1);
-			temporaryRemoveNpc(n);
-		} else
-			p.message("Talk to Seer before you attempt catching this scorpion");
+		};
 	}
 
 	@Override
@@ -519,29 +536,37 @@ public class ScorpionCatcher implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnWallObject(GameObject obj, Item item, Player player) {
-		/*
-		 * Velrak cell door
-		 */
-		if (obj.getID() == 83 && obj.getY() == 3428 && item.getID() == ItemId.JAIL_KEYS.id()) {
-			showBubble(player, item);
-			doDoor(obj, player);
-		}
-		/*
-		 * Below door infront of Velrak cell has nothing todo with quest or
-		 * anything important at all - replicated it anyway.
-		 */
-		if (obj.getID() == 83 && obj.getY() == 3425 && item.getID() == ItemId.JAIL_KEYS.id()) {
-			showBubble(player, item);
-			doDoor(obj, player);
-		}
-		/*
-		 * Dusty key door into blue dragons lair in Taverly dungeon
-		 */
-		if (obj.getID() == 84 && obj.getY() == 3353 && item.getID() == ItemId.DUSTY_KEY.id()) {
-			showBubble(player, item);
-			doDoor(obj, player);
-		}
+	public GameStateEvent onInvUseOnWallObject(GameObject obj, Item item, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					/*
+					 * Velrak cell door
+					 */
+					if (obj.getID() == 83 && obj.getY() == 3428 && item.getID() == ItemId.JAIL_KEYS.id()) {
+						showBubble(player, item);
+						doDoor(obj, player);
+					}
+					/*
+					 * Below door infront of Velrak cell has nothing todo with quest or
+					 * anything important at all - replicated it anyway.
+					 */
+					if (obj.getID() == 83 && obj.getY() == 3425 && item.getID() == ItemId.JAIL_KEYS.id()) {
+						showBubble(player, item);
+						doDoor(obj, player);
+					}
+					/*
+					 * Dusty key door into blue dragons lair in Taverly dungeon
+					 */
+					if (obj.getID() == 84 && obj.getY() == 3353 && item.getID() == ItemId.DUSTY_KEY.id()) {
+						showBubble(player, item);
+						doDoor(obj, player);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -551,11 +576,20 @@ public class ScorpionCatcher implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		if (obj.getID() == 87 && obj.getY() == 3353 && p.getQuestStage(this) == 2) {
-			doDoor(obj, p);
-			p.message("You just went through a secret door");
-		}
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 87 && obj.getY() == 3353 && p.getQuestStage(quest) == 2) {
+						doDoor(obj, p);
+						p.message("You just went through a secret door");
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	class SEER_NPC {

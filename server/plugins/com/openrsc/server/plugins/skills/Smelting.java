@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.custom.BatchEvent;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
@@ -23,83 +24,91 @@ public class Smelting implements InvUseOnObjectListener,
 	public static final int FURNACE = 118;
 
 	@Override
-	public void onInvUseOnObject(GameObject obj, Item item, Player p) {
-		if (obj.getID() == FURNACE && !DataConversions.inArray(new int[]{ItemId.GOLD_BAR.id(), ItemId.SILVER_BAR.id(), ItemId.SAND.id(), ItemId.GOLD_BAR_FAMILYCREST.id()}, item.getID())) {
-			if (item.getID() == ItemId.STEEL_BAR.id()) {
-				if (p.getInventory().hasItemId(ItemId.CANNON_AMMO_MOULD.id())) {
-					if (getCurrentLevel(p, Skills.SMITHING) < 30) {
-						p.message("You need at least level 30 smithing to make cannon balls");
-						return;
-					}
-					if (p.getQuestStage(Quests.DWARF_CANNON) != -1) {
-						p.message("You need to complete the dwarf cannon quest");
-						return;
-					}
-					showBubble(p, new Item(ItemId.MULTI_CANNON_BALL.id(), 1));
-					int messagedelay = p.getWorld().getServer().getConfig().BATCH_PROGRESSION ? 200 : 1700;
-					int delay = p.getWorld().getServer().getConfig().BATCH_PROGRESSION ? 7200: 2100;
-					message(p, messagedelay, "you heat the steel bar into a liquid state",
-						"and pour it into your cannon ball mould",
-						"you then leave it to cool for a short while");
-
-					p.setBatchEvent(new BatchEvent(p.getWorld(), p, delay, "Smelting", p.getInventory().countId(item.getID()), false) {
-						@Override
-						public void action() {
-							getOwner().incExp(Skills.SMITHING, 100, true);
-							getOwner().getInventory().replace(ItemId.STEEL_BAR.id(), ItemId.MULTI_CANNON_BALL.id(),false);
-							if (Functions.isWielding(getOwner(), ItemId.DWARVEN_RING.id())) {
-								getOwner().getInventory().add(new Item(ItemId.MULTI_CANNON_BALL.id(), getWorld().getServer().getConfig().DWARVEN_RING_BONUS),false);
-								int charges;
-								if (getOwner().getCache().hasKey("dwarvenring")) {
-									charges = getOwner().getCache().getInt("dwarvenring") + 1;
-									if (charges >= getWorld().getServer().getConfig().DWARVEN_RING_USES) {
-										getOwner().getCache().remove("dwarvenring");
-										getOwner().getInventory().shatter(ItemId.DWARVEN_RING.id());
-									} else
-										getOwner().getCache().put("dwarvenring", charges);
+	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == FURNACE && !DataConversions.inArray(new int[]{ItemId.GOLD_BAR.id(), ItemId.SILVER_BAR.id(), ItemId.SAND.id(), ItemId.GOLD_BAR_FAMILYCREST.id()}, item.getID())) {
+						if (item.getID() == ItemId.STEEL_BAR.id()) {
+							if (p.getInventory().hasItemId(ItemId.CANNON_AMMO_MOULD.id())) {
+								if (getCurrentLevel(p, Skills.SMITHING) < 30) {
+									p.message("You need at least level 30 smithing to make cannon balls");
+									return null;
 								}
-								else
-									getOwner().getCache().put("dwarvenring", 1);
-
-							}
-							ActionSender.sendInventory(getOwner());
-							getOwner().message("it's very heavy");
-
-							if (!isCompleted()) {
-								getOwner().message("you repeat the process");
-								showBubble(getOwner(), new Item(ItemId.MULTI_CANNON_BALL.id(), 1));
-							}
-							if (getCurrentLevel(getOwner(), Skills.SMITHING) < 30) {
-								getOwner().message("You need at least level 30 smithing to make cannon balls");
-								interrupt();
-								return;
-							}
-							if (getOwner().getQuestStage(Quests.DWARF_CANNON) != -1) {
-								getOwner().message("You need to complete the dwarf cannon quest");
-								interrupt();
-								return;
-							}
-							if (getWorld().getServer().getConfig().WANT_FATIGUE) {
-								if (getOwner().getFatigue() >= getOwner().MAX_FATIGUE) {
-									getOwner().message("You are too tired to smelt cannon ball");
-									interrupt();
-									return;
+								if (p.getQuestStage(Quests.DWARF_CANNON) != -1) {
+									p.message("You need to complete the dwarf cannon quest");
+									return null;
 								}
+								showBubble(p, new Item(ItemId.MULTI_CANNON_BALL.id(), 1));
+								int messagedelay = p.getWorld().getServer().getConfig().BATCH_PROGRESSION ? 200 : 1700;
+								int delay = p.getWorld().getServer().getConfig().BATCH_PROGRESSION ? 7200: 2100;
+								message(p, messagedelay, "you heat the steel bar into a liquid state",
+									"and pour it into your cannon ball mould",
+									"you then leave it to cool for a short while");
+
+								p.setBatchEvent(new BatchEvent(p.getWorld(), p, delay, "Smelting", p.getInventory().countId(item.getID()), false) {
+									@Override
+									public void action() {
+										getOwner().incExp(Skills.SMITHING, 100, true);
+										getOwner().getInventory().replace(ItemId.STEEL_BAR.id(), ItemId.MULTI_CANNON_BALL.id(),false);
+										if (Functions.isWielding(getOwner(), ItemId.DWARVEN_RING.id())) {
+											getOwner().getInventory().add(new Item(ItemId.MULTI_CANNON_BALL.id(), getWorld().getServer().getConfig().DWARVEN_RING_BONUS),false);
+											int charges;
+											if (getOwner().getCache().hasKey("dwarvenring")) {
+												charges = getOwner().getCache().getInt("dwarvenring") + 1;
+												if (charges >= getWorld().getServer().getConfig().DWARVEN_RING_USES) {
+													getOwner().getCache().remove("dwarvenring");
+													getOwner().getInventory().shatter(ItemId.DWARVEN_RING.id());
+												} else
+													getOwner().getCache().put("dwarvenring", charges);
+											}
+											else
+												getOwner().getCache().put("dwarvenring", 1);
+
+										}
+										ActionSender.sendInventory(getOwner());
+										getOwner().message("it's very heavy");
+
+										if (!isCompleted()) {
+											getOwner().message("you repeat the process");
+											showBubble(getOwner(), new Item(ItemId.MULTI_CANNON_BALL.id(), 1));
+										}
+										if (getCurrentLevel(getOwner(), Skills.SMITHING) < 30) {
+											getOwner().message("You need at least level 30 smithing to make cannon balls");
+											interrupt();
+											return;
+										}
+										if (getOwner().getQuestStage(Quests.DWARF_CANNON) != -1) {
+											getOwner().message("You need to complete the dwarf cannon quest");
+											interrupt();
+											return;
+										}
+										if (getWorld().getServer().getConfig().WANT_FATIGUE) {
+											if (getOwner().getFatigue() >= getOwner().MAX_FATIGUE) {
+												getOwner().message("You are too tired to smelt cannon ball");
+												interrupt();
+												return;
+											}
+										}
+										if (getOwner().getInventory().countId(ItemId.STEEL_BAR.id()) < 1) {
+											getOwner().message("You have no steel bars left");
+											interrupt();
+											return;
+										}
+									}
+								});
+							} else { // No mould
+								p.message("You heat the steel bar");
 							}
-							if (getOwner().getInventory().countId(ItemId.STEEL_BAR.id()) < 1) {
-								getOwner().message("You have no steel bars left");
-								interrupt();
-								return;
-							}
+						} else {
+							handleRegularSmelting(item, p, obj);
 						}
-					});
-				} else { // No mould
-					p.message("You heat the steel bar");
-				}
-			} else {
-				handleRegularSmelting(item, p, obj);
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	private void handleRegularSmelting(final Item item, Player p, final GameObject obj) {

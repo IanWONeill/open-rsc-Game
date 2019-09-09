@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.itemactions;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.player.Player;
@@ -22,31 +23,45 @@ public class PotFlour implements InvUseOnGroundItemListener, InvUseOnGroundItemE
 	}
 
 	@Override
-	public void onInvUseOnGroundItem(Item myItem, GroundItem item, Player player) {
-		if (myItem.getID() == ItemId.POT.id()) {
-			if (player.getInventory().remove(myItem) < 0)
-				return;
-			player.message("You put the flour in the pot");
-			player.getWorld().unregisterItem(item);
-			player.getInventory().add(new Item(ItemId.POT_OF_FLOUR.id()));
-			return;
-		}
+	public GameStateEvent onInvUseOnGroundItem(Item myItem, GroundItem item, Player player) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (myItem.getID() == ItemId.POT.id()) {
+						if (player.getInventory().remove(myItem) < 0)
+							return null;
+						player.message("You put the flour in the pot");
+						player.getWorld().unregisterItem(item);
+						player.getInventory().add(new Item(ItemId.POT_OF_FLOUR.id()));
+						return null;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
-	public void onPickup(Player player, GroundItem item) {
-		if (item.getID() == ItemId.FLOUR.id()) {
-			if (player.getInventory().hasItemId(ItemId.POT.id())) {
-				player.message("You put the flour in the pot");
-				player.getWorld().unregisterItem(item);
-				player.getInventory().replace(ItemId.POT.id(), ItemId.POT_OF_FLOUR.id());
-			} else {
-				player.message("I can't pick it up!");
-				player.message("I need a pot to hold it in");
+	public GameStateEvent onPickup(Player player, GroundItem item) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (item.getID() == ItemId.FLOUR.id()) {
+						if (player.getInventory().hasItemId(ItemId.POT.id())) {
+							player.message("You put the flour in the pot");
+							player.getWorld().unregisterItem(item);
+							player.getInventory().replace(ItemId.POT.id(), ItemId.POT_OF_FLOUR.id());
+						} else {
+							player.message("I can't pick it up!");
+							player.message("I need a pot to hold it in");
+						}
+						return null;
+					}
+
+					return null;
+				});
 			}
-			return;
-		}
+		};
 	}
-	
-	
 }

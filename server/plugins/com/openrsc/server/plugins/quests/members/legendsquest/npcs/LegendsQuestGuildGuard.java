@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.quests.members.legendsquest.npcs;
 
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -217,13 +218,21 @@ public class LegendsQuestGuildGuard implements TalkToNpcListener, TalkToNpcExecu
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.LEGENDS_GUILD_GUARD.id()) {
-			if (p.getQuestStage(Quests.LEGENDS_QUEST) == 0) {
-				message(p, 1200, "You approach a nearby guard...");
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.LEGENDS_GUILD_GUARD.id()) {
+						if (p.getQuestStage(Quests.LEGENDS_QUEST) == 0) {
+							message(p, 1200, "You approach a nearby guard...");
+						}
+						legendsGuardDialogue(p, n, -1);
+					}
+
+					return null;
+				});
 			}
-			legendsGuardDialogue(p, n, -1);
-		}
+		};
 	}
 
 	@Override
@@ -232,59 +241,67 @@ public class LegendsQuestGuildGuard implements TalkToNpcListener, TalkToNpcExecu
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (obj.getID() == MITHRIL_GATES) {
-			if (command.equals("open")) {
-				if (p.getY() <= 550) {
-					replaceObjectDelayed(obj, 2500, 181);
-					p.teleport(513, 552);
-					return;
-				}
-				Npc legends_guard = getNearestNpc(p, NpcId.LEGENDS_GUILD_GUARD.id(), 5);
-				switch (p.getQuestStage(Quests.LEGENDS_QUEST)) {
-					case 0:
-						if (legends_guard != null) {
-							message(p, 1200, "A nearby guard approaches you...");
-							legends_guard.initializeTalkScript(p);
-						} else {
-							p.message("The guards is currently busy.");
-						}
-						break;
-					case 1:
-					case 2:
-					case 3:
-					case 4:
-					case 5:
-					case 6:
-					case 7:
-					case 8:
-					case 9:
-					case 10:
-						if (legends_guard != null) {
-							p.message("A guard nods at you as you walk past.");
-							npcTalk(p, legends_guard, "Hope the quest is going well " + (p.isMale() ? "Sir" : "Ma'am") + " !");
-						}
-						openGates(p);
-						break;
-					case 11:
-					case -1:
-						if (legends_guard != null) {
-							p.message("The guards Salute you as you walk past.");
-							npcTalk(p, legends_guard, "! ! ! Attention ! ! !",
-								"Legends Guild Member Approaching");
-						}
-						openGates(p);
-						break;
-				}
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == MITHRIL_GATES) {
+						if (command.equals("open")) {
+							if (p.getY() <= 550) {
+								replaceObjectDelayed(obj, 2500, 181);
+								p.teleport(513, 552);
+								return null;
+							}
+							Npc legends_guard = getNearestNpc(p, NpcId.LEGENDS_GUILD_GUARD.id(), 5);
+							switch (p.getQuestStage(Quests.LEGENDS_QUEST)) {
+								case 0:
+									if (legends_guard != null) {
+										message(p, 1200, "A nearby guard approaches you...");
+										legends_guard.initializeTalkScript(p);
+									} else {
+										p.message("The guards is currently busy.");
+									}
+									break;
+								case 1:
+								case 2:
+								case 3:
+								case 4:
+								case 5:
+								case 6:
+								case 7:
+								case 8:
+								case 9:
+								case 10:
+									if (legends_guard != null) {
+										p.message("A guard nods at you as you walk past.");
+										npcTalk(p, legends_guard, "Hope the quest is going well " + (p.isMale() ? "Sir" : "Ma'am") + " !");
+									}
+									openGates(p);
+									break;
+								case 11:
+								case -1:
+									if (legends_guard != null) {
+										p.message("The guards Salute you as you walk past.");
+										npcTalk(p, legends_guard, "! ! ! Attention ! ! !",
+											"Legends Guild Member Approaching");
+									}
+									openGates(p);
+									break;
+							}
 
-			} else if (command.equals("search")) {
-				message(p, 1200, "The gates to the Legends Guild are made from wrought Mithril.");
-				message(p, 1200, "A small path leads away up to a very grandiose building.");
-				message(p, 1200, "To the left is a smaller out building, but it is no less impressive.");
-				message(p, 1200, "All the buildings are set in wonderfully landscaped gardens.");
-				p.message("Two well dressed guards seem to be guarding the gate.");
+						} else if (command.equals("search")) {
+							message(p, 1200, "The gates to the Legends Guild are made from wrought Mithril.");
+							message(p, 1200, "A small path leads away up to a very grandiose building.");
+							message(p, 1200, "To the left is a smaller out building, but it is no less impressive.");
+							message(p, 1200, "All the buildings are set in wonderfully landscaped gardens.");
+							p.message("Two well dressed guards seem to be guarding the gate.");
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	class LegendsGuard {

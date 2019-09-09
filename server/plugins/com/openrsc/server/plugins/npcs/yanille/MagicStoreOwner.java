@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.npcs.yanille;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -25,17 +26,25 @@ public final class MagicStoreOwner implements ShopInterface,
 		new Item(ItemId.STAFF_OF_WATER.id(), 2), new Item(ItemId.STAFF_OF_EARTH.id(), 2), new Item(ItemId.STAFF_OF_FIRE.id(), 2));
 
 	@Override
-	public void onTalkToNpc(Player p, final Npc n) {
-		npcTalk(p, n, "Welcome to the magic guild store",
-			"would you like to buy some magic supplies?");
+	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					npcTalk(p, n, "Welcome to the magic guild store",
+						"would you like to buy some magic supplies?");
 
-		int option = showMenu(p, n, "Yes please", "No thankyou");
-		switch (option) {
-			case 0:
-				p.setAccessingShop(shop);
-				ActionSender.showShop(p, shop);
-				break;
-		}
+					int option = showMenu(p, n, "Yes please", "No thankyou");
+					switch (option) {
+						case 0:
+							p.setAccessingShop(shop);
+							ActionSender.showShop(p, shop);
+							break;
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override

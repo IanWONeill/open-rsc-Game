@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
@@ -146,181 +147,190 @@ public class HerosQuest implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onTalkToNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.GRIP.id()) {
-			if (p.getCache().hasKey("talked_grip") || p.getQuestStage(this) == -1) {
-				int menu = showMenu(p, n,
-					"So can I guard the treasure room please",
-					"So what do my duties involve?",
-					"Well I'd better sort my new room out");
-				if (menu == 0) {
-					treasureRoomDialogue(p, n);
-				} else if (menu == 1) {
-					dutiesDialogue(p, n);
-				} else if (menu == 2) {
-					npcTalk(p, n, "Yeah I'll give you time to settle in");
-				}
-				return;
-			}
-			playerTalk(p, n, "Hi I am Hartigen",
-				"I've come to take the job as your deputy");
-			npcTalk(p, n, "Ah good at last, you took you're time getting here",
-				"Now let me see",
-				"Your quarters will be that room nearest the sink",
-				"I'll get your hours of duty sorted in a bit",
-				"Oh and have you got your I.D paper",
-				"Internal security is almost as important as external security for a guard");
-			if (!hasItem(p, ItemId.ID_PAPER.id())) {
-				playerTalk(p, n, "Oh dear I don't have that with me any more");
-			} else {
-				p.message("You hand your I.D paper to grip");
-				removeItem(p, ItemId.ID_PAPER.id(), 1);
-				p.getCache().store("talked_grip", true);
-				int menu = showMenu(p, n,
-					"So can I guard the treasure room please",
-					"So what do my duties involve?",
-					"Well I'd better sort my new room out");
-				if (menu == 0) {
-					treasureRoomDialogue(p, n);
-				} else if (menu == 1) {
-					dutiesDialogue(p, n);
-				} else if (menu == 2) {
-					npcTalk(p, n, "Yeah I'll give you time to settle in");
-				}
-			}
-		}
-		else if (n.getID() == NpcId.TROBERT.id()) {
-			if (p.getQuestStage(this) == -1) {
-				return;
-			}
-			if (p.getCache().hasKey("hq_impersonate")) {
-				if (hasItem(p, ItemId.ID_PAPER.id())) {
-					return;
-				} else {
-					playerTalk(p, n, "I have lost Hartigen's I.D paper");
-					npcTalk(p, n, "That was careless",
-						"He had a spare fortunatley",
-						"Here it is");
-					addItem(p, ItemId.ID_PAPER.id(), 1);
-					npcTalk(p, n, "Be more careful this time");
-				}
-				return;
-			}
-			npcTalk(p, n, "Hi, welcome to our Brimhaven headquarters",
-				"I'm Trobert and I'm in charge here");
-			int menu = showMenu(p, n, false, //do not send over
-				"So can you help me get Scarface Pete's candlesticks?",
-				"pleased to meet you");
-			if (menu == 0) {
-				playerTalk(p, n, "So can you help me get Scarface Pete's candlesticks?");
-				npcTalk(p, n, "Well we have made some progress there",
-					"We know one of the keys to Pete's treasure room is carried by Grip the head guard",
-					"So we thought it might be good to get close to the head guard",
-					"Grip was taking on a new deputy called Hartigen",
-					"Hartigen was an Asgarnian black knight",
-					"However he was deserting the black knight fortress and seeking new employment",
-					"We managed to waylay him on the way here",
-					"We now have his i.d paper",
-					"Next we need someone to impersonate the black knight");
-				int sec_menu = showMenu(p, n,
-					"I volunteer to undertake that mission",
-					"Well good luck then");
-				if (sec_menu == 0) {
-					npcTalk(p, n, "Well here's the I.d");
-					addItem(p, ItemId.ID_PAPER.id(), 1);
-					p.getCache().store("hq_impersonate", true);
-					npcTalk(p, n, "Take that to the guard room at Scarface Pete's mansion");
-				}
-			} else if (menu == 1) {
-				playerTalk(p, n, "Pleased to meet you");
-			}
-		}
-		else if (n.getID() == NpcId.GRUBOR.id()) {
-			playerTalk(p, n, "Hi");
-			npcTalk(p, n, "Hi, I'm a little busy right now");
-		}
-		else if (n.getID() == NpcId.ACHETTIES.id()) {
-			switch (p.getQuestStage(this)) {
-				case 0:
-					npcTalk(p, n, "Greetings welcome to the hero's guild",
-						"Only the foremost hero's of the land can enter here");
-					int opt = showMenu(p, n,
-						"I'm a hero, may I apply to join?",
-						"Good for the foremost hero's of the land");
-					if (opt == 0) {
-						if ((p.getQuestStage(Quests.LOST_CITY) == -1 &&
-							(p.getQuestStage(Quests.SHIELD_OF_ARRAV) == -1 ||
-								p.getQuestStage(Quests.SHIELD_OF_ARRAV) == -2 ) &&
-							p.getQuestStage(Quests.MERLINS_CRYSTAL) == -1 &&
-							p.getQuestStage(Quests.DRAGON_SLAYER) == -1)
-							&& p.getQuestPoints() >= 55) {
-							npcTalk(p, n, "Ok you may begin the tasks for joining the hero's guild",
-								"You need the feather of an Entrana firebird",
-								"A master thief armband",
-								"And a cooked lava eel");
-							p.updateQuestStage(this, 1);
-							int opt2 = showMenu(p, n, false, //do not send over
-								"Any hints on getting the armband?",
-								"Any hints on getting the feather?",
-								"Any hints on getting the eel?",
-								"I'll start looking for all those things then");
-							if (opt2 == 0) {
-								playerTalk(p, n, "Any hints on getting the thieves armband?");
-								npcTalk(p, n, "I'm sure you have relevant contacts to find out about that");
-							} else if (opt2 == 1) {
-								playerTalk(p, n, "Any hints on getting the feather?");
-								npcTalk(p, n, "Not really - Entrana firebirds live on Entrana");
-							} else if (opt2 == 2) {
-								playerTalk(p, n, "Any hints on getting the eel?");
-								npcTalk(p, n, "Maybe go and find someone who knows a lot about fishing?");
+	public GameStateEvent onTalkToNpc(Player p, Npc n) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.GRIP.id()) {
+						if (p.getCache().hasKey("talked_grip") || p.getQuestStage(quest) == -1) {
+							int menu = showMenu(p, n,
+								"So can I guard the treasure room please",
+								"So what do my duties involve?",
+								"Well I'd better sort my new room out");
+							if (menu == 0) {
+								treasureRoomDialogue(p, n);
+							} else if (menu == 1) {
+								dutiesDialogue(p, n);
+							} else if (menu == 2) {
+								npcTalk(p, n, "Yeah I'll give you time to settle in");
 							}
+							return null;
+						}
+						playerTalk(p, n, "Hi I am Hartigen",
+							"I've come to take the job as your deputy");
+						npcTalk(p, n, "Ah good at last, you took you're time getting here",
+							"Now let me see",
+							"Your quarters will be that room nearest the sink",
+							"I'll get your hours of duty sorted in a bit",
+							"Oh and have you got your I.D paper",
+							"Internal security is almost as important as external security for a guard");
+						if (!hasItem(p, ItemId.ID_PAPER.id())) {
+							playerTalk(p, n, "Oh dear I don't have that with me any more");
 						} else {
-							npcTalk(p, n, "You're a hero?, I've never heard of you");
-							message(p, "You need to have 55 quest points to file for an application",
-								"You also need to have completed the following quests",
-								"The shield of arrav, the lost city",
-								"Merlin's crystal and dragon slayer\"");
+							p.message("You hand your I.D paper to grip");
+							removeItem(p, ItemId.ID_PAPER.id(), 1);
+							p.getCache().store("talked_grip", true);
+							int menu = showMenu(p, n,
+								"So can I guard the treasure room please",
+								"So what do my duties involve?",
+								"Well I'd better sort my new room out");
+							if (menu == 0) {
+								treasureRoomDialogue(p, n);
+							} else if (menu == 1) {
+								dutiesDialogue(p, n);
+							} else if (menu == 2) {
+								npcTalk(p, n, "Yeah I'll give you time to settle in");
+							}
 						}
 					}
-					break;
-				case 1:
-				case 2:
-					npcTalk(p, n, "Greetings welcome to the hero's guild",
-						"How goes thy quest?");
-					if (hasItem(p, ItemId.MASTER_THIEF_ARMBAND.id()) && hasItem(p, ItemId.LAVA_EEL.id()) && hasItem(p, ItemId.RED_FIREBIRD_FEATHER.id())) {
-						playerTalk(p, n, "I have all the things needed");
-						removeItem(p, ItemId.MASTER_THIEF_ARMBAND.id(), 1);
-						removeItem(p, ItemId.LAVA_EEL.id(), 1);
-						removeItem(p, ItemId.RED_FIREBIRD_FEATHER.id(), 1);
-						p.sendQuestComplete(Quests.HEROS_QUEST);
-					} else {
-						playerTalk(p, n, "It's tough, I've not done it yet");
-						npcTalk(p, n, "Remember you need the feather of an Entrana firebird",
-							"A master thief armband",
-							"And a cooked lava eel");
-						int opt2 = showMenu(p, n, false, //do not send over
-							"Any hints on getting the armband?",
-							"Any hints on getting the feather?",
-							"Any hints on getting the eel?",
-							"I'll start looking for all those things then");
-						if (opt2 == 0) {
-							playerTalk(p, n, "Any hints on getting the thieves armband?");
-							npcTalk(p, n, "I'm sure you have relevant contacts to find out about that");
-						} else if (opt2 == 1) {
-							playerTalk(p, n, "Any hints on getting the feather?");
-							npcTalk(p, n, "Not really - Entrana firebirds live on Entrana");
-						} else if (opt2 == 2) {
-							playerTalk(p, n, "Any hints on getting the eel?");
-							npcTalk(p, n, "Maybe go and find someone who knows a lot about fishing?");
+					else if (n.getID() == NpcId.TROBERT.id()) {
+						if (p.getQuestStage(quest) == -1) {
+							return null;
+						}
+						if (p.getCache().hasKey("hq_impersonate")) {
+							if (hasItem(p, ItemId.ID_PAPER.id())) {
+								return null;
+							} else {
+								playerTalk(p, n, "I have lost Hartigen's I.D paper");
+								npcTalk(p, n, "That was careless",
+									"He had a spare fortunatley",
+									"Here it is");
+								addItem(p, ItemId.ID_PAPER.id(), 1);
+								npcTalk(p, n, "Be more careful this time");
+							}
+							return null;
+						}
+						npcTalk(p, n, "Hi, welcome to our Brimhaven headquarters",
+							"I'm Trobert and I'm in charge here");
+						int menu = showMenu(p, n, false, //do not send over
+							"So can you help me get Scarface Pete's candlesticks?",
+							"pleased to meet you");
+						if (menu == 0) {
+							playerTalk(p, n, "So can you help me get Scarface Pete's candlesticks?");
+							npcTalk(p, n, "Well we have made some progress there",
+								"We know one of the keys to Pete's treasure room is carried by Grip the head guard",
+								"So we thought it might be good to get close to the head guard",
+								"Grip was taking on a new deputy called Hartigen",
+								"Hartigen was an Asgarnian black knight",
+								"However he was deserting the black knight fortress and seeking new employment",
+								"We managed to waylay him on the way here",
+								"We now have his i.d paper",
+								"Next we need someone to impersonate the black knight");
+							int sec_menu = showMenu(p, n,
+								"I volunteer to undertake that mission",
+								"Well good luck then");
+							if (sec_menu == 0) {
+								npcTalk(p, n, "Well here's the I.d");
+								addItem(p, ItemId.ID_PAPER.id(), 1);
+								p.getCache().store("hq_impersonate", true);
+								npcTalk(p, n, "Take that to the guard room at Scarface Pete's mansion");
+							}
+						} else if (menu == 1) {
+							playerTalk(p, n, "Pleased to meet you");
 						}
 					}
-					break;
-				case -1:
-					npcTalk(p, n, "Greetings welcome to the hero's guild");
-					break;
+					else if (n.getID() == NpcId.GRUBOR.id()) {
+						playerTalk(p, n, "Hi");
+						npcTalk(p, n, "Hi, I'm a little busy right now");
+					}
+					else if (n.getID() == NpcId.ACHETTIES.id()) {
+						switch (p.getQuestStage(quest)) {
+							case 0:
+								npcTalk(p, n, "Greetings welcome to the hero's guild",
+									"Only the foremost hero's of the land can enter here");
+								int opt = showMenu(p, n,
+									"I'm a hero, may I apply to join?",
+									"Good for the foremost hero's of the land");
+								if (opt == 0) {
+									if ((p.getQuestStage(Quests.LOST_CITY) == -1 &&
+										(p.getQuestStage(Quests.SHIELD_OF_ARRAV) == -1 ||
+											p.getQuestStage(Quests.SHIELD_OF_ARRAV) == -2 ) &&
+										p.getQuestStage(Quests.MERLINS_CRYSTAL) == -1 &&
+										p.getQuestStage(Quests.DRAGON_SLAYER) == -1)
+										&& p.getQuestPoints() >= 55) {
+										npcTalk(p, n, "Ok you may begin the tasks for joining the hero's guild",
+											"You need the feather of an Entrana firebird",
+											"A master thief armband",
+											"And a cooked lava eel");
+										p.updateQuestStage(quest, 1);
+										int opt2 = showMenu(p, n, false, //do not send over
+											"Any hints on getting the armband?",
+											"Any hints on getting the feather?",
+											"Any hints on getting the eel?",
+											"I'll start looking for all those things then");
+										if (opt2 == 0) {
+											playerTalk(p, n, "Any hints on getting the thieves armband?");
+											npcTalk(p, n, "I'm sure you have relevant contacts to find out about that");
+										} else if (opt2 == 1) {
+											playerTalk(p, n, "Any hints on getting the feather?");
+											npcTalk(p, n, "Not really - Entrana firebirds live on Entrana");
+										} else if (opt2 == 2) {
+											playerTalk(p, n, "Any hints on getting the eel?");
+											npcTalk(p, n, "Maybe go and find someone who knows a lot about fishing?");
+										}
+									} else {
+										npcTalk(p, n, "You're a hero?, I've never heard of you");
+										message(p, "You need to have 55 quest points to file for an application",
+											"You also need to have completed the following quests",
+											"The shield of arrav, the lost city",
+											"Merlin's crystal and dragon slayer\"");
+									}
+								}
+								break;
+							case 1:
+							case 2:
+								npcTalk(p, n, "Greetings welcome to the hero's guild",
+									"How goes thy quest?");
+								if (hasItem(p, ItemId.MASTER_THIEF_ARMBAND.id()) && hasItem(p, ItemId.LAVA_EEL.id()) && hasItem(p, ItemId.RED_FIREBIRD_FEATHER.id())) {
+									playerTalk(p, n, "I have all the things needed");
+									removeItem(p, ItemId.MASTER_THIEF_ARMBAND.id(), 1);
+									removeItem(p, ItemId.LAVA_EEL.id(), 1);
+									removeItem(p, ItemId.RED_FIREBIRD_FEATHER.id(), 1);
+									p.sendQuestComplete(Quests.HEROS_QUEST);
+								} else {
+									playerTalk(p, n, "It's tough, I've not done it yet");
+									npcTalk(p, n, "Remember you need the feather of an Entrana firebird",
+										"A master thief armband",
+										"And a cooked lava eel");
+									int opt2 = showMenu(p, n, false, //do not send over
+										"Any hints on getting the armband?",
+										"Any hints on getting the feather?",
+										"Any hints on getting the eel?",
+										"I'll start looking for all those things then");
+									if (opt2 == 0) {
+										playerTalk(p, n, "Any hints on getting the thieves armband?");
+										npcTalk(p, n, "I'm sure you have relevant contacts to find out about that");
+									} else if (opt2 == 1) {
+										playerTalk(p, n, "Any hints on getting the feather?");
+										npcTalk(p, n, "Not really - Entrana firebirds live on Entrana");
+									} else if (opt2 == 2) {
+										playerTalk(p, n, "Any hints on getting the eel?");
+										npcTalk(p, n, "Maybe go and find someone who knows a lot about fishing?");
+									}
+								}
+								break;
+							case -1:
+								npcTalk(p, n, "Greetings welcome to the hero's guild");
+								break;
 
+						}
+					}
+
+					return null;
+				});
 			}
-		}
+		};
 	}
 
 	@Override
@@ -350,130 +360,139 @@ public class HerosQuest implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		if (obj.getID() == 78 && obj.getX() == 448 && obj.getY() == 682) {
-			if (p.getCache().hasKey("talked_alf") || p.getQuestStage(this) == -1) {
-				p.message("you open the door");
-				p.message("You go through the door");
-				doDoor(obj, p);
-			} else {
-				Npc alf = getNearestNpc(p, NpcId.ALFONSE_THE_WAITER.id(), 10);
-				if (alf != null) {
-					npcTalk(p, alf, "Hey you can't go through there, that's private");
-				}
-			}
-		}
-		else if (obj.getID() == 76 && obj.getX() == 439 && obj.getY() == 694) {
-			Npc grubor = getNearestNpc(p, NpcId.GRUBOR.id(), 10);
-			if (p.getQuestStage(this) == -1) {
-				npcTalk(p, grubor, "Yes? what do you want?");
-				int mem = showMenu(p, grubor, false, //do not send over
-					"Would you like to have your windows refitting?",
-					"I want to come in",
-					"Do you want to trade?");
-				if (mem == 0) {
-					playerTalk(p, grubor, "Would you like to have your windows refitting?");
-					npcTalk(p, grubor, "Don't be daft, we don't have any windows");
-				} else if (mem == 1) {
-					playerTalk(p, grubor, "I want to come in");
-					npcTalk(p, grubor, "No, go away");
-				} else if (mem == 2) {
-					playerTalk(p, grubor, "Do you want to trade");
-					npcTalk(p, grubor, "No I'm busy");
-				}
-				return;
-			}
-			if (p.getCache().hasKey("blackarm_mission")) {
-				if (p.getCache().hasKey("talked_grubor")) {
-					p.message("you open the door");
-					p.message("You go through the door");
-					doDoor(obj, p);
-				} else {
-					if (grubor != null) {
-						npcTalk(p, grubor, "Yes? what do you want?");
-						int menu = showMenu(p, grubor, false, //do not send over
-							"Rabbit's foot",
-							"four leaved clover",
-							"Lucky Horseshoe",
-							"Black cat");
-						if (menu == 1) {
-							playerTalk(p, grubor, "Four leaved clover");
-							npcTalk(p, grubor, "Oh you're one of the gang are you",
-								"Just a second I'll let you in");
-							p.message("You here the door being unbarred");
-							p.getCache().store("talked_grubor", true);
-							return;
-						}
-						if (menu == 0) {
-							playerTalk(p, grubor, "Rabbit's foot");
-						} else if (menu == 2) {
-							playerTalk(p, grubor, "Lucky Horseshoe");
-						} else if (menu == 3) {
-							playerTalk(p, grubor, "Black cat");
-						}
-						npcTalk(p, grubor, "What are you on about",
-							"Go away");
-						return;
-					}
-				}
-			} else {
-				p.message("The door won't open");
-			}
-		}
-		else if (obj.getID() == 75 && obj.getX() == 463 && obj.getY() == 681) {
-			Npc garv = getNearestNpc(p, NpcId.GARV.id(), 12);
-			if (p.getCache().hasKey("garv_door") || p.getQuestStage(this) == -1) {
-				p.message("you open the door");
-				p.message("You go through the door");
-				doDoor(obj, p);
-				return;
-			}
-			if (garv != null) {
-				npcTalk(p, garv, "Where do you think you're going?");
-				if (isBlackArmGang(p)) {
-					playerTalk(p, garv, "Hi, I'm Hartigen",
-						"I've come to work here");
-					if (p.getInventory().wielding(ItemId.BLACK_PLATE_MAIL_LEGS.id())
-							&& p.getInventory().wielding(ItemId.LARGE_BLACK_HELMET.id())&& p.getInventory().wielding(ItemId.BLACK_PLATE_MAIL_BODY.id())) {
-						npcTalk(p, garv, "So have you got your i.d paper?");
-						if (hasItem(p, ItemId.ID_PAPER.id())) {
-							npcTalk(p, garv, "You had better come in then",
-								"Grip will want to talk to you");
-							p.getCache().store("garv_door", true);
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 78 && obj.getX() == 448 && obj.getY() == 682) {
+						if (p.getCache().hasKey("talked_alf") || p.getQuestStage(quest) == -1) {
+							p.message("you open the door");
+							p.message("You go through the door");
+							doDoor(obj, p);
 						} else {
-							playerTalk(p, garv, "No I must have left it in my other suit of armour");
+							Npc alf = getNearestNpc(p, NpcId.ALFONSE_THE_WAITER.id(), 10);
+							if (alf != null) {
+								npcTalk(p, alf, "Hey you can't go through there, that's private");
+							}
 						}
-					} else {
-						npcTalk(p, garv, "Hartigen the black knight?",
-							"I don't think so - he doesn't dress like that");
 					}
-				}
+					else if (obj.getID() == 76 && obj.getX() == 439 && obj.getY() == 694) {
+						Npc grubor = getNearestNpc(p, NpcId.GRUBOR.id(), 10);
+						if (p.getQuestStage(quest) == -1) {
+							npcTalk(p, grubor, "Yes? what do you want?");
+							int mem = showMenu(p, grubor, false, //do not send over
+								"Would you like to have your windows refitting?",
+								"I want to come in",
+								"Do you want to trade?");
+							if (mem == 0) {
+								playerTalk(p, grubor, "Would you like to have your windows refitting?");
+								npcTalk(p, grubor, "Don't be daft, we don't have any windows");
+							} else if (mem == 1) {
+								playerTalk(p, grubor, "I want to come in");
+								npcTalk(p, grubor, "No, go away");
+							} else if (mem == 2) {
+								playerTalk(p, grubor, "Do you want to trade");
+								npcTalk(p, grubor, "No I'm busy");
+							}
+							return null;
+						}
+						if (p.getCache().hasKey("blackarm_mission")) {
+							if (p.getCache().hasKey("talked_grubor")) {
+								p.message("you open the door");
+								p.message("You go through the door");
+								doDoor(obj, p);
+							} else {
+								if (grubor != null) {
+									npcTalk(p, grubor, "Yes? what do you want?");
+									int menu = showMenu(p, grubor, false, //do not send over
+										"Rabbit's foot",
+										"four leaved clover",
+										"Lucky Horseshoe",
+										"Black cat");
+									if (menu == 1) {
+										playerTalk(p, grubor, "Four leaved clover");
+										npcTalk(p, grubor, "Oh you're one of the gang are you",
+											"Just a second I'll let you in");
+										p.message("You here the door being unbarred");
+										p.getCache().store("talked_grubor", true);
+										return null;
+									}
+									if (menu == 0) {
+										playerTalk(p, grubor, "Rabbit's foot");
+									} else if (menu == 2) {
+										playerTalk(p, grubor, "Lucky Horseshoe");
+									} else if (menu == 3) {
+										playerTalk(p, grubor, "Black cat");
+									}
+									npcTalk(p, grubor, "What are you on about",
+										"Go away");
+									return null;
+								}
+							}
+						} else {
+							p.message("The door won't open");
+						}
+					}
+					else if (obj.getID() == 75 && obj.getX() == 463 && obj.getY() == 681) {
+						Npc garv = getNearestNpc(p, NpcId.GARV.id(), 12);
+						if (p.getCache().hasKey("garv_door") || p.getQuestStage(quest) == -1) {
+							p.message("you open the door");
+							p.message("You go through the door");
+							doDoor(obj, p);
+							return null;
+						}
+						if (garv != null) {
+							npcTalk(p, garv, "Where do you think you're going?");
+							if (isBlackArmGang(p)) {
+								playerTalk(p, garv, "Hi, I'm Hartigen",
+									"I've come to work here");
+								if (p.getInventory().wielding(ItemId.BLACK_PLATE_MAIL_LEGS.id())
+									&& p.getInventory().wielding(ItemId.LARGE_BLACK_HELMET.id())&& p.getInventory().wielding(ItemId.BLACK_PLATE_MAIL_BODY.id())) {
+									npcTalk(p, garv, "So have you got your i.d paper?");
+									if (hasItem(p, ItemId.ID_PAPER.id())) {
+										npcTalk(p, garv, "You had better come in then",
+											"Grip will want to talk to you");
+										p.getCache().store("garv_door", true);
+									} else {
+										playerTalk(p, garv, "No I must have left it in my other suit of armour");
+									}
+								} else {
+									npcTalk(p, garv, "Hartigen the black knight?",
+										"I don't think so - he doesn't dress like that");
+								}
+							}
+						}
+					}
+					else if (obj.getID() == 77 && obj.getX() == 463 && obj.getY() == 676) {
+						if (p.getCache().hasKey("talked_grip") || p.getQuestStage(quest) == -1) {
+							p.message("you open the door");
+							p.message("You go through the door");
+							doDoor(obj, p);
+						} else {
+							p.message("You can't get through the door");
+							p.message("You need to speak to grip first");
+						}
+					}
+					else if (obj.getID() == 79) { // strange panel - 11
+						p.playSound("secretdoor");
+						p.message("You just went through a secret door");
+						doDoor(obj, p, 11);
+					}
+					else if (obj.getID() == 80 && obj.getX() == 459 && obj.getY() == 674) {
+						p.message("The door is locked");
+						playerTalk(p, null, "This room isn't a lot of use on it's own",
+							"Maybe I can get extra help from the inside somehow",
+							"I wonder if any of the other players have found a way in");
+					}
+					else if (obj.getID() == 81 && obj.getX() == 472 && obj.getY() == 674) {
+						p.message("The door is locked");
+					}
+
+					return null;
+				});
 			}
-		}
-		else if (obj.getID() == 77 && obj.getX() == 463 && obj.getY() == 676) {
-			if (p.getCache().hasKey("talked_grip") || p.getQuestStage(this) == -1) {
-				p.message("you open the door");
-				p.message("You go through the door");
-				doDoor(obj, p);
-			} else {
-				p.message("You can't get through the door");
-				p.message("You need to speak to grip first");
-			}
-		}
-		else if (obj.getID() == 79) { // strange panel - 11
-			p.playSound("secretdoor");
-			p.message("You just went through a secret door");
-			doDoor(obj, p, 11);
-		}
-		else if (obj.getID() == 80 && obj.getX() == 459 && obj.getY() == 674) {
-			p.message("The door is locked");
-			playerTalk(p, null, "This room isn't a lot of use on it's own",
-				"Maybe I can get extra help from the inside somehow",
-				"I wonder if any of the other players have found a way in");
-		}
-		else if (obj.getID() == 81 && obj.getX() == 472 && obj.getY() == 674) {
-			p.message("The door is locked");
-		}
+		};
 	}
 
 	@Override
@@ -482,23 +501,30 @@ public class HerosQuest implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onInvUseOnWallObject(GameObject obj, Item item, Player p) {
-		if (obj.getID() == 80) {
-			if (item.getID() == ItemId.MISCELLANEOUS_KEY.id()) {
-				showBubble(p, item);
-				p.message("You unlock the door");
-				p.message("You go through the door");
-				doDoor(obj, p);
-			}
-		}
-		else if (obj.getID() == 81) {
-			if (item.getID() == ItemId.BUNCH_OF_KEYS.id()) {
-				p.message("You open the door");
-				p.message("You go through the door");
-				doDoor(obj, p);
-			}
-		}
+	public GameStateEvent onInvUseOnWallObject(GameObject obj, Item item, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == 80) {
+						if (item.getID() == ItemId.MISCELLANEOUS_KEY.id()) {
+							showBubble(p, item);
+							p.message("You unlock the door");
+							p.message("You go through the door");
+							doDoor(obj, p);
+						}
+					}
+					else if (obj.getID() == 81) {
+						if (item.getID() == ItemId.BUNCH_OF_KEYS.id()) {
+							p.message("You open the door");
+							p.message("You go through the door");
+							doDoor(obj, p);
+						}
+					}
 
+					return null;
+				});
+			}
+		};
 	}
 
 	@Override
@@ -508,67 +534,83 @@ public class HerosQuest implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		Npc guard = getNearestNpc(p, NpcId.GUARD_PIRATE.id(), 10);
-		Npc grip = getNearestNpc(p, NpcId.GRIP.id(), 15);
-		if (obj.getID() == GRIPS_CUPBOARD_OPEN || obj.getID() == GRIPS_CUPBOARD_CLOSED) {
-			if (command.equalsIgnoreCase("open") || command.equalsIgnoreCase("search")) {
-				if (guard != null) {
-					npcTalk(p, guard, "I don't think Mr Grip will like you opening that up",
-						"That's his drinks cabinet");
-					int menu = showMenu(p, guard,
-						"He won't notice me having a quick look",
-						"Ok I'll leave it");
-					if (menu == 0) {
-						if (grip != null) {
-							grip.teleport(463, 673);
-							npcTalk(p, grip, "Hey what are you doing there",
-								"That's my drinks cabinet get away from it");
-						} else {
-							if (command.equalsIgnoreCase("open")) {
-								openCupboard(obj, p, GRIPS_CUPBOARD_OPEN);
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		final QuestInterface quest = this;
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					Npc guard = getNearestNpc(p, NpcId.GUARD_PIRATE.id(), 10);
+					Npc grip = getNearestNpc(p, NpcId.GRIP.id(), 15);
+					if (obj.getID() == GRIPS_CUPBOARD_OPEN || obj.getID() == GRIPS_CUPBOARD_CLOSED) {
+						if (command.equalsIgnoreCase("open") || command.equalsIgnoreCase("search")) {
+							if (guard != null) {
+								npcTalk(p, guard, "I don't think Mr Grip will like you opening that up",
+									"That's his drinks cabinet");
+								int menu = showMenu(p, guard,
+									"He won't notice me having a quick look",
+									"Ok I'll leave it");
+								if (menu == 0) {
+									if (grip != null) {
+										grip.teleport(463, 673);
+										npcTalk(p, grip, "Hey what are you doing there",
+											"That's my drinks cabinet get away from it");
+									} else {
+										if (command.equalsIgnoreCase("open")) {
+											openCupboard(obj, p, GRIPS_CUPBOARD_OPEN);
+										} else {
+											p.message("You find a bottle of whisky in the cupboard");
+											addItem(p, ItemId.DRAYNOR_WHISKY.id(), 1);
+										}
+									}
+								}
 							} else {
-								p.message("You find a bottle of whisky in the cupboard");
-								addItem(p, ItemId.DRAYNOR_WHISKY.id(), 1);
+								p.message("The guard is busy at the moment");
+							}
+						} else if (command.equalsIgnoreCase("close")) {
+							closeCupboard(obj, p, GRIPS_CUPBOARD_CLOSED);
+						}
+					}
+					else if (obj.getID() == CANDLESTICK_CHEST_OPEN || obj.getID() == CANDLESTICK_CHEST_CLOSED) {
+						if (command.equalsIgnoreCase("open")) {
+							openGenericObject(obj, p, CANDLESTICK_CHEST_OPEN, "You open the chest");
+						} else if (command.equalsIgnoreCase("close")) {
+							closeGenericObject(obj, p, CANDLESTICK_CHEST_CLOSED, "You close the chest");
+						} else {
+							if (!hasItem(p, ItemId.CANDLESTICK.id())) {
+								addItem(p, ItemId.CANDLESTICK.id(), 2);
+								message(p, "You find two candlesticks in the chest",
+									"So that will be one for you",
+									"And one to the person who killed grip for you");
+								if (p.getQuestStage(quest) == 1) {
+									p.updateQuestStage(quest, 2);
+								}
+							} else {
+								p.message("The chest is empty");
 							}
 						}
 					}
-				} else {
-					p.message("The guard is busy at the moment");
-				}
-			} else if (command.equalsIgnoreCase("close")) {
-				closeCupboard(obj, p, GRIPS_CUPBOARD_CLOSED);
-			}
-		}
-		else if (obj.getID() == CANDLESTICK_CHEST_OPEN || obj.getID() == CANDLESTICK_CHEST_CLOSED) {
-			if (command.equalsIgnoreCase("open")) {
-				openGenericObject(obj, p, CANDLESTICK_CHEST_OPEN, "You open the chest");
-			} else if (command.equalsIgnoreCase("close")) {
-				closeGenericObject(obj, p, CANDLESTICK_CHEST_CLOSED, "You close the chest");
-			} else {
-				if (!hasItem(p, ItemId.CANDLESTICK.id())) {
-					addItem(p, ItemId.CANDLESTICK.id(), 2);
-					message(p, "You find two candlesticks in the chest",
-						"So that will be one for you",
-						"And one to the person who killed grip for you");
-					if (p.getQuestStage(this) == 1) {
-						p.updateQuestStage(this, 2);
-					}
-				} else {
-					p.message("The chest is empty");
-				}
-			}
-		}
 
+					return null;
+				});
+			}
+		};
 	}
 	
 	@Override
-	public void onPlayerKilledNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.GRIP.id()) {
-			p.getWorld().registerItem(
-					new GroundItem(p.getWorld(), ItemId.BUNCH_OF_KEYS.id(), n.getX(), n.getY(), 1, (Player) null));
-		}
-		n.killedBy(p);
+	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.GRIP.id()) {
+						p.getWorld().registerItem(
+							new GroundItem(p.getWorld(), ItemId.BUNCH_OF_KEYS.id(), n.getX(), n.getY(), 1, (Player) null));
+					}
+					n.killedBy(p);
+
+					return null;
+				});
+			}
+		};
 	}
 	
 	@Override
@@ -592,39 +634,61 @@ public class HerosQuest implements QuestInterface, TalkToNpcListener,
 	}
 
 	@Override
-	public void onPlayerMageNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.GRIP.id() && !p.getLocation().inHeroQuestRangeRoom()) {
-			playerTalk(p, null, "I can't attack the head guard here",
-					"There are too many witnesses to see me do it",
-					"I'd have the whole of Brimhaven after me",
-					"Besides if he dies I want to have the chance of being promoted");
-			p.message("Maybe you need another player's help");
-		}
-	}
+	public GameStateEvent onPlayerMageNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.GRIP.id() && !p.getLocation().inHeroQuestRangeRoom()) {
+						playerTalk(p, null, "I can't attack the head guard here",
+							"There are too many witnesses to see me do it",
+							"I'd have the whole of Brimhaven after me",
+							"Besides if he dies I want to have the chance of being promoted");
+						p.message("Maybe you need another player's help");
+					}
 
-	@Override
-	public void onPlayerRangeNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.GRIP.id() && !p.getLocation().inHeroQuestRangeRoom()) {
-			playerTalk(p, null, "I can't attack the head guard here",
-				"There are too many witnesses to see me do it",
-				"I'd have the whole of Brimhaven after me",
-				"Besides if he dies I want to have the chance of being promoted");
-			p.message("Maybe you need another player's help");
-		}
-	}
-
-	@Override
-	public void onPlayerAttackNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.GRIP.id()) {
-			if (!p.getLocation().inHeroQuestRangeRoom()) {
-				playerTalk(p, null, "I can't attack the head guard here",
-					"There are too many witnesses to see me do it",
-					"I'd have the whole of Brimhaven after me",
-					"Besides if he dies I want to have the chance of being promoted");
-				p.message("Maybe you need another player's help");
+					return null;
+				});
 			}
-		}
-
+		};
 	}
 
+	@Override
+	public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.GRIP.id() && !p.getLocation().inHeroQuestRangeRoom()) {
+						playerTalk(p, null, "I can't attack the head guard here",
+							"There are too many witnesses to see me do it",
+							"I'd have the whole of Brimhaven after me",
+							"Besides if he dies I want to have the chance of being promoted");
+						p.message("Maybe you need another player's help");
+					}
+
+					return null;
+				});
+			}
+		};
+	}
+
+	@Override
+	public GameStateEvent onPlayerAttackNpc(Player p, Npc n) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (n.getID() == NpcId.GRIP.id()) {
+						if (!p.getLocation().inHeroQuestRangeRoom()) {
+							playerTalk(p, null, "I can't attack the head guard here",
+								"There are too many witnesses to see me do it",
+								"I'd have the whole of Brimhaven after me",
+								"Besides if he dies I want to have the chance of being promoted");
+							p.message("Maybe you need another player's help");
+						}
+					}
+
+					return null;
+				});
+			}
+		};
+	}
 }

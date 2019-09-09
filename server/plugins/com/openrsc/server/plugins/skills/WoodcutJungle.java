@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.skills;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
@@ -35,13 +36,21 @@ public class WoodcutJungle implements ObjectActionListener,
 	}
 
 	@Override
-	public void onObjectAction(GameObject obj, String command, Player p) {
-		if (inArray(obj.getID(), JUNGLE_TREES)) {
-			handleJungleWoodcut(obj, p);
-		}
-		if (obj.getID() == JUNGLE_TREE_STUMP) {
-			p.teleport(obj.getX(), obj.getY());
-		}
+	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (inArray(obj.getID(), JUNGLE_TREES)) {
+						handleJungleWoodcut(obj, p);
+					}
+					if (obj.getID() == JUNGLE_TREE_STUMP) {
+						p.teleport(obj.getX(), obj.getY());
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	private void handleJungleWoodcut(GameObject obj, Player p) {
@@ -142,10 +151,18 @@ public class WoodcutJungle implements ObjectActionListener,
 	}
 
 	@Override
-	public void onWallObjectAction(GameObject obj, Integer click, Player p) {
-		if (obj.getID() == JUNGLE_VINE) {
-			handleJungleWoodcut(obj, p);
-		}
+	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			public void init() {
+				addState(0, () -> {
+					if (obj.getID() == JUNGLE_VINE) {
+						handleJungleWoodcut(obj, p);
+					}
+
+					return null;
+				});
+			}
+		};
 	}
 
 	/**

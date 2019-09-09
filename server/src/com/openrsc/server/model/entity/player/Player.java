@@ -1876,7 +1876,7 @@ public final class Player extends Mob {
 		}
 	}
 
-	public void sendOutgoingPackets() {
+	public void processOutgoingPackets() {
 		// Unsure if we want to clear right now. Probably OK not to since the player should be cleaned up when the channel is no longer open.
 		/*if(!channel.isOpen() || !isLoggedIn()) {
 			outgoingPackets.clear();
