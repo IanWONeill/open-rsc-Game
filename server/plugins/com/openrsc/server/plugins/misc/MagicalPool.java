@@ -66,21 +66,32 @@ public class MagicalPool implements ObjectActionListener, ObjectActionExecutiveL
 				player.teleport(143, 173);
 			} else if(option == 10) {
 			*/
-						if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") >= 2) {
-							movePlayer(player, 471, 3385);
-							player.message("you are teleported further under ground");
+						if (getPlayerOwner().getCache().hasKey("mage_arena") && getPlayerOwner().getCache().getInt("mage_arena") >= 2) {
+							movePlayer(getPlayerOwner(), 471, 3385);
+							getPlayerOwner().message("you are teleported further under ground");
 						} else {
-							message(player, 1200, "you step into the pool");
-							message(player, 1200, "you wet your boots");
+							getPlayerOwner().message("you step into the pool");
+							return invoke(3, 2);
 						}
 					}
 					if (obj.getID() == 1166) {
-						message(player, 1200, "you step into the sparkling water");
-						message(player, 1200, "you feel energy rush through your veins");
-						movePlayer(player, 447, 3373);
-						player.message("you are teleported to kolodions cave");
+						getPlayerOwner().message("you step into the sparkling water");
+						return nextState(2);
 					}
+					return null;
+				});
+				addState(1, () -> {
+					getPlayerOwner().message("you feel energy rush through your veins");
+					return nextState(2);
 
+				});
+				addState(2, () -> {
+					movePlayer(getPlayerOwner(), 447, 3373);
+					getPlayerOwner().message("you are teleported to kolodions cave");
+					return null;
+				});
+				addState(3, () -> {
+					getPlayerOwner().message("you wet your boots");
 					return null;
 				});
 			}

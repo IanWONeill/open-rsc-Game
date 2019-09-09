@@ -21,13 +21,16 @@ public class LeafyPalmTree implements ObjectActionListener, ObjectActionExecutiv
 		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
-					if (obj.getID() == 1176) {
-						message(p, 1300, "You give the palm tree a good shake.");
-						message(p, 0, "A palm leaf falls down.");
-						createGroundItem(ItemId.PALM_TREE_LEAF.id(), 1, obj.getX(), obj.getY(), p);
-						replaceObjectDelayed(obj, 15000, 33);
-					}
-
+						if (obj.getID() != 1176) {
+							return null;
+						}
+						getPlayerOwner().message("You give the palm tree a good shake.");
+						return nextState(2);
+					});
+				addState(1, () -> {
+					getPlayerOwner().message("A palm leaf falls down.");
+					createGroundItem(ItemId.PALM_TREE_LEAF.id(), 1, obj.getX(), obj.getY(), p);
+					replaceObjectDelayed(obj, 15000, 33);
 					return null;
 				});
 			}

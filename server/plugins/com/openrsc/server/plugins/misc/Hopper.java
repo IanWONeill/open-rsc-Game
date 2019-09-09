@@ -50,14 +50,18 @@ public class Hopper implements InvUseOnObjectListener, InvUseOnObjectExecutiveLi
 		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
 			public void init() {
 				addState(0, () -> {
-					message(player, 500, "You operate the hopper");
-					player.playSound("mechanical");
+						getPlayerOwner().message("You operate the hopper");
+						return nextState(1);
+					});
+
+				addState(1, () -> {
+					getPlayerOwner().playSound("mechanical");
 					int contains = obj.getAttribute("contains_item", -1);
 					if (contains != ItemId.GRAIN.id()) {
-						player.message("Nothing interesting happens");
+						getPlayerOwner().message("Nothing interesting happens");
 						return null;
 					}
-					player.message("The grain slides down the chute");
+					getPlayerOwner().message("The grain slides down the chute");
 
 					int offY = 0;
 					/* Chute in Chef's guild has offsetY -2 from calculated */
@@ -66,12 +70,11 @@ public class Hopper implements InvUseOnObjectListener, InvUseOnObjectExecutiveLi
 					}
 
 					if (obj.getID() == 246) {
-						createGroundItem(player.getWorld(), ItemId.FLOUR.id(), 1, 162, 3533);
+						createGroundItem(getPlayerOwner().getWorld(), ItemId.FLOUR.id(), 1, 162, 3533);
 					} else {
-						createGroundItem(player.getWorld(), ItemId.FLOUR.id(), 1, obj.getX(), Formulae.getNewY(Formulae.getNewY(obj.getY(), false), false) + offY);
+						createGroundItem(getPlayerOwner().getWorld(), ItemId.FLOUR.id(), 1, obj.getX(), Formulae.getNewY(Formulae.getNewY(obj.getY(), false), false) + offY);
 					}
 					obj.removeAttribute("contains_item");
-
 					return null;
 				});
 			}
