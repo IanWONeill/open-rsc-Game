@@ -73,8 +73,6 @@ public class GameTickEventHandler {
 		// Sort the Events Hashmap such that the following execution order is preserved: GameStateEvent -> GameNotifyEvent -> Everything else
 		List list = new LinkedList(events.entrySet());
 		Collections.sort(list, (Object o1, Object o2) -> {
-
-
 			if(o1 instanceof GameStateEvent && !(o2 instanceof GameStateEvent)) {
 				return -1;
 			}
@@ -199,14 +197,15 @@ public class GameTickEventHandler {
 			++i;
 		}
 
-		return
-			(
-				"Tick: " + getServer().getConfig().GAME_TICK + "ms, Server: " + getServer().getLastTickDuration() + "ms " + getServer().getLastIncomingPacketsDuration() + "ms " + getServer().getLastEventsDuration() + "ms " + getServer().getLastGameStateDuration() + "ms " + getServer().getLastOutgoingPacketsDuration() + "ms" + newLine +
+		String returnString = (
+			"Tick: " + getServer().getConfig().GAME_TICK + "ms, Server: " + getServer().getLastTickDuration() + "ms " + getServer().getLastIncomingPacketsDuration() + "ms " + getServer().getLastEventsDuration() + "ms " + getServer().getLastGameStateDuration() + "ms " + getServer().getLastOutgoingPacketsDuration() + "ms" + newLine +
 				"Game Updater: " + getServer().getGameUpdater().getLastProcessPlayersDuration() + "ms " + getServer().getGameUpdater().getLastProcessNpcsDuration() + "ms " + getServer().getGameUpdater().getLastProcessMessageQueuesDuration() + "ms " + getServer().getGameUpdater().getLastUpdateClientsDuration() + "ms " + getServer().getGameUpdater().getLastDoCleanupDuration() + "ms " + getServer().getGameUpdater().getLastExecuteWalkToActionsDuration() + "ms " + newLine +
 				"Events: " + countAllEvents + ", NPCs: " + getServer().getWorld().getNpcs().size() + ", Players: " + getServer().getWorld().getPlayers().size() + ", Shops: " + getServer().getWorld().getShops().size() + newLine +
 				/*"Player Atk Map: " + getWorld().getPlayersUnderAttack().size() + ", NPC Atk Map: " + getWorld().getNpcsUnderAttack().size() + ", Quests: " + getWorld().getQuests().size() + ", Mini Games: " + getWorld().getMiniGames().size() + newLine +*/
 				s
-			).substring(0, 1999); // Limit to 2000 characters for Discord.
+		);
+
+		return returnString.substring(0, returnString.length() > 1999 ? 1999 : returnString.length()); // Limit to 2000 characters for Discord.
 	}
 
 	public HashMap<String, GameTickEvent> getEvents() {
