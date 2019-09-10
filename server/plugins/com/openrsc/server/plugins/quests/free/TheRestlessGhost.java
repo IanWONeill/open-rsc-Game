@@ -287,7 +287,7 @@ public class TheRestlessGhost implements QuestInterface, PickupExecutiveListener
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.GHOST_RESTLESS.id()) {
@@ -303,7 +303,7 @@ public class TheRestlessGhost implements QuestInterface, PickupExecutiveListener
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == GHOST_COFFIN_OPEN || obj.getID() == GHOST_COFFIN_CLOSED) {
@@ -331,7 +331,7 @@ public class TheRestlessGhost implements QuestInterface, PickupExecutiveListener
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == GHOST_COFFIN_OPEN && player.getQuestStage(quest) == 3
@@ -381,7 +381,7 @@ public class TheRestlessGhost implements QuestInterface, PickupExecutiveListener
 
 	@Override
 	public GameStateEvent onPickup(Player p, GroundItem i) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					Npc skeleton = getNearestNpc(p, NpcId.SKELETON_RESTLESS.id(), 10);

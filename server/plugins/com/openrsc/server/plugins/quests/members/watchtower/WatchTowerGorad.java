@@ -28,7 +28,7 @@ public class WatchTowerGorad implements TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.GORAD.id()) {
@@ -51,7 +51,7 @@ public class WatchTowerGorad implements TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.GORAD.id()) {
@@ -94,7 +94,7 @@ public class WatchTowerGorad implements TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onPlayerAttackNpc(Player p, Npc affectedmob) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (affectedmob.getID() == NpcId.GORAD.id()) {

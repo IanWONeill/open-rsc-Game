@@ -25,7 +25,7 @@ public class Gundai implements TalkToNpcExecutiveListener, TalkToNpcListener, Np
 	private static final Logger LOGGER = LogManager.getLogger(Gundai.class);
 	@Override
 	public GameStateEvent onTalkToNpc(final Player player, final Npc n) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					playerTalk(player, n, "hello, what are you doing out here?");
@@ -201,7 +201,7 @@ public class Gundai implements TalkToNpcExecutiveListener, TalkToNpcListener, Np
 
 	@Override
 	public GameStateEvent onNpcCommand(Npc n, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.GUNDAI.id()) {

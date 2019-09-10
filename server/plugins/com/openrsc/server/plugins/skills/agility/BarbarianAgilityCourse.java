@@ -41,7 +41,7 @@ public class BarbarianAgilityCourse implements WallObjectActionListener,
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == BACK_PIPE || obj.getID() == PIPE) {
@@ -212,7 +212,7 @@ public class BarbarianAgilityCourse implements WallObjectActionListener,
 
 	@Override
 	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (getPlayerOwner().getWorld().getServer().getConfig().WANT_FATIGUE) {

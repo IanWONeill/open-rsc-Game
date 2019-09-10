@@ -24,7 +24,7 @@ public class SpiritTrees implements ObjectActionListener, ObjectActionExecutiveL
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					/** STRONGHOLD SPIRIT TREE

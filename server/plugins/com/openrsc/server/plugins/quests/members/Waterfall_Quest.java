@@ -70,7 +70,7 @@ public class Waterfall_Quest implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.ALMERA.id()) {
@@ -287,7 +287,7 @@ public class Waterfall_Quest implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 464) {
@@ -659,7 +659,7 @@ public class Waterfall_Quest implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 480 && item.getID() == ItemId.LARGE_KEY.id()) {
@@ -772,7 +772,7 @@ public class Waterfall_Quest implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onInvAction(Item i, Player p, String command) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (i.getID() == ItemId.MITHRIL_SEED.id()) {
@@ -864,7 +864,7 @@ public class Waterfall_Quest implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 135) {
@@ -885,7 +885,7 @@ public class Waterfall_Quest implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onInvUseOnWallObject(GameObject obj, Item item, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 135 && item.getID() == ItemId.AN_OLD_KEY.id()) {

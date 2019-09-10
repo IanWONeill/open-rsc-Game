@@ -67,7 +67,7 @@ public class SheepHerder implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() ==  NpcId.FARMER_BRUMTY.id()) {
@@ -205,7 +205,7 @@ public class SheepHerder implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == GATE) {
@@ -266,7 +266,7 @@ public class SheepHerder implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onInvUseOnNpc(Player p, final Npc plagueSheep, Item item) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (plagueSheep.getID() == NpcId.FIRST_PLAGUE_SHEEP.id() || plagueSheep.getID() == NpcId.SECOND_PLAGUE_SHEEP.id()
@@ -494,7 +494,7 @@ public class SheepHerder implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == CATTLE_FURNACE) {

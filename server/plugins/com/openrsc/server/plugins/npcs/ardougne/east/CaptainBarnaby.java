@@ -20,7 +20,7 @@ public final class CaptainBarnaby implements ObjectActionListener,
 
 	@Override
 	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-	return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+	return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					npcTalk(p, n, "Do you want to go on a trip to Karamja?",
@@ -72,7 +72,7 @@ public final class CaptainBarnaby implements ObjectActionListener,
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 157) {

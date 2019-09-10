@@ -18,7 +18,7 @@ public class BankAssistant implements TalkToNpcExecutiveListener,
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					npcTalk(p, n, "Hello welcome to the bank of runescape",

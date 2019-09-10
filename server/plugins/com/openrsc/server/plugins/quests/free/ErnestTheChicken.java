@@ -60,7 +60,7 @@ public class ErnestTheChicken implements QuestInterface,
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == QuestObjects.FOUNTAIN && item.getID() == ItemId.POISONED_FISH_FOOD.id()) {
@@ -126,7 +126,7 @@ public class ErnestTheChicken implements QuestInterface,
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					switch (obj.getID()) {
@@ -241,7 +241,7 @@ public class ErnestTheChicken implements QuestInterface,
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					switch (NpcId.getById(n.getID())) {
@@ -487,7 +487,7 @@ public class ErnestTheChicken implements QuestInterface,
 
 	@Override
 	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					Cache c = p.getCache();
@@ -663,7 +663,7 @@ public class ErnestTheChicken implements QuestInterface,
 
 	@Override
 	public GameStateEvent onInvUseOnItem(Player player, Item item1, Item item2) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (Functions.compareItemsIds(item1, item2, ItemId.FISH_FOOD.id(), ItemId.POISON.id())) {
@@ -687,7 +687,7 @@ public class ErnestTheChicken implements QuestInterface,
 
 	@Override
 	public GameStateEvent onInvUseOnWallObject(GameObject obj, Item item, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.CLOSET_KEY.id() && obj.getID() == 35) {

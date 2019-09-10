@@ -74,7 +74,7 @@ public class LostCity implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					switch (obj.getID()) {
@@ -184,7 +184,7 @@ public class LostCity implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.LEPRECHAUN.id()) {
@@ -418,7 +418,7 @@ public class LostCity implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (atQuestStage(p, quest, 3)) {
@@ -439,7 +439,7 @@ public class LostCity implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onInvUseOnItem(Player p, Item item1, Item item2) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (hasItem(p, ItemId.DRAMEN_BRANCH.id(), 1)) {
@@ -469,7 +469,7 @@ public class LostCity implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == MAGIC_DOOR) {

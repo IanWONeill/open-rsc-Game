@@ -40,7 +40,7 @@ public class Panning implements ObjectActionListener, ObjectActionExecutiveListe
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == PANNING_POINT) {
@@ -78,7 +78,7 @@ public class Panning implements ObjectActionListener, ObjectActionExecutiveListe
 
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == PANNING_POINT) {
@@ -133,7 +133,7 @@ public class Panning implements ObjectActionListener, ObjectActionExecutiveListe
 
 	@Override
 	public GameStateEvent onInvUseOnNpc(Player p, Npc npc, Item item) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (npc.getID() == NpcId.DIGSITE_GUIDE.id()) {
@@ -179,7 +179,7 @@ public class Panning implements ObjectActionListener, ObjectActionExecutiveListe
 
 	@Override
 	public GameStateEvent onInvAction(Item item, Player p, String command) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.PANNING_TRAY.id()) {

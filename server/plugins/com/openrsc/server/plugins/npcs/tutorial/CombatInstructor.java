@@ -24,7 +24,7 @@ public class CombatInstructor implements TalkToNpcExecutiveListener, TalkToNpcLi
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (!hasItem(p, ItemId.WOODEN_SHIELD.id(), 1) && (!hasItem(p, ItemId.BRONZE_LONG_SWORD.id(), 1)) && p.getCache().hasKey("tutorial") && p.getCache().getInt("tutorial") == 15) {
@@ -118,7 +118,7 @@ public class CombatInstructor implements TalkToNpcExecutiveListener, TalkToNpcLi
 
 	@Override
 	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.RAT_TUTORIAL.id()) {

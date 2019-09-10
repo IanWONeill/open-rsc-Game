@@ -19,7 +19,7 @@ public final class BorderGuard implements TalkToNpcExecutiveListener,
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (p.getQuestStage(Quests.PRINCE_ALI_RESCUE) == -1
@@ -79,7 +79,7 @@ public final class BorderGuard implements TalkToNpcExecutiveListener,
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 180 && command.equals("open")) {

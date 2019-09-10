@@ -29,7 +29,7 @@ public class DrinkMixing implements InvUseOnItemListener, InvUseOnItemExecutiveL
 
 	@Override
 	public GameStateEvent onInvUseOnItem(Player p, Item item1, Item item2) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					DrinkMix dm = null;
@@ -172,7 +172,7 @@ public class DrinkMixing implements InvUseOnItemListener, InvUseOnItemExecutiveL
 
 	@Override
 	public GameStateEvent onInvAction(Item item, Player p, String command) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.COCKTAIL_SHAKER.id()) {

@@ -17,7 +17,7 @@ public class Yohnus implements TalkToNpcExecutiveListener, TalkToNpcListener, Wa
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.YOHNUS.id()) {
@@ -64,7 +64,7 @@ public class Yohnus implements TalkToNpcExecutiveListener, TalkToNpcListener, Wa
 
 	@Override
 	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 165) {

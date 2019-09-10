@@ -20,7 +20,7 @@ public final class PortSarimSailor implements ObjectActionExecutiveListener, Obj
 
 	@Override
 	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					npcTalk(p, n, "Do you want to go on a trip to Karamja?",
@@ -72,7 +72,7 @@ public final class PortSarimSailor implements ObjectActionExecutiveListener, Obj
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject arg0, String arg1, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {		Npc sailor = getNearestNpc(p, NpcId.CAPTAIN_TOBIAS.id(), 5);
 					if (sailor != null) {

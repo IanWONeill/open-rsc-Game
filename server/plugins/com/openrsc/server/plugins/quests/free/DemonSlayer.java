@@ -54,7 +54,7 @@ public class DemonSlayer implements QuestInterface,
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 77) {
@@ -102,7 +102,7 @@ public class DemonSlayer implements QuestInterface,
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 77 && obj.getY() == 461) {
@@ -143,7 +143,7 @@ public class DemonSlayer implements QuestInterface,
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.GYPSY.id()) {
@@ -1128,7 +1128,7 @@ public class DemonSlayer implements QuestInterface,
 	}
 
 	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					n.getSkills().setLevel(Skills.HITS, n.getDef().getHits());
@@ -1181,7 +1181,7 @@ public class DemonSlayer implements QuestInterface,
 
 	@Override
 	public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.DELRITH.id()) {

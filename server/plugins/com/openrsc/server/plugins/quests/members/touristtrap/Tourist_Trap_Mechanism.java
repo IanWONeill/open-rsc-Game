@@ -33,7 +33,7 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onUnWield(Player player, Item item) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if ((item.getID() == ItemId.SLAVES_ROBE_BOTTOM.id() || item.getID() == ItemId.SLAVES_ROBE_TOP.id()) && (player.getLocation().inTouristTrapCave()) && player.getQuestStage(Quests.TOURIST_TRAP) != -1) {
@@ -71,7 +71,7 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onInvUseOnNpc(Player p, Npc npc, Item item) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.TECHNICAL_PLANS.id() && npc.getID() == NpcId.BEDABIN_NOMAD_GUARD.id()) {
@@ -228,7 +228,7 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					//closest to irena
@@ -884,7 +884,7 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 1006 && item.getID() == ItemId.BRONZE_BAR.id()) {
@@ -936,7 +936,7 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onInvUseOnItem(Player p, Item item1, Item item2) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (Functions.compareItemsIds(item1, item2, ItemId.FEATHER.id(), ItemId.PROTOTYPE_DART_TIP.id())) {
@@ -956,7 +956,7 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 	
 	@Override
 	public GameStateEvent onPickup(Player player, GroundItem item) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.ANA_IN_A_BARREL.id()) {
@@ -981,7 +981,7 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onDrop(Player p, Item i) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (i.getID() == ItemId.ANA_IN_A_BARREL.id()) {
@@ -1045,7 +1045,7 @@ PickupExecutiveListener, DropListener, DropExecutiveListener, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.MINING_CART_DRIVER.id()) {

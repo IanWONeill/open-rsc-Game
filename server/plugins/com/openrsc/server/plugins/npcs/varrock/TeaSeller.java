@@ -48,7 +48,7 @@ public final class TeaSeller implements ShopInterface,
 
 	@Override
 	public GameStateEvent onPickup(final Player p, final GroundItem i) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (i.getID() == ItemId.DISPLAY_TEA.id()) {
@@ -70,7 +70,7 @@ public final class TeaSeller implements ShopInterface,
 
 	@Override
 	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					npcTalk(p, n, "Greetings!",

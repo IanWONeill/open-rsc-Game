@@ -75,7 +75,7 @@ public class BioHazard implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.ELENA_HOUSE.id()) {
@@ -1026,7 +1026,7 @@ public class BioHazard implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == ELENAS_DOOR) {
@@ -1053,7 +1053,7 @@ public class BioHazard implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == JERICOS_CUPBOARD_ONE_OPEN || obj.getID() == JERICOS_CUPBOARD_ONE_CLOSED) {
@@ -1148,7 +1148,7 @@ public class BioHazard implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.BIRD_FEED.id() && obj.getID() == WATCH_TOWER) {
@@ -1197,7 +1197,7 @@ public class BioHazard implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.MOURNER_ILL.id()) {

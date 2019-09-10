@@ -65,7 +65,7 @@ public class DoorAction {
 	}
 
 	public GameStateEvent onWallObjectAction(final GameObject obj, final Integer click, final Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					// Door's lock needs to be picked, or needs a key.
@@ -871,7 +871,7 @@ public class DoorAction {
 	 */
 
 	public GameStateEvent onInvUseOnWallObject(GameObject obj, Item item, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					int keyItem = ItemId.NOTHING.id();
@@ -998,7 +998,7 @@ public class DoorAction {
 	}
 
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getGameObjectDef().getName().toLowerCase().contains("gate")) {

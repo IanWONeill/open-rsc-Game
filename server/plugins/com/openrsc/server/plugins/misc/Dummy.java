@@ -16,7 +16,7 @@ public class Dummy implements ObjectActionListener, ObjectActionExecutiveListene
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 						getPlayerOwner().message("You swing at the dummy");

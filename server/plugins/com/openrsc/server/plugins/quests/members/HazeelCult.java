@@ -72,7 +72,7 @@ public class HazeelCult implements QuestInterface, TalkToNpcListener, TalkToNpcE
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.CERIL.id()) {
@@ -1210,7 +1210,7 @@ public class HazeelCult implements QuestInterface, TalkToNpcListener, TalkToNpcE
 	@Override
 	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.ALOMONE.id()) {
@@ -1246,7 +1246,7 @@ public class HazeelCult implements QuestInterface, TalkToNpcListener, TalkToNpcE
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == BUTLERS_CUPBOARD_OPEN || obj.getID() == BUTLERS_CUPBOARD_CLOSED) {
@@ -1337,7 +1337,7 @@ public class HazeelCult implements QuestInterface, TalkToNpcListener, TalkToNpcE
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == CARNILLEAN_CHEST_CLOSED && item.getID() == ItemId.CARNILLEAN_KEY.id()) {

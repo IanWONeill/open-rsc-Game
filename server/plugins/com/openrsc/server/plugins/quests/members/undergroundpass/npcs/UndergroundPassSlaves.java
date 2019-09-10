@@ -20,7 +20,7 @@ public class UndergroundPassSlaves implements TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (inArray(n.getID(), NpcId.SLAVE_1.id(), NpcId.SLAVE_2.id(), NpcId.SLAVE_3.id(),

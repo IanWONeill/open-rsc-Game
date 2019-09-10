@@ -42,7 +42,7 @@ public final class Pick implements ObjectActionExecutiveListener,
 
 	@Override
 	public GameStateEvent onObjectAction(final GameObject object, final String command, final Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					switch (object.getID()) {

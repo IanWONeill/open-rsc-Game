@@ -473,7 +473,7 @@ public class FishingContest implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onInvUseOnObject(final GameObject obj, final Item item, final Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 355 && item.getID() == ItemId.SPADE.id()) { // teleport coords:
@@ -504,7 +504,7 @@ public class FishingContest implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onObjectAction(final GameObject obj, final String command, final Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 358) {
@@ -682,7 +682,7 @@ public class FishingContest implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.MOUNTAIN_DWARF.id()) {
@@ -791,7 +791,7 @@ public class FishingContest implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onInvUseOnNpc(Player p, Npc n, Item i) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.SINISTER_STRANGER.id() && i.getID() == ItemId.GARLIC.id()) {

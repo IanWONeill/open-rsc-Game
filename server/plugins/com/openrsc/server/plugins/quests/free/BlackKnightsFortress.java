@@ -67,7 +67,7 @@ public class BlackKnightsFortress implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.SIR_AMIK_VARZE.id()) {
@@ -189,7 +189,7 @@ public class BlackKnightsFortress implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					switch (obj.getID()) {
@@ -242,7 +242,7 @@ public class BlackKnightsFortress implements QuestInterface, TalkToNpcListener,
 	@Override
 	public GameStateEvent onObjectAction(final GameObject obj, String command, final Player player) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					switch (obj.getID()) {
@@ -301,7 +301,7 @@ public class BlackKnightsFortress implements QuestInterface, TalkToNpcListener,
 
 	@Override
 	public GameStateEvent onWallObjectAction(final GameObject obj, Integer click, final Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					switch (obj.getID()) {

@@ -13,7 +13,7 @@ public class FillHole implements ObjectActionExecutiveListener, ObjectActionList
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					getPlayerOwner().setBusy(true);

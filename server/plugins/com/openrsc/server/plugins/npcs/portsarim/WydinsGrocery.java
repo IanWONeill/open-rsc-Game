@@ -50,7 +50,7 @@ public final class WydinsGrocery implements ShopInterface,
 
 	@Override
 	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					npcTalk(p, n, "Welcome to my foodstore",
@@ -80,7 +80,7 @@ public final class WydinsGrocery implements ShopInterface,
 	@Override
 	public GameStateEvent onWallObjectAction(final GameObject obj, final Integer click,
 								   final Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 47 && obj.getX() == 277 && obj.getY() == 658) {

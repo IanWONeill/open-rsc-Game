@@ -28,7 +28,7 @@ public class WeaponMaster implements TalkToNpcListener, TalkToNpcExecutiveListen
 
 	@Override
 	public GameStateEvent onPlayerAttackNpc(Player p, Npc affectedmob) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (isPhoenixGang(p)) {
@@ -57,7 +57,7 @@ public class WeaponMaster implements TalkToNpcListener, TalkToNpcExecutiveListen
 
 	@Override
 	public GameStateEvent onPickup(Player p, GroundItem i) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if ((i.getX() == 107 || i.getX() == 105) && i.getY() == 1476 && i.getID() == ItemId.PHOENIX_CROSSBOW.id()) {
@@ -88,7 +88,7 @@ public class WeaponMaster implements TalkToNpcListener, TalkToNpcExecutiveListen
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (!p.getCache().hasKey("arrav_gang") || isBlackArmGang(p)) {

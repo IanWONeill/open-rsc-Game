@@ -20,7 +20,7 @@ public class EnchantDragonstoneRing implements PlayerMageItemListener, PlayerMag
 
 	@Override
 	public GameStateEvent onPlayerMageItem(Player p, Integer itemID, Integer spellID) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					SpellDef spellDef = p.getWorld().getServer().getEntityHandler().getSpellDef(spellID.intValue());

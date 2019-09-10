@@ -28,7 +28,7 @@ public class GnomeSlice implements InvUseOnItemListener, InvUseOnItemExecutiveLi
 
 	@Override
 	public GameStateEvent onInvUseOnItem(Player p, Item item1, Item item2) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (compareItemsIds(item1, item2, ItemId.KNIFE.id(), ItemId.ORANGE.id())) {

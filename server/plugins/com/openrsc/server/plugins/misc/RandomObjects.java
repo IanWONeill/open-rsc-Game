@@ -19,7 +19,7 @@ public class RandomObjects implements ObjectActionExecutiveListener, ObjectActio
 
 	@Override
 	public GameStateEvent onObjectAction(final GameObject object, String command, Player owner) {
-		return new GameStateEvent(owner.getWorld(), owner, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(owner.getWorld(), owner, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (command.equals("search") && object.getID() == 17) {

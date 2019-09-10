@@ -48,7 +48,7 @@ public class BlurberrysBar implements MiniGameInterface, TalkToNpcListener, Talk
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player player, Npc npc) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (npc.getID() == NpcId.BLURBERRY.id()) {
@@ -301,7 +301,7 @@ public class BlurberrysBar implements MiniGameInterface, TalkToNpcListener, Talk
 
 	@Override
 	public GameStateEvent onInvAction(Item item, Player p, String command) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.GNOME_COCKTAIL_GUIDE.id()) {

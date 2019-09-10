@@ -21,7 +21,7 @@ public class LegendsQuestRanalphDevere implements PlayerAttackNpcListener, Playe
 
 	@Override
 	public GameStateEvent onPlayerAttackNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.RANALPH_DEVERE.id() && !hasItem(p, ItemId.A_HUNK_OF_CRYSTAL.id()) && !p.getCache().hasKey("cavernous_opening")) {
@@ -50,7 +50,7 @@ public class LegendsQuestRanalphDevere implements PlayerAttackNpcListener, Playe
 
 	@Override
 	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.RANALPH_DEVERE.id() && p.getQuestStage(Quests.LEGENDS_QUEST) == 8 && p.getCache().hasKey("viyeldi_companions")) {
@@ -95,7 +95,7 @@ public class LegendsQuestRanalphDevere implements PlayerAttackNpcListener, Playe
 
 	@Override
 	public GameStateEvent onPlayerMageNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.RANALPH_DEVERE.id() && !hasItem(p, ItemId.A_HUNK_OF_CRYSTAL.id()) && !p.getCache().hasKey("cavernous_opening")) {
@@ -115,7 +115,7 @@ public class LegendsQuestRanalphDevere implements PlayerAttackNpcListener, Playe
 
 	@Override
 	public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.RANALPH_DEVERE.id() && !hasItem(p, ItemId.A_HUNK_OF_CRYSTAL.id())) {
@@ -135,7 +135,7 @@ public class LegendsQuestRanalphDevere implements PlayerAttackNpcListener, Playe
 
 	@Override
 	public GameStateEvent onPlayerNpcRun(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.RANALPH_DEVERE.id() && p.getQuestStage(Quests.LEGENDS_QUEST) == 8 && p.getCache().hasKey("viyeldi_companions")) {

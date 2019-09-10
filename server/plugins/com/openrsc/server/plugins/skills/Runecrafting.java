@@ -51,7 +51,7 @@ public class Runecrafting implements ObjectActionListener, ObjectActionExecutive
 			return null;
 		}
 
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (player.getQuestStage(Quests.RUNE_MYSTERIES) != -1)
@@ -122,7 +122,7 @@ public class Runecrafting implements ObjectActionListener, ObjectActionExecutive
 
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (p.getQuestStage(Quests.RUNE_MYSTERIES) != -1)

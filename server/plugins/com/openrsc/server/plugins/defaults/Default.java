@@ -24,7 +24,7 @@ public class Default implements DefaultHandler, TalkToNpcListener, ObjectActionL
 
 	@Override
 	public GameStateEvent onInvUseOnNpc(final Player player, final Npc npc, final Item item) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					player.message("Nothing interesting happens");
@@ -36,7 +36,7 @@ public class Default implements DefaultHandler, TalkToNpcListener, ObjectActionL
 
 	@Override
 	public GameStateEvent onInvUseOnObject(final GameObject object, final Item item, final Player owner) {
-		return new GameStateEvent(owner.getWorld(), owner, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(owner.getWorld(), owner, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (doors.blockInvUseOnWallObject(object, item, owner)) {
@@ -56,7 +56,7 @@ public class Default implements DefaultHandler, TalkToNpcListener, ObjectActionL
 
 	@Override
 	public GameStateEvent onObjectAction(final GameObject obj, final String command, final Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (doors.blockObjectAction(obj, command, player)) {
@@ -74,7 +74,7 @@ public class Default implements DefaultHandler, TalkToNpcListener, ObjectActionL
 
 	@Override
 	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					p.message(
@@ -89,7 +89,7 @@ public class Default implements DefaultHandler, TalkToNpcListener, ObjectActionL
 
 	@Override
 	public GameStateEvent onInvUseOnWallObject(GameObject object, Item item, Player owner) {
-		return new GameStateEvent(owner.getWorld(), owner, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(owner.getWorld(), owner, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (doors.blockInvUseOnWallObject(object, item, owner)) {
@@ -105,7 +105,7 @@ public class Default implements DefaultHandler, TalkToNpcListener, ObjectActionL
 
 	@Override
 	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (doors.blockWallObjectAction(obj, click, p)) {

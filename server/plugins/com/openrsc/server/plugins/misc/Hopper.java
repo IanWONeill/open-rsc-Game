@@ -22,7 +22,7 @@ public class Hopper implements InvUseOnObjectListener, InvUseOnObjectExecutiveLi
 
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getAttribute("contains_item", null) != null) {
@@ -47,7 +47,7 @@ public class Hopper implements InvUseOnObjectListener, InvUseOnObjectExecutiveLi
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 						getPlayerOwner().message("You operate the hopper");

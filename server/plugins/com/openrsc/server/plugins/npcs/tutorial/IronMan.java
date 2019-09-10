@@ -29,7 +29,7 @@ public class IronMan implements TalkToNpcExecutiveListener,
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (!p.getWorld().getServer().getConfig().SPAWN_IRON_MAN_NPCS) return null;
@@ -177,7 +177,7 @@ public class IronMan implements TalkToNpcExecutiveListener,
 
 	@Override
 	public GameStateEvent onNpcCommand(Npc n, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (!p.getWorld().getServer().getConfig().SPAWN_IRON_MAN_NPCS) return null;

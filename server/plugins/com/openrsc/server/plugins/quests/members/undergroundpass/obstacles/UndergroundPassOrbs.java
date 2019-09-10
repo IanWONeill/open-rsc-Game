@@ -40,7 +40,7 @@ public class UndergroundPassOrbs implements ObjectActionListener, ObjectActionEx
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String cmd, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (inArray(obj.getID(), NORTH_PASSAGE)) {
@@ -170,7 +170,7 @@ public class UndergroundPassOrbs implements ObjectActionListener, ObjectActionEx
 
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.PLANK.id() && (obj.getID() == NORTH_PASSAGE[0] || obj.getID() == NORTH_PASSAGE[2])) {

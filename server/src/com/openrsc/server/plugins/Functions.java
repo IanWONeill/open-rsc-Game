@@ -1364,14 +1364,14 @@ public class Functions {
 
 	public static void sleep(final int delay) {
 		// TODO: This should not exist.
-		try {
+		/*try {
 			if (Thread.currentThread().getName().toLowerCase().contains("gamethread"))
 				return;
 			// System.out.println("Sleeping on " +
 			// Thread.currentThread().getName().toLowerCase());
 			Thread.sleep(delay);
 		} catch (final InterruptedException e) {
-		}
+		}*/
 	}
 
 	public static void doGate(final Player p, final GameObject object) {

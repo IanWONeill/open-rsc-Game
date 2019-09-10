@@ -22,7 +22,7 @@ public class Yanni implements TalkToNpcListener, TalkToNpcExecutiveListener, Inv
 
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					boolean hasItemsInterest = false;
@@ -95,7 +95,7 @@ public class Yanni implements TalkToNpcListener, TalkToNpcExecutiveListener, Inv
 
 	@Override
 	public GameStateEvent onInvUseOnNpc(Player p, Npc npc, Item item) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (npc.getID() == NpcId.YANNI.id()) {

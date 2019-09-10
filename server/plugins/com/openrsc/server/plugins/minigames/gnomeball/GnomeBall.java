@@ -52,7 +52,7 @@ InvActionListener, InvActionExecutiveListener, ObjectActionListener, ObjectActio
 	
 	@Override
 	public GameStateEvent onInvUseOnPlayer(Player player, Player otherPlayer, Item item) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.GNOME_BALL.id()) {
@@ -91,7 +91,7 @@ InvActionListener, InvActionExecutiveListener, ObjectActionListener, ObjectActio
 	
 	@Override
 	public GameStateEvent onInvAction(Item item, Player player, String command) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					Zone playerZone = GnomeField.getInstance().resolvePositionToZone(player);
@@ -228,7 +228,7 @@ InvActionListener, InvActionExecutiveListener, ObjectActionListener, ObjectActio
 
 	@Override
 	public GameStateEvent onPickup(Player p, GroundItem item) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.GNOME_BALL.id()) {
@@ -268,7 +268,7 @@ InvActionListener, InvActionExecutiveListener, ObjectActionListener, ObjectActio
 
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 702) {

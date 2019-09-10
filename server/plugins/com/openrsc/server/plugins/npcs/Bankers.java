@@ -42,7 +42,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 		if (player.getWorld().getServer().getConfig().SPAWN_AUCTION_NPCS)
 			messages.add("I'd like to collect my items from auction");
 
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					npc.setBusy(true);
@@ -351,7 +351,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 
 	@Override
 	public GameStateEvent onNpcCommand(Npc n, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (inArray(n.getID(), BANKERS)) {

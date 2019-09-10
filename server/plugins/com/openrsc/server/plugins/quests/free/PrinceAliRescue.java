@@ -909,7 +909,7 @@ public class PrinceAliRescue implements QuestInterface, WallObjectActionListener
 	@Override
 	public GameStateEvent onInvUseOnNpc(final Player p, final Npc npc, final Item item) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (npc.getID() == NpcId.LADY_KELI.id() && item.getID() == ItemId.ROPE.id()) {
@@ -934,7 +934,7 @@ public class PrinceAliRescue implements QuestInterface, WallObjectActionListener
 	@Override
 	public GameStateEvent onInvUseOnWallObject(final GameObject obj, final Item item, final Player player) {
 		final QuestInterface quest = this;
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 45 && item.getID() == ItemId.BRONZE_KEY.id()) {
@@ -971,7 +971,7 @@ public class PrinceAliRescue implements QuestInterface, WallObjectActionListener
 
 	@Override
 	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					//border guard in separate file
@@ -999,7 +999,7 @@ public class PrinceAliRescue implements QuestInterface, WallObjectActionListener
 
 	@Override
 	public GameStateEvent onWallObjectAction(final GameObject obj, final Integer click, final Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == 45) {

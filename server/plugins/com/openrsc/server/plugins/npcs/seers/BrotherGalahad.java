@@ -15,7 +15,7 @@ public class BrotherGalahad implements TalkToNpcExecutiveListener, TalkToNpcList
 
 	@Override
 	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (p.getQuestStage(Quests.THE_HOLY_GRAIL) == -1) {

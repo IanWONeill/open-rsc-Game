@@ -23,7 +23,7 @@ public class Curator implements TalkToNpcExecutiveListener, TalkToNpcListener, I
 
 	@Override
 	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					npcTalk(p, n, "Welcome to the museum of Varrock");
@@ -112,7 +112,7 @@ public class Curator implements TalkToNpcExecutiveListener, TalkToNpcListener, I
 
 	@Override
 	public GameStateEvent onInvUseOnNpc(Player p, Npc n, Item item) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == NpcId.CURATOR.id()) {

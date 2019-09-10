@@ -22,7 +22,7 @@ public class InvCooking implements InvUseOnItemListener, InvUseOnItemExecutiveLi
 
 	@Override
 	public GameStateEvent onInvUseOnItem(Player player, Item item1, Item item2) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item1.getID() == ItemId.CAKE_TIN.id() || item2.getID() == ItemId.CAKE_TIN.id()) {

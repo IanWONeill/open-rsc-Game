@@ -24,7 +24,7 @@ public final class WormBrain implements WallObjectActionListener, WallObjectActi
 
 	@Override
 	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, final Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (p.getWorld().getServer().getConfig().WANT_BARTER_WORMBRAINS && obj.getID() == 30

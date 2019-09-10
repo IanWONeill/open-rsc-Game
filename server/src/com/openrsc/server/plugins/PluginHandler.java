@@ -399,7 +399,7 @@ public final class PluginHandler {
 								@Override
 								public Integer call() throws Exception {
 									try {
-										LOGGER.info("Executing with : " + m.getName());
+										LOGGER.info("Executing with : " + c.getClass().getSimpleName() + "." + m.getName());
 										m.invoke(c, data);
 									} catch (Exception cme) {
 										LOGGER.catching(cme);
@@ -409,6 +409,7 @@ public final class PluginHandler {
 							});
 						getExecutor().execute(task);*/
 						try {
+							LOGGER.info("Executing with : " + c.getClass().getSimpleName() + "." + m.getName() + " : " + Arrays.toString(data));
 							GameStateEvent e = (GameStateEvent) m.invoke(c, data);
 							if(e != null) {
 								getServer().getGameEventHandler().add(e);

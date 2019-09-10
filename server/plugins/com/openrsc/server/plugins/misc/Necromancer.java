@@ -80,7 +80,7 @@ public class Necromancer implements PlayerAttackNpcListener, PlayerAttackNpcExec
 
 	@Override
 	public GameStateEvent onPlayerAttackNpc(Player p, Npc necromancer) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					necromancerFightSpawnMethod(p, necromancer);
@@ -93,7 +93,7 @@ public class Necromancer implements PlayerAttackNpcListener, PlayerAttackNpcExec
 
 	@Override
 	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					necromancerOnKilledMethod(p, n);
@@ -116,7 +116,7 @@ public class Necromancer implements PlayerAttackNpcListener, PlayerAttackNpcExec
 
 	@Override
 	public GameStateEvent onPlayerMageNpc(Player p, Npc necromancer) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					necromancerFightSpawnMethod(p, necromancer);
@@ -134,7 +134,7 @@ public class Necromancer implements PlayerAttackNpcListener, PlayerAttackNpcExec
 	
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					p.playerServerMessage(MessageType.QUEST, "Invrigar the necromancer is not interested in talking");

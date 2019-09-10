@@ -13,7 +13,7 @@ public class Prayer implements ObjectActionExecutiveListener, ObjectActionListen
 
 	@Override
 	public GameStateEvent onObjectAction(final GameObject object, String command, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (command.equalsIgnoreCase("recharge at")) {

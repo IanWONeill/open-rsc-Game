@@ -24,7 +24,7 @@ public class SpinningWheel implements InvUseOnObjectListener,
 
 	@Override
 	public GameStateEvent onInvUseOnObject(GameObject obj, final Item item, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					int produceID = -1;

@@ -25,7 +25,7 @@ public class CutWeb implements InvUseOnWallObjectListener, InvUseOnWallObjectExe
 
 	@Override
 	public GameStateEvent onInvUseOnWallObject(GameObject obj, Item item, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (obj.getID() == WEB) {
@@ -57,7 +57,7 @@ public class CutWeb implements InvUseOnWallObjectListener, InvUseOnWallObjectExe
 
 	@Override
 	public GameStateEvent onWallObjectAction(GameObject obj, Integer click, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					boolean canCut = false;

@@ -21,7 +21,7 @@ public class InspectNet implements ObjectActionListener, ObjectActionExecutiveLi
 	@Override
 	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
 		final FishingTrawler trawler = player.getWorld().getFishingTrawler(player);
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					getPlayerOwner().message("you inspect the net");

@@ -21,7 +21,7 @@ public class DigsiteMiscs implements DropListener, DropExecutiveListener {
 
 	@Override
 	public GameStateEvent onDrop(Player p, Item i) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (i.getID() == ItemId.UNIDENTIFIED_LIQUID.id()) {

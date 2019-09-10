@@ -31,7 +31,7 @@ public class LegendsQuestHolyWater implements InvActionListener, InvActionExecut
 
 	@Override
 	public GameStateEvent onInvUseOnItem(Player player, Item item1, Item item2) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					// simple random for the moment
@@ -66,7 +66,7 @@ public class LegendsQuestHolyWater implements InvActionListener, InvActionExecut
 
 	@Override
 	public GameStateEvent onInvAction(Item item, Player player, String command) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (!player.getInventory().wielding(ItemId.HOLY_WATER_VIAL.id())) {

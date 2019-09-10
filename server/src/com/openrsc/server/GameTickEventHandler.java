@@ -99,6 +99,9 @@ public class GameTickEventHandler {
 		events.clear();
 		events.putAll(sortedHashMap);
 
+		eventsCounts.clear();
+		eventsDurations.clear();
+
 		for (Iterator<Map.Entry<String, GameTickEvent>> it = events.entrySet().iterator(); it.hasNext(); ) {
 			GameTickEvent event = it.next().getValue();
 			if (event == null || event.getOwner() != null && event.getOwner().isUnregistering()) {
@@ -136,9 +139,6 @@ public class GameTickEventHandler {
 
 	public long runGameEvents() {
 		final long eventsStart = System.currentTimeMillis();
-
-		eventsCounts.clear();
-		eventsDurations.clear();
 
 		processEvents();
 

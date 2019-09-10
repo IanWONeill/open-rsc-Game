@@ -25,7 +25,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 
 	@Override
 	public GameStateEvent onInvAction(final Item item, Player player, String command) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (command.equalsIgnoreCase("Identify")) {
@@ -90,7 +90,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 
 	@Override
 	public GameStateEvent onInvUseOnItem(Player player, Item item, Item usedWith) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					ItemHerbSecond secondDef = null;

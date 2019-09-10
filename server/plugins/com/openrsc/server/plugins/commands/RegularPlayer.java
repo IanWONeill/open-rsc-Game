@@ -54,7 +54,7 @@ public final class RegularPlayer implements CommandListener {
 	}
 
 	public GameStateEvent handleCommand(String cmd, String[] args, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (cmd.equalsIgnoreCase("gang")) {

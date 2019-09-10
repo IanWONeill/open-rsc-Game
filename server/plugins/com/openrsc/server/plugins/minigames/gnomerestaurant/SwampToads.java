@@ -22,7 +22,7 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 
 	@Override
 	public GameStateEvent onInvAction(Item item, Player p, String command) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
 					if (item.getID() == ItemId.SWAMP_TOAD.id()) {
@@ -49,7 +49,7 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 	@Override
 	public GameStateEvent onPickup(Player p, GroundItem i) {
 		if (i.getID() == ItemId.SWAMP_TOAD.id()) {
-			return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + getClass().getEnclosingMethod().getName()) {
+			return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 				public void init() {
 					addState(0, () -> {
 						getPlayerOwner().message("you pick up the swamp toad");
