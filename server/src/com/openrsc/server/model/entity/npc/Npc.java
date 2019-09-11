@@ -1177,7 +1177,7 @@ public class Npc extends Mob {
 
 	@Override
 	public String toString() {
-		return "Warning! @yel@" + getWorld().getServer().getEntityHandler().getNpcDef(id).getName() + "@whi@";
+		return "[NPC:" + getDef().getName() + "]";
 	}
 
 	public void updatePosition() {
