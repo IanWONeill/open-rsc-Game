@@ -409,7 +409,7 @@ public final class PluginHandler {
 							});
 						getExecutor().execute(task);*/
 						try {
-							LOGGER.info("Executing with : " + c.getClass().getSimpleName() + "." + m.getName() + " : " + Arrays.deepToString(data));
+							LOGGER.info("Executing Plugin : " + c.getClass().getSimpleName() + "." + m.getName() + " : " + Arrays.deepToString(data));
 							GameStateEvent e = (GameStateEvent) m.invoke(c, data);
 							if(e != null) {
 								getServer().getGameEventHandler().add(e);

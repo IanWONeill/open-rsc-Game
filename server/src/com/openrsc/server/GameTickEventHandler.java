@@ -171,6 +171,9 @@ public class GameTickEventHandler {
 			long o2EventDuration = eventsDurations.get(((Map.Entry) (o2)).getKey());
 
 			if(o1EventDuration == o2EventDuration) {
+				if(o1EventCount == o2EventCount) {
+					return 0;
+				}
 				return o1EventCount < o2EventCount ? 1 : -1;
 			} else {
 				return o1EventDuration < o2EventDuration ? 1 : -1;
@@ -204,6 +207,8 @@ public class GameTickEventHandler {
 				/*"Player Atk Map: " + getWorld().getPlayersUnderAttack().size() + ", NPC Atk Map: " + getWorld().getNpcsUnderAttack().size() + ", Quests: " + getWorld().getQuests().size() + ", Mini Games: " + getWorld().getMiniGames().size() + newLine +*/
 				s
 		);
+
+		LOGGER.info(returnString);
 
 		return returnString.substring(0, returnString.length() > 1999 ? 1999 : returnString.length()); // Limit to 2000 characters for Discord.
 	}
