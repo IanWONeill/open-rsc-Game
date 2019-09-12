@@ -208,7 +208,9 @@ public class GameTickEventHandler {
 				s
 		);
 
-		LOGGER.info(returnString);
+		if(!forInGame) {
+			LOGGER.info(returnString);
+		}
 
 		return returnString.substring(0, returnString.length() > 1999 ? 1999 : returnString.length()); // Limit to 2000 characters for Discord.
 	}
