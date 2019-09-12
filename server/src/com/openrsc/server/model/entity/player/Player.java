@@ -1787,14 +1787,6 @@ public final class Player extends Mob {
 		ActionSender.sendPlayerServerMessage(this, type, string);
 	}
 
-	public void walkThenTeleport(int x1, int y1, int x2, int y2, boolean bubble) {
-		walk(x1, y1);
-		while (!getWalkingQueue().finished()) {
-			sleep(1);
-		}
-		teleport(x2, y2, bubble);
-	}
-
 	public void teleport(int x, int y) {
 		teleport(x, y, false);
 	}
