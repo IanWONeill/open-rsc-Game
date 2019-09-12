@@ -68,24 +68,15 @@ public class Ladders {
 					} else if (obj.getID() == 487) {
 						player.message("You pull the lever");
 						player.teleport(567, 3330);
-						sleep(600);
-						if (player.getX() == 567 && player.getY() == 3330) {
-							displayTeleportBubble(player, player.getX(), player.getY(), false);
-						}
+						return invoke(1, 1);
 					} else if (obj.getID() == 488) {
 						player.message("You pull the lever");
 						player.teleport(282, 3019);
-						sleep(600);
-						if (player.getX() == 282 && player.getY() == 3019) {
-							displayTeleportBubble(player, player.getX(), player.getY(), false);
-						}
+						return invoke(2,1);
 					} else if (obj.getID() == 349) {
 						player.playerServerMessage(MessageType.QUEST, "You pull the lever");
 						player.teleport(621, 596);
-						sleep(600);
-						if (player.getX() == 621 && player.getY() == 596) {
-							displayTeleportBubble(player, player.getX(), player.getY(), false);
-						}
+						return invoke(3, 1);
 					} else if (obj.getID() == 348) {
 						boolean skip = player.getCache().hasKey("hide_wild_lever_warn")
 							&& player.getCache().getBoolean("hide_wild_lever_warn");
@@ -103,10 +94,7 @@ public class Ladders {
 							player.message("you pull the lever");
 							player.teleport(180, 128);
 							displayTeleportBubble(player, player.getX(), player.getY(), false);
-							sleep(600);
-							if (player.getX() == 180 && player.getY() == 128) {
-								displayTeleportBubble(player, player.getX(), player.getY(), false);
-							}
+							return invoke(4, 1);
 						}
 					} else if (obj.getID() == 776) {
 						if (hasItem(player, ItemId.PARAMAYA_REST_TICKET.id())) {
@@ -200,15 +188,7 @@ public class Ladders {
 						if (paladinGuard != null) {
 							npcYell(player, paladinGuard, "Stop right there");
 							paladinGuard.setChasing(player);
-							sleep(1000);
-							if (player.inCombat()) {
-								return null;
-							}
-							int[] coords = coordModifier(player, true, obj);
-							player.teleport(coords[0], coords[1], false);
-							player.message(
-								"You " + command.replace("-", " ") + " the "
-									+ obj.getGameObjectDef().getName().toLowerCase());
+							return invoke(5, 2);
 						}
 					} else if (obj.getID() == 249 && obj.getX() == 98 && obj.getY() == 3537) { // lost city (Zanaris) ladder
 						Npc ladderAttendant = player.getWorld().getNpc(NpcId.FAIRY_LADDER_ATTENDANT.id(), 99, 99, 3537, 3537);
@@ -248,6 +228,51 @@ public class Ladders {
 							"You " + command.replace("-", " ") + " the "
 								+ obj.getGameObjectDef().getName().toLowerCase());
 					}
+					return null;
+				});
+
+				addState(1, () -> {
+					if (player.getX() == 567 && player.getY() == 3330) {
+						displayTeleportBubble(player, player.getX(), player.getY(), false);
+					}
+
+					return null;
+				});
+
+				addState(2, () -> {
+					if (player.getX() == 282 && player.getY() == 3019) {
+						displayTeleportBubble(player, player.getX(), player.getY(), false);
+					}
+
+					return null;
+				});
+
+				addState(3, () -> {
+					if (player.getX() == 621 && player.getY() == 596) {
+						displayTeleportBubble(player, player.getX(), player.getY(), false);
+					}
+
+					return null;
+				});
+
+				addState(4, () -> {
+					if (player.getX() == 180 && player.getY() == 128) {
+						displayTeleportBubble(player, player.getX(), player.getY(), false);
+					}
+
+					return null;
+				});
+
+				addState(5, () -> {
+					if (player.inCombat()) {
+						return null;
+					}
+					int[] coords = coordModifier(player, true, obj);
+					player.teleport(coords[0], coords[1], false);
+					player.message(
+						"You " + command.replace("-", " ") + " the "
+							+ obj.getGameObjectDef().getName().toLowerCase());
+
 					return null;
 				});
 			}
