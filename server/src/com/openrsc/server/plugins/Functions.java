@@ -1362,6 +1362,54 @@ public class Functions {
 		}, "Temporary Remove NPC");
 	}
 
+	public static GameNotifyEvent getBankPinInput(Player player, GameStateEvent parent) {
+		ActionSender.sendBankPinInterface(player);
+		player.setAttribute("bank_pin_entered", null);
+		final GameNotifyEvent notifier = new GameNotifyEvent(player.getWorld(), player, 0, "getBankPinInput Notifier") {
+			@Override
+			public void run() {
+				String enteredPin = player.getAttribute("bank_pin_entered", null);
+				if (enteredPin != null) {
+					setTriggered(true);
+					if (enteredPin.equals("cancel")) {
+						ActionSender.sendCloseBankPinInterface(player);
+						return;
+					}
+					addObjectOut("string_pin",enteredPin);
+				}
+			}
+		};
+		player.getWorld().getServer().getGameEventHandler().add(notifier);
+		return notifier;
+	}
+
+	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final String... options) {
+		// TODO: Why doesn't this perform the same checks and synchronize like showMenu() does?
+		player.resetMenuHandler();
+		GameNotifyEvent event = new GameNotifyEvent(player.getWorld(), player, 0, "showPlayerMenu Notifier") {
+			@Override public void run(){
+				if (player.shouldBreakMenu(npc)) {
+					player.setBusy(false);
+					setTriggered(true);
+					getParentEvent().stop();
+				}
+			}};
+		player.getWorld().getServer().getGameEventHandler().add(event);
+		player.setMenuHandler(new MenuOptionListener(options) {
+			@Override
+			public void handleReply(final int option, final String reply) {
+				event.addObjectOut("int_option", option);
+				event.setTriggered(true);
+			}
+		});
+		ActionSender.sendMenu(player, options);
+		return event;
+	}
+
+	/*
+	 * All of this below here needs to either be removed or converted to using a GameNotifyEvent when the code is completed.
+	 */
+
 	public static void sleep(final int delay) {
 		// TODO: This should not exist.
 		/*try {
@@ -1372,6 +1420,14 @@ public class Functions {
 			Thread.sleep(delay);
 		} catch (final InterruptedException e) {
 		}*/
+	}
+
+	public static void walkThenTeleport(Player player, int x1, int y1, int x2, int y2, boolean bubble) {
+		player.walk(x1, y1);
+		while (!player.getWalkingQueue().finished()) {
+			sleep(1);
+		}
+		player.teleport(x2, y2, bubble);
 	}
 
 	public static void doGate(final Player p, final GameObject object) {
@@ -1450,27 +1506,6 @@ public class Functions {
 			return null;
 		}
 		return enteredPin;
-	}
-
-	public static GameNotifyEvent getBankPinInput(Player player, GameStateEvent parent) {
-		ActionSender.sendBankPinInterface(player);
-		player.setAttribute("bank_pin_entered", null);
-		final GameNotifyEvent notifier = new GameNotifyEvent(player.getWorld(), player, 0, "getBankPinInput Notifier") {
-			@Override
-			public void run() {
-				String enteredPin = player.getAttribute("bank_pin_entered", null);
-				if (enteredPin != null) {
-					setTriggered(true);
-					if (enteredPin.equals("cancel")) {
-						ActionSender.sendCloseBankPinInterface(player);
-						return;
-					}
-					addObjectOut("string_pin",enteredPin);
-				}
-			}
-		};
-		player.getWorld().getServer().getGameEventHandler().add(notifier);
-		return notifier;
 	}
 
 	/**
@@ -1615,28 +1650,6 @@ public class Functions {
 			sleep(4 * player.getWorld().getServer().getConfig().GAME_TICK);
 		}
 	}
-
-	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final String... options) {
-		player.resetMenuHandler();
-		GameNotifyEvent event = new GameNotifyEvent(player.getWorld(), player, 0, "showPlayerMenu Notifier") {
-			@Override public void run(){
-				if (player.shouldBreakMenu(npc)) {
-					player.setBusy(false);
-					setTriggered(true);
-					getParentEvent().stop();
-				}
-			}};
-		player.getWorld().getServer().getGameEventHandler().add(event);
-		player.setMenuHandler(new MenuOptionListener(options) {
-			@Override
-			public void handleReply(final int option, final String reply) {
-				event.addObjectOut("int_option", option);
-				event.setTriggered(true);
-			}
-		});
-		ActionSender.sendMenu(player, options);
-		return event;
-	}
 	
 	public static int showMenu(final Player player, final String... options) {
 		return showMenu(player, null, true, options);
@@ -1647,6 +1660,7 @@ public class Functions {
 	}
 
 	public static int showMenu(final Player player, final Npc npc, final boolean sendToClient, final String... options) {
+		// TODO: Why doesn't Functions.showPlayerMenu also synchronize and check for under attack state?
 		final long start = System.currentTimeMillis();
 		if (npc != null) {
 			if (npc.isRemoved()) {

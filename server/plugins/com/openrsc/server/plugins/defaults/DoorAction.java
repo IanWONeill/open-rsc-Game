@@ -331,11 +331,7 @@ public class DoorAction {
 							} else {
 								p.message("Your weight is too much for the bridge to hold");
 								p.teleport(544, 3330);
-								sleep(650);
-								p.message("You fall through the bridge");
-								sleep(1000);
-								p.message("The lava singes you");
-								p.damage(DataConversions.roundUp(p.getSkills().getLevel(Skills.HITS) / 5));
+								return invoke(1, 1);
 							}
 							break;
 
@@ -569,8 +565,7 @@ public class DoorAction {
 								if (dwarf != null) {
 									npcTalk(p, dwarf, "Sorry only the top miners are allowed in there");
 								}
-								sleep(600);
-								p.message("You need a mining of level 60 to enter");
+								return invoke(3, 1);
 							} else {
 								doDoor(obj, p);
 							}
@@ -586,9 +581,7 @@ public class DoorAction {
 								if (master != null) {
 									npcTalk(p, master, "Sorry only experienced craftsmen are allowed in here");
 								}
-								sleep(600);
-								p.setBusy(false);
-								p.message("You need a crafting level of 40 to enter the guild");
+								return invoke(4, 1);
 							} else if (!p.getInventory().wielding(ItemId.BROWN_APRON.id())) {
 								Npc master = p.getWorld().getNpc(NpcId.MASTER_CRAFTER.id(), 341, 349, 599, 612);
 								if (master != null) {
@@ -609,8 +602,7 @@ public class DoorAction {
 								if (chef != null) {
 									npcTalk(p, chef, "Sorry. Only the finest chefs are allowed in here");
 								}
-								sleep(600);
-								p.message("You need a cooking level of 32 to enter");
+								return invoke(5, 1);
 							} else if (!p.getInventory().wielding(ItemId.CHEFS_HAT.id())) {
 								Npc chef = p.getWorld().getNpc(NpcId.HEAD_CHEF.id(), 176, 181, 480, 487);
 								if (chef != null) {
@@ -819,6 +811,38 @@ public class DoorAction {
 							}
 							break;
 					}
+
+					return null;
+				});
+
+				addState(1, () -> {
+					p.message("You fall through the bridge");
+
+					return invoke(2, 2);
+				});
+
+				addState(2, () -> {
+					p.message("The lava singes you");
+					p.damage(DataConversions.roundUp(p.getSkills().getLevel(Skills.HITS) / 5));
+
+					return null;
+				});
+
+				addState(3, () -> {
+					p.message("You need a mining of level 60 to enter");
+
+					return null;
+				});
+
+				addState(4, () -> {
+					p.setBusy(false);
+					p.message("You need a crafting level of 40 to enter the guild");
+
+					return null;
+				});
+
+				addState(5, () -> {
+					p.message("You need a cooking level of 32 to enter");
 
 					return null;
 				});
