@@ -82,6 +82,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 	}
 
 	public StateEventContext invokeOnNotify(GameNotifyEvent child, int state, int delay) {
+		getWorld().getServer().getGameEventHandler().add(child);
 		linkNotifier(child);
 		this.child.setReturnState(state);
 		this.child.setReturnDelay(delay);
@@ -102,7 +103,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 
 	private void linkNotifier(GameNotifyEvent child) {
 		child.setParentEvent(this);
-		this.child = child;
+		setNotifyEvent(child);
 	}
 
 	public void unlinkNotifier() {

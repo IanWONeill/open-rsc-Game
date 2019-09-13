@@ -6,7 +6,7 @@ import com.openrsc.server.model.world.World;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class GameNotifyEvent extends GameTickEvent {
+public abstract class GameNotifyEvent extends GameStateEvent {
 
 	private GameStateEvent parentEvent;
 	private final Map<String, Object> inObjects = new ConcurrentHashMap<>();
@@ -23,16 +23,20 @@ public abstract class GameNotifyEvent extends GameTickEvent {
 		this.parentEvent = event;
 	}
 
-	public void setTriggered(boolean val) {
-		triggered = val;
+	public void trigger() {
+		triggered = true;
+		restoreParent();
+		onTriggered();
 	}
 
-	public void restoreParent() {
+	public void onTriggered() {}
+
+	private void restoreParent() {
 		getParentEvent().setState(getReturnState());
 		getParentEvent().setDelayTicks(getReturnDelay());
 	}
 
-	public boolean isTriggered() { return this.triggered; }
+	public boolean isTriggered() { return triggered; }
 
 	public void addObjectOut(String name, Object item) {
 		outObjects.put(name, item);
@@ -43,11 +47,11 @@ public abstract class GameNotifyEvent extends GameTickEvent {
 	}
 
 	public Object getObjectOut(String name) {
-		return this.outObjects.get(name);
+		return outObjects.get(name);
 	}
 
 	public Object getObjectIn(String name) {
-		return this.inObjects.get(name);
+		return inObjects.get(name);
 	}
 
 	public int getReturnState() {

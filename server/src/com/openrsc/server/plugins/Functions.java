@@ -1367,39 +1367,45 @@ public class Functions {
 		player.setAttribute("bank_pin_entered", null);
 		final GameNotifyEvent notifier = new GameNotifyEvent(player.getWorld(), player, 0, "getBankPinInput Notifier") {
 			@Override
-			public void run() {
-				String enteredPin = player.getAttribute("bank_pin_entered", null);
-				if (enteredPin != null) {
-					setTriggered(true);
-					if (enteredPin.equals("cancel")) {
-						ActionSender.sendCloseBankPinInterface(player);
-						return;
+			public void init() {
+				addState(0, () -> {
+					String enteredPin = player.getAttribute("bank_pin_entered", null);
+					if (enteredPin != null) {
+						trigger();
+						if (enteredPin.equals("cancel")) {
+							ActionSender.sendCloseBankPinInterface(player);
+						}
+						addObjectOut("string_pin",enteredPin);
 					}
-					addObjectOut("string_pin",enteredPin);
-				}
+
+					return isTriggered() ? null : invoke(0, 1);
+				});
 			}
 		};
-		player.getWorld().getServer().getGameEventHandler().add(notifier);
 		return notifier;
 	}
 
 	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final String... options) {
-		// TODO: Why doesn't this perform the same checks and synchronize like showMenu() does?
+		// TODO: THis doesn't cause the player to speak like the other showMenu() calls do.
 		player.resetMenuHandler();
 		GameNotifyEvent event = new GameNotifyEvent(player.getWorld(), player, 0, "showPlayerMenu Notifier") {
-			@Override public void run(){
-				if (player.shouldBreakMenu(npc)) {
-					player.setBusy(false);
-					setTriggered(true);
-					getParentEvent().stop();
-				}
+			@Override public void init(){
+				addState(0, () -> {
+					if (player.shouldBreakMenu(npc)) {
+						player.setBusy(false);
+						trigger();
+						getParentEvent().stop();
+					}
+
+					return isTriggered() ? null : invoke(0, 1);
+				});
 			}};
-		player.getWorld().getServer().getGameEventHandler().add(event);
 		player.setMenuHandler(new MenuOptionListener(options) {
 			@Override
 			public void handleReply(final int option, final String reply) {
+				player.setOption(option);
 				event.addObjectOut("int_option", option);
-				event.setTriggered(true);
+				event.trigger();
 			}
 		});
 		ActionSender.sendMenu(player, options);

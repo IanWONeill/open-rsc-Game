@@ -86,7 +86,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					return null;
 				});
 				addState(3, () -> {
-					String pin = (String)getNotifyEvent().getObjectOut("string_ping");
+					String pin = (String)getNotifyEvent().getObjectOut("string_pin");
 					if (pin == null) {
 						getPlayerOwner().setBusy(false);
 						npc.setBusy(false);
