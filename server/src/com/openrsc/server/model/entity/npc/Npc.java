@@ -220,11 +220,6 @@ public class Npc extends Mob {
 		this(world, new NPCLoc(id, startX, startY, minX, maxX, minY, maxY));
 	}
 
-	public Npc(World world, Point location, int x, String username) {
-		super(world);
-		//Default constructor for NPC, this is useful for finding the name of an NPC without having to spawn an NPC.
-	}
-
 	public Npc(World world, NPCLoc loc) {
 		super(world);
 

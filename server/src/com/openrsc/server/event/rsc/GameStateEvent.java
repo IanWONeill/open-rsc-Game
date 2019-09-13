@@ -80,6 +80,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 					return block.call();
 				} catch (Exception a) {
 					LOGGER.error("addState() for Event \"" + getDescriptor() + "\": " + a.getMessage());
+					LOGGER.catching(a);
 				}
 				return null;
 			}

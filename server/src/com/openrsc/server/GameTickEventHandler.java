@@ -109,11 +109,7 @@ public class GameTickEventHandler {
 				continue;
 			}
 			try {
-				event.countdown();
-				if (event.shouldRun()) {
-					event.doRun();
-					event.resetCountdown();
-				}
+				event.doRun();
 			} catch (Exception e) {
 				LOGGER.catching(e);
 				event.stop();

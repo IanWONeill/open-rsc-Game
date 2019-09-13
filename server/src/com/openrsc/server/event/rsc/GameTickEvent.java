@@ -39,7 +39,11 @@ public abstract class GameTickEvent {
 
 	public final long doRun() {
 		final long eventStart	= System.currentTimeMillis();
-		run();
+		countdown();
+		if (shouldRun()) {
+			run();
+			resetCountdown();
+		}
 		final long eventEnd		= System.currentTimeMillis();
 		final long eventTime	= eventEnd - eventStart;
 		lastEventDuration		= eventTime;
