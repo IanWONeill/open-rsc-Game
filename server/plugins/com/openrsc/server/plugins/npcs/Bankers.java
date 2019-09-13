@@ -87,11 +87,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 				});
 				addState(3, () -> {
 					String pin = (String)getNotifyEvent().getObjectOut("string_pin");
-					if (pin == null) {
-						getPlayerOwner().setBusy(false);
-						npc.setBusy(false);
-						return null;
-					}
 					try {
 						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
 						statement.setString(1, getPlayerOwner().getUsername());
@@ -192,7 +187,8 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 				});
 				addState(13, () -> {
 					String bankPin = (String)getNotifyEvent().getObjectOut("string_pin");
-					if (bankPin == null) {
+					if (bankPin == "cancel") {
+						ActionSender.sendBox(getPlayerOwner(), "You have not entered a bank pin.%No bank pin set.", false);
 						getPlayerOwner().setBusy(false);
 						npc.setBusy(false);
 						return null;
@@ -215,11 +211,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 				});
 				addState(14, () -> {
 					String bankPin = (String)getNotifyEvent().getObjectOut("string_pin");
-					if (bankPin == null) {
-						getPlayerOwner().setBusy(false);
-						npc.setBusy(false);
-						return null;
-					}
 					try {
 						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
 						statement.setString(1, getPlayerOwner().getUsername());
@@ -242,7 +233,8 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 				addState(15, () -> {
 					try {
 						String changeTo = (String)getNotifyEvent().getObjectOut("string_pin");
-						if (changeTo == null) {
+						if (changeTo == "cancel") {
+							ActionSender.sendBox(getPlayerOwner(), "You have not entered a bank pin.%No bank pin set.", false);
 							getPlayerOwner().setBusy(false);
 							npc.setBusy(false);
 							return null;
@@ -253,7 +245,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 						if (result.next()) {
 							changeTo = DataConversions.hashPassword(changeTo, result.getString("salt"));
 							getPlayerOwner().getCache().store("bank_pin", changeTo);
-							ActionSender.sendBox(getPlayerOwner(), "Your bank pin has been set.", false);
+							ActionSender.sendBox(getPlayerOwner(), "You have set your bank pin.", false);
 						}
 					} catch (SQLException e) {
 						LOGGER.catching(e);
@@ -264,11 +256,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 				});
 				addState(16, () -> {
 					String bankPin = (String)getNotifyEvent().getObjectOut("string_pin");
-					if (bankPin == null) {
-						getPlayerOwner().setBusy(false);
-						npc.setBusy(false);
-						return null;
-					}
 					try {
 						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
 						statement.setString(1, getPlayerOwner().getUsername());
@@ -317,11 +304,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 				});
 				addState(19, () -> {
 					String pin = (String)getNotifyEvent().getObjectOut("string_pin");
-					if (pin == null) {
-						getPlayerOwner().setBusy(false);
-						npc.setBusy(false);
-						return null;
-					}
 					try {
 						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
 						statement.setString(1, getPlayerOwner().getUsername());
@@ -390,10 +372,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					return invoke(2, 0);
 				});
 				addState(1, () -> {
-					String pin;
-					if ((pin=(String)getNotifyEvent().getObjectOut("string_pin")) == null) {
-						return null;
-					}
+					String pin = (String)getNotifyEvent().getObjectOut("string_pin");
 					try {
 						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
 						statement.setString(1, getPlayerOwner().getUsername());

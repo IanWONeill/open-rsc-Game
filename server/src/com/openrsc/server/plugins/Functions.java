@@ -1390,33 +1390,50 @@ public class Functions {
 	 * Remove parent argument in each of these calls.
 	 */
 	public static GameNotifyEvent getBankPinInput(Player player, GameStateEvent parent) {
-		ActionSender.sendBankPinInterface(player);
-		player.setAttribute("bank_pin_entered", null);
-		final GameNotifyEvent notifier = new GameNotifyEvent(player.getWorld(), player, 0, "getBankPinInput Notifier") {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "getBankPinInput Notifier") {
 			@Override
 			public void init() {
 				addState(0, () -> {
+					player.setAttribute("bank_pin_entered", null);
+					ActionSender.sendBankPinInterface(player);
+
+					return invoke(1, 0);
+				});
+
+				addState(1, () -> {
 					String enteredPin = player.getAttribute("bank_pin_entered", null);
 					if (enteredPin != null) {
 						trigger();
-						if (enteredPin.equals("cancel")) {
-							ActionSender.sendCloseBankPinInterface(player);
-						}
-						addObjectOut("string_pin",enteredPin);
+						addObjectOut("string_pin", enteredPin);
 					}
 
-					return isTriggered() ? null : invoke(0, 1);
+					return isTriggered() ? null : invoke(1, 1);
 				});
 			}
 		};
-		return notifier;
 	}
 
 	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final String... options) {
-		player.resetMenuHandler();
-		GameNotifyEvent event = new GameNotifyEvent(player.getWorld(), player, 0, "showPlayerMenu Notifier") {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "showPlayerMenu Notifier") {
 			@Override public void init(){
 				addState(0, () -> {
+					final GameNotifyEvent event = this;
+
+					player.resetMenuHandler();
+					player.setMenuHandler(new MenuOptionListener(options) {
+						@Override
+						public void handleReply(final int option, final String reply) {
+							player.setOption(option);
+							event.addObjectOut("int_option", option);
+							event.trigger();
+						}
+					});
+					ActionSender.sendMenu(player, options);
+
+					return invoke(1, 0);
+				});
+
+				addState(1, () -> {
 					if (player.shouldBreakMenu(npc)) {
 						player.setBusy(false);
 						player.setOption(-1);
@@ -1433,19 +1450,10 @@ public class Functions {
 						return null;
 					}
 
-					return invoke(0, 1);
+					return invoke(1, 1);
 				});
-			}};
-		player.setMenuHandler(new MenuOptionListener(options) {
-			@Override
-			public void handleReply(final int option, final String reply) {
-				player.setOption(option);
-				event.addObjectOut("int_option", option);
-				event.trigger();
 			}
-		});
-		ActionSender.sendMenu(player, options);
-		return event;
+		};
 	}
 
 	/**

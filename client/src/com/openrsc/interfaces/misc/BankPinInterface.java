@@ -62,7 +62,7 @@ public class BankPinInterface extends NComponent {
 		exitButton.setInputListener(new InputListener() {
 			@Override
 			public boolean onMouseDown(int clickX, int clickY, int mButtonDown, int mButtonClick) {
-				hide();
+				cancel();
 				return super.onMouseDown(clickX, clickY, mButtonDown, mButtonClick);
 			}
 		});
@@ -78,7 +78,8 @@ public class BankPinInterface extends NComponent {
 		resetPin.setInputListener(new InputListener() {
 			@Override
 			public boolean onMouseDown(int clickX, int clickY, int mButtonDown, int mButtonClick) {
-				// TODO Auto-generated method stub
+				// TODO: Forgot your bank pin code. This just closes it.
+				cancel();
 				return super.onMouseDown(clickX, clickY, mButtonDown, mButtonClick);
 			}
 		});
@@ -144,14 +145,6 @@ public class BankPinInterface extends NComponent {
 					return true;
 				}
 
-				private void sendBankPin() {
-					getClient().packetHandler.getClientStream().newPacket(199);
-					getClient().packetHandler.getClientStream().writeBuffer1.putByte(8);
-					getClient().packetHandler.getClientStream().writeBuffer1.putByte(0);
-					getClient().packetHandler.getClientStream().writeBuffer1.putString(bankPin);
-					getClient().packetHandler.getClientStream().finishPacket();
-				}
-
 				private void updateDigits() {
 					digitsEnteredText.setText("? ? ? ?");
 					for (int i = 0; i < digitsEntered; i++) {
@@ -176,6 +169,26 @@ public class BankPinInterface extends NComponent {
 		addComponent(titleBox);
 		addComponent(alternativeBox);
 		setVisible(false);
+	}
+
+	private void sendBankPin() {
+		getClient().packetHandler.getClientStream().newPacket(199);
+		getClient().packetHandler.getClientStream().writeBuffer1.putByte(8);
+		getClient().packetHandler.getClientStream().writeBuffer1.putByte(0);
+		getClient().packetHandler.getClientStream().writeBuffer1.putString(bankPin);
+		getClient().packetHandler.getClientStream().finishPacket();
+	}
+
+	private void sendCancelBankPin() {
+		getClient().packetHandler.getClientStream().newPacket(199);
+		getClient().packetHandler.getClientStream().writeBuffer1.putByte(8);
+		getClient().packetHandler.getClientStream().writeBuffer1.putByte(1);
+		getClient().packetHandler.getClientStream().finishPacket();
+	}
+
+	public void cancel() {
+		hide();
+		sendCancelBankPin();
 	}
 
 	public void show() {

@@ -4,8 +4,14 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class GameTickEvent {
+	/**
+	 * Logger instance
+	 */
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	protected boolean running = true;
 	private Mob owner;
@@ -63,6 +69,7 @@ public abstract class GameTickEvent {
 	}
 
 	public final void stop() {
+		LOGGER.info("Stopping : " + getDescriptor() + " : " + getOwner());
 		running = false;
 	}
 
