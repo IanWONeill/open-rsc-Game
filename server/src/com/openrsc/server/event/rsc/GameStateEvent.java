@@ -12,6 +12,8 @@ import java.util.concurrent.Callable;
 public abstract class GameStateEvent extends GameTickEvent {
 
 	private final int STATE_WAITING_FOR_NOTIFY = -1;
+	private final int STATE_ENDED = -2;
+
 
 	/**
 	 * The asynchronous logger.
@@ -35,15 +37,20 @@ public abstract class GameStateEvent extends GameTickEvent {
 
 	@Override
 	public void run() {
-		if (eventState == STATE_WAITING_FOR_NOTIFY)
+		if (getState() == STATE_WAITING_FOR_NOTIFY)
 			return;
+
+		if(getState() == STATE_ENDED) {
+			stop();
+			return;
+		}
 
 		StateEventContext result = action();
 		if (result == null)
 			stop();
 		else {
-			this.eventState = result.getState();
-			this.setDelayTicks(result.getDelay());
+			setState(result.getState());
+			setDelayTicks(result.getDelay());
 			if (result.getDelay() == 0)
 				this.run();
 		}
@@ -52,7 +59,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 	private StateEventContext action() {
 		StateEventContext result = null;
 		try {
-			result = tasks.get(this.eventState).call();
+			result = tasks.get(getState()).call();
 		} catch (Exception a) {
 			LOGGER.error("action() for Event \"" + getDescriptor() + "\": " + a.getMessage());
 		}
@@ -79,6 +86,14 @@ public abstract class GameStateEvent extends GameTickEvent {
 
 	public StateEventContext invoke(int state, int delay) {
 		return new StateEventContext(state, delay);
+	}
+
+	public StateEventContext endOnNotify(GameNotifyEvent child) {
+		return invokeOnNotify(child, STATE_ENDED, 0);
+	}
+
+	public StateEventContext endOnNotify(GameNotifyEvent child, int delay) {
+		return invokeOnNotify(child, STATE_ENDED, delay);
 	}
 
 	public StateEventContext invokeOnNotify(GameNotifyEvent child, int state, int delay) {

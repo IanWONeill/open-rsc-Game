@@ -1362,6 +1362,9 @@ public class Functions {
 		}, "Temporary Remove NPC");
 	}
 
+	/*
+	 * Remove parent argument in each of these calls.
+	 */
 	public static GameNotifyEvent getBankPinInput(Player player, GameStateEvent parent) {
 		ActionSender.sendBankPinInterface(player);
 		player.setAttribute("bank_pin_entered", null);
@@ -1386,18 +1389,27 @@ public class Functions {
 	}
 
 	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final String... options) {
-		// TODO: THis doesn't cause the player to speak like the other showMenu() calls do.
 		player.resetMenuHandler();
 		GameNotifyEvent event = new GameNotifyEvent(player.getWorld(), player, 0, "showPlayerMenu Notifier") {
 			@Override public void init(){
 				addState(0, () -> {
 					if (player.shouldBreakMenu(npc)) {
 						player.setBusy(false);
+						player.setOption(-1);
 						trigger();
 						getParentEvent().stop();
 					}
 
-					return isTriggered() ? null : invoke(0, 1);
+					if(isTriggered()) {
+						if(player.getOption() >= 0 && options[player.getOption()] != null) {
+							GameNotifyEvent notifier = playerTalk(this, player, npc, options[player.getOption()]);
+							return endOnNotify(notifier);
+						}
+
+						return null;
+					}
+
+					return invoke(0, 1);
 				});
 			}};
 		player.setMenuHandler(new MenuOptionListener(options) {
@@ -1409,6 +1421,57 @@ public class Functions {
 			}
 		});
 		ActionSender.sendMenu(player, options);
+		return event;
+	}
+
+	/**
+	 * Player message(s), each message has 4 tick delay between.
+	 *
+	 * @param player
+	 * @param npc
+	 * @param messages
+	 */
+	public static GameNotifyEvent playerTalk(final GameStateEvent parent, final Player player, final Npc npc, final String... messages) {
+		GameNotifyEvent event = new GameNotifyEvent(player.getWorld(), player, 0, "playerTalk Notifier") {
+			@Override public void init(){
+				int state = 0;
+
+				for (final String message : messages) {
+					addState(state++, () -> {
+						if (!message.equalsIgnoreCase("null")) {
+							if (npc != null) {
+								if (npc.isRemoved()) {
+									player.setBusy(false);
+									trigger();
+									return null;
+								}
+							}
+							if (npc != null) {
+								npc.resetPath();
+								npc.setBusyTimer(4);
+							}
+							if (!player.inCombat()) {
+								if (npc != null) {
+									npc.face(player);
+									player.face(npc);
+								}
+								player.setBusyTimer(4);
+								player.resetPath();
+							}
+							player.getUpdateFlags().setChatMessage(new ChatMessage(player, message, (npc == null ? player : npc)));
+						}
+
+						return nextState( 4);
+					});
+				}
+
+				// Add a final state ... We just want to emulate the last sleep() before notifying
+				addState(state, () -> {
+					trigger();
+					return null;
+				});
+			}
+		};
 		return event;
 	}
 
@@ -1494,24 +1557,6 @@ public class Functions {
 		sleep(1200);
 
 		registerObject(new GameObject(object.getWorld(), object.getLoc()));
-	}
-
-	public static String getBankPinInput(Player player) {
-		ActionSender.sendBankPinInterface(player);
-		player.setAttribute("bank_pin_entered", null);
-		String enteredPin = null;
-		while (true) {
-			enteredPin = player.getAttribute("bank_pin_entered", null);
-			if (enteredPin != null) {
-				break;
-			}
-			Functions.sleep(100);
-		}
-		if (enteredPin.equals("cancel")) {
-			ActionSender.sendCloseBankPinInterface(player);
-			return null;
-		}
-		return enteredPin;
 	}
 
 	/**
@@ -1622,40 +1667,8 @@ public class Functions {
 	}
 
 	/**
-	 * Player message(s), each message has 2.2s delay between.
-	 *
-	 * @param player
-	 * @param npc
-	 * @param messages
+	 * Mostly converted after here
 	 */
-	public static void playerTalk(final Player player, final Npc npc, final String... messages) {
-		for (final String message : messages) {
-			if (!message.equalsIgnoreCase("null")) {
-				if (npc != null) {
-					if (npc.isRemoved()) {
-						player.setBusy(false);
-						return;
-					}
-				}
-				player.getWorld().getServer().post(() -> {
-					if (npc != null) {
-						npc.resetPath();
-						npc.setBusyTimer(4);
-					}
-					if (!player.inCombat()) {
-						if (npc != null) {
-							npc.face(player);
-							player.face(npc);
-						}
-						player.setBusyTimer(4);
-						player.resetPath();
-					}
-					player.getUpdateFlags().setChatMessage(new ChatMessage(player, message, (npc == null ? player : npc)));
-				}, "Talk as Player");
-			}
-			sleep(4 * player.getWorld().getServer().getConfig().GAME_TICK);
-		}
-	}
 	
 	public static int showMenu(final Player player, final String... options) {
 		return showMenu(player, null, true, options);
@@ -1715,5 +1728,63 @@ public class Functions {
 			}
 			return -1;
 		}
+	}
+
+	/**
+	 * Fully converted after here
+	 */
+
+	/**
+	 * Player message(s), each message has 2.2s delay between.
+	 *
+	 * @param player
+	 * @param npc
+	 * @param messages
+	 */
+	public static void playerTalk(final Player player, final Npc npc, final String... messages) {
+		for (final String message : messages) {
+			if (!message.equalsIgnoreCase("null")) {
+				if (npc != null) {
+					if (npc.isRemoved()) {
+						player.setBusy(false);
+						return;
+					}
+				}
+				player.getWorld().getServer().post(() -> {
+					if (npc != null) {
+						npc.resetPath();
+						npc.setBusyTimer(4);
+					}
+					if (!player.inCombat()) {
+						if (npc != null) {
+							npc.face(player);
+							player.face(npc);
+						}
+						player.setBusyTimer(4);
+						player.resetPath();
+					}
+					player.getUpdateFlags().setChatMessage(new ChatMessage(player, message, (npc == null ? player : npc)));
+				}, "Talk as Player");
+			}
+			sleep(4 * player.getWorld().getServer().getConfig().GAME_TICK);
+		}
+	}
+
+	public static String getBankPinInput(Player player) {
+		ActionSender.sendBankPinInterface(player);
+		player.setAttribute("bank_pin_entered", null);
+		String enteredPin = null;
+		while (true) {
+			enteredPin = player.getAttribute("bank_pin_entered", null);
+			if (enteredPin != null) {
+				break;
+			}
+			Functions.sleep(100);
+		}
+		if (enteredPin.equals("cancel")) {
+			ActionSender.sendCloseBankPinInterface(player);
+			return null;
+		}
+		return enteredPin;
 	}
 }

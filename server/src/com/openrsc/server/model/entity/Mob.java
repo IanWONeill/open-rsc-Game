@@ -648,7 +648,7 @@ public abstract class Mob extends Entity {
 		return statRestorationEvent;
 	}
 
-	public UpdateFlags getUpdateFlags() {
+	public synchronized UpdateFlags getUpdateFlags() {
 		return updateFlags;
 	}
 
