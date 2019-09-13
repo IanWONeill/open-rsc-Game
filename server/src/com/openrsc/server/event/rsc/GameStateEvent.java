@@ -67,6 +67,11 @@ public abstract class GameStateEvent extends GameTickEvent {
 	}
 
 	public void addState(int state, Callable<StateEventContext> block) {
+		if(state < 0 ) {
+			LOGGER.error("Invalid addState() for Event \"" + getDescriptor() + "\"");
+			return;
+		}
+
 		tasks.put(state, new StateEventTask() {
 			@Override
 			public StateEventContext call() {
@@ -89,11 +94,11 @@ public abstract class GameStateEvent extends GameTickEvent {
 	}
 
 	public StateEventContext endOnNotify(GameNotifyEvent child) {
-		return invokeOnNotify(child, STATE_ENDED, 0);
+		return endOnNotify(child, 0);
 	}
 
-	public StateEventContext endOnNotify(GameNotifyEvent child, int delay) {
-		return invokeOnNotify(child, STATE_ENDED, delay);
+	public StateEventContext endOnNotify(GameNotifyEvent child, int delayAfter) {
+		return invokeOnNotify(child, STATE_ENDED, delayAfter);
 	}
 
 	public StateEventContext invokeOnNotify(GameNotifyEvent child, int state, int delay) {
