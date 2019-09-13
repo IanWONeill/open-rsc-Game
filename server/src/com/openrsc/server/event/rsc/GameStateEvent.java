@@ -46,13 +46,14 @@ public abstract class GameStateEvent extends GameTickEvent {
 		}
 
 		StateEventContext result = action();
-		if (result == null)
+		if (result == null) {
 			stop();
-		else {
+		} else {
 			setState(result.getState());
 			setDelayTicks(result.getDelay());
-			if (result.getDelay() == 0)
-				this.run();
+			if (result.getDelay() == 0) {
+				run();
+			}
 		}
 	}
 
