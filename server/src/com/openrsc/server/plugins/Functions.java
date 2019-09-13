@@ -1362,6 +1362,30 @@ public class Functions {
 		}, "Temporary Remove NPC");
 	}
 
+	public static GameNotifyEvent walkThenTeleport(Player player, int x1, int y1, int x2, int y2, boolean bubble) {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "walkThenTeleport Notifier") {
+			@Override
+			public void init() {
+				addState(0, () -> {
+					player.walk(x1, y1);
+
+					return invoke(1, 0);
+				});
+				addState(1, () -> {
+					if (player.getWalkingQueue().finished()) {
+						return invoke(2, 0);
+					}
+					return invoke(1, 1);
+				});
+				addState(2, () -> {
+					player.teleport(x2, y2, bubble);
+					trigger();
+					return null;
+				});
+			}
+		};
+	}
+
 	/*
 	 * Remove parent argument in each of these calls.
 	 */
@@ -1489,14 +1513,6 @@ public class Functions {
 			Thread.sleep(delay);
 		} catch (final InterruptedException e) {
 		}*/
-	}
-
-	public static void walkThenTeleport(Player player, int x1, int y1, int x2, int y2, boolean bubble) {
-		player.walk(x1, y1);
-		while (!player.getWalkingQueue().finished()) {
-			sleep(1);
-		}
-		player.teleport(x2, y2, bubble);
 	}
 
 	public static void doGate(final Player p, final GameObject object) {

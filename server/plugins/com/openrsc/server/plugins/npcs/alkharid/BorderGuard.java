@@ -55,10 +55,10 @@ public final class BorderGuard implements TalkToNpcExecutiveListener,
 								npcTalk(p, n, "You may pass");
 								p.message("The gate swings open");
 								if (p.getX() > 91) {
-									Functions.walkThenTeleport(p, 92, 649, 91, 649, false);
+									return endOnNotify(Functions.walkThenTeleport(p, 92, 649, 91, 649, false));
 								}
 								else {
-									Functions.walkThenTeleport(p,91, 649, 92, 649, false);
+									return endOnNotify(Functions.walkThenTeleport(p,91, 649, 92, 649, false));
 								}
 							} else {
 								playerTalk(p, n,
