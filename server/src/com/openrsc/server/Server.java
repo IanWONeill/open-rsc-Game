@@ -94,7 +94,7 @@ public final class Server implements Runnable {
 
 	static {
 		try {
-			Thread.currentThread().setName("InitializationThread");
+			Thread.currentThread().setName("InitThread");
 			System.setProperty("log4j.configurationFile", "conf/server/log4j2.xml");
 			/* Enables asynchronous, garbage-free logging. */
 			System.setProperty("Log4jContextSelector",
