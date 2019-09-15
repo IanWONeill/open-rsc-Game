@@ -73,17 +73,20 @@ public class GameTickEventHandler {
 		// Sort the Events Hashmap such that the following execution order is preserved: GameStateEvent -> GameNotifyEvent -> Everything else
 		List list = new LinkedList(events.entrySet());
 		Collections.sort(list, (Object o1, Object o2) -> {
-			if((o1 instanceof GameStateEvent && !(o1 instanceof GameNotifyEvent)) && !(o2 instanceof GameStateEvent)) {
+			if((o1 instanceof GameNotifyEvent) && !(o2 instanceof GameNotifyEvent)) {
 				return -1;
 			}
-			else if (!(o1 instanceof GameStateEvent) && (o2 instanceof GameStateEvent && !(o2 instanceof GameNotifyEvent))){
+			else if (!(o1 instanceof GameNotifyEvent) && (o2 instanceof GameNotifyEvent)){
 				 return 1;
 			}
+			else if(o1 instanceof GameNotifyEvent && o2 instanceof GameNotifyEvent) {
+				return 0;
+			}
 			else {
-				if(o1 instanceof GameNotifyEvent && !(o2 instanceof GameNotifyEvent)) {
+				if((o1 instanceof GameStateEvent) && !(o2 instanceof GameStateEvent)) {
 					return -1;
 				}
-				else if (!(o1 instanceof GameNotifyEvent) && o2 instanceof GameNotifyEvent){
+				else if (!(o1 instanceof GameStateEvent) && (o2 instanceof GameStateEvent)){
 					return 1;
 				}
 				else {
