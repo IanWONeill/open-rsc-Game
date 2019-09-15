@@ -241,7 +241,7 @@ public class Thieving extends Functions
 						tempChest = new GameObject(getPlayerOwner().getWorld(), obj.getLocation(), 340, obj.getDirection(), obj.getType());
 						replaceObject(obj, tempChest);
 					}
-					return nextState(2);
+					return invokeNextState(2);
 				});
 				addState(1, () -> {
 					GameObject tempChest = null;

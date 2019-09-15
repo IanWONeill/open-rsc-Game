@@ -132,7 +132,7 @@ public class Runecrafting implements ObjectActionListener, ObjectActionExecutive
 					}
 					p.message("You feel a powerful force take hold of you...");
 
-					return nextState(1);
+					return invokeNextState(1);
 				});
 				addState(1, () -> {
 					switch(ItemId.getById(item.getID()))

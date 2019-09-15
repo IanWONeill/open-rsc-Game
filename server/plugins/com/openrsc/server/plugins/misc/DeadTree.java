@@ -21,7 +21,7 @@ public class DeadTree implements ObjectActionListener, ObjectActionExecutiveList
 				addState(0, () -> {
 					getPlayerOwner().setBusy(true);
 					getPlayerOwner().message("The tree seems to lash out at you!");
-					return nextState(1);
+					return invokeNextState(1);
 				});
 				addState(1, () -> {
 					getPlayerOwner().damage((int) (getPlayerOwner().getSkills().getLevel(Skills.HITS) * 0.2D));

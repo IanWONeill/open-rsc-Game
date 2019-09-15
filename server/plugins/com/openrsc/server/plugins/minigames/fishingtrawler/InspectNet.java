@@ -25,7 +25,7 @@ public class InspectNet implements ObjectActionListener, ObjectActionExecutiveLi
 			public void init() {
 				addState(0, () -> {
 					getPlayerOwner().message("you inspect the net");
-					return nextState(3);
+					return invokeNextState(3);
 				});
 				addState(1, () -> {
 					if (trawler != null && trawler.isNetBroken()) {
@@ -35,7 +35,7 @@ public class InspectNet implements ObjectActionListener, ObjectActionExecutiveLi
 							return null;
 						}
 						getPlayerOwner().message("you attempt to fix it with your rope");
-						return nextState(3);
+						return invokeNextState(3);
 					}
 					getPlayerOwner().message("it is not damaged");
 					return null;

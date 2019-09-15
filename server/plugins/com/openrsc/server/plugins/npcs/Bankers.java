@@ -45,10 +45,8 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
-					npc.setBusy(true);
-					player.setBusy(true);
-					npcSpeakLine(getPlayerOwner(), npc, "Good day" + (npc.getID() == 617 ? " Bwana" : "") + ", how may I help you?");
-					return nextState(3);
+					GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "Good day" + (npc.getID() == 617 ? " Bwana" : "") + ", how may I help you?");
+					return invokeNextStateOnNotify(notifier);
 				});
 				addState(1, () -> {
 					GameNotifyEvent event = showPlayerMenu(getPlayerOwner(), npc, messages.toArray(new String[messages.size()]));
@@ -69,8 +67,8 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 						}
 						return invoke(4, 0);
 					} else if (menu == 1) {
-						npcSpeakLine(getPlayerOwner(), npc, "This is a branch of the bank of Runescape");
-						return invoke(6, 3);
+						GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "This is a branch of the bank of Runescape");
+						return invokeOnNotify(notifier, 6);
 					} else if (menu == 2 && getPlayerOwner().getWorld().getServer().getConfig().WANT_BANK_PINS) {
 						GameNotifyEvent event = showPlayerMenu(getPlayerOwner(), npc,
 							"Set a bank pin", "Change bank pin", "Delete bank pin");
@@ -108,8 +106,8 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					return invoke(4, 0);
 				});
 				addState(4, () -> {
-					npcSpeakLine(getPlayerOwner(), npc, "Certainly " + (getPlayerOwner().isMale() ? "Sir" : "Miss"));
-					return invoke(5,3);
+					final GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "Certainly " + (getPlayerOwner().isMale() ? "Sir" : "Miss"));
+					return invokeOnNotify(notifier, 5);
 				});
 				addState(5, () -> {
 					ActionSender.showBank(getPlayerOwner());
@@ -119,22 +117,22 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					return null;
 				});
 				addState(6, () -> {
-					npcSpeakLine(getPlayerOwner(), npc, "We have branches in many towns");
-					return invoke(7, 3);
+					final GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "We have branches in many towns");
+					return invokeOnNotify(notifier, 7);
 				});
 				addState(7, () -> {
 					GameNotifyEvent menuevent = showPlayerMenu(getPlayerOwner(), npc,
 						"And what do you do?", "Didn't you used to be called the bank of Varrock");
-					return invokeOnNotify(menuevent, 8, 0);
+					return invokeOnNotify(menuevent, 8);
 				});
 				addState(8, () -> {
 					int branchMenu = (int)getNotifyEvent().getObjectOut("int_option");
 					if (branchMenu == 0) {
-						npcSpeakLine(getPlayerOwner(), npc, "We will look after your items and money for you");
-						return invoke(9, 3);
+						final GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "We will look after your items and money for you");
+						return invokeOnNotify(notifier, 9);
 					} else if (branchMenu == 1) {
-						npcSpeakLine(getPlayerOwner(), npc, "Yes we did, but people kept on coming into our branches outside of varrock");
-						return invoke(10, 3);
+						final GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "Yes we did, but people kept on coming into our branches outside of varrock");
+						return invokeOnNotify(notifier, 10);
 					}
 
 					getPlayerOwner().setBusy(false);
@@ -142,20 +140,16 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					return null;
 				});
 				addState(9, () -> {
-					npcSpeakLine(getPlayerOwner(), npc, "So leave your valuables with us if you want to keep them safe");
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
-					return null;
+					final GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "So leave your valuables with us if you want to keep them safe");
+					return endOnNotify(notifier);
 				});
 				addState(10, () -> {
-					npcSpeakLine(getPlayerOwner(), npc, "And telling us our signs were wrong");
-					return invoke(11, 3);
+					final GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "And telling us our signs were wrong");
+					return invokeOnNotify(notifier, 11);
 				});
 				addState(11, () -> {
-					npcSpeakLine(getPlayerOwner(), npc, "As if we didn't know what town we were in or something!");
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
-					return null;
+					final GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "As if we didn't know what town we were in or something!");
+					return endOnNotify(notifier);
 				});
 				addState(12, () -> {
 					int bankPinMenu = (int)getNotifyEvent().getObjectOut("int_option");

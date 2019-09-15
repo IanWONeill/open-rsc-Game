@@ -50,7 +50,7 @@ public class WildernessAgilityCourse implements ObjectActionListener,
 							public void init() {
 								addState(0, () -> {
 									movePlayer(getPlayerOwner(), 298, 130);
-									return nextState(2);
+									return invokeNextState(2);
 								});
 								addState(1, () -> {
 									if (failRate == 1) {
@@ -77,7 +77,7 @@ public class WildernessAgilityCourse implements ObjectActionListener,
 							public void init() {
 								addState(0, () -> {
 									movePlayer(getPlayerOwner(), 298, 130);
-									return nextState(2);
+									return invokeNextState(2);
 								});
 								addState(1, () -> {
 									if (failRate == 1) {
@@ -138,7 +138,7 @@ public class WildernessAgilityCourse implements ObjectActionListener,
 											// 11 damage on 73hp.
 											//
 											getPlayerOwner().message("Your hands slip and you fall to the level below");
-											return nextState(2);
+											return invokeNextState(2);
 										}
 									});
 									addState(1, () -> {
@@ -160,7 +160,7 @@ public class WildernessAgilityCourse implements ObjectActionListener,
 									addState(0, () -> {
 										if (passObstacle) {
 											movePlayer(getPlayerOwner(), 293, 105);
-											return nextState(1);
+											return invokeNextState(1);
 										} else {
 											getPlayerOwner().message("Your lose your footing and land in the lava");
 											movePlayer(getPlayerOwner(), 292, 104);
@@ -172,16 +172,16 @@ public class WildernessAgilityCourse implements ObjectActionListener,
 									});
 									addState(1, () -> {
 										movePlayer(getPlayerOwner(), 294, 104);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(2, () -> {
 										movePlayer(getPlayerOwner(), 295, 104);
 										getPlayerOwner().message("and walk across");
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(3, () -> {
 										movePlayer(getPlayerOwner(), 296, 105);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(4, () -> {
 										movePlayer(getPlayerOwner(), 297, 106);
@@ -248,11 +248,11 @@ public class WildernessAgilityCourse implements ObjectActionListener,
 								public void init() {
 									addState(0, () -> {
 										movePlayer(getPlayerOwner(), 305, 118);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(1, () -> {
 										movePlayer(getPlayerOwner(), 304, 119);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(2, () -> {
 										movePlayer(getPlayerOwner(), 304, 120);

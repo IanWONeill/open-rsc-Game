@@ -30,7 +30,7 @@ public class Cow implements InvUseOnNpcListener, InvUseOnNpcExecutiveListener {
 						addItem(getPlayerOwner(), ItemId.MILK.id(), 1);
 					}
 					getPlayerOwner().message("You milk the cow");
-					return nextState(5);
+					return invokeNextState(5);
 				});
 				addState(1, () -> {
 					npc.setBusy(false);

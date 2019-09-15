@@ -1415,7 +1415,7 @@ public class Functions {
 	}
 
 	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final String... options) {
-		return showPlayerMenu(player, npc, options);
+		return showPlayerMenu(player, npc, true, options);
 	}
 
 	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final boolean doPlayerDialogue, final String... options) {
@@ -1470,7 +1470,25 @@ public class Functions {
 	public static GameNotifyEvent playerDialogue(final Player player, final Npc npc, final String... messages) {
 		return new GameNotifyEvent(player.getWorld(), player, 0, "playerTalk Notifier") {
 			@Override public void init(){
-				int state = 0;
+				addState(0, () -> {
+					if (npc != null) {
+						npc.setBusy(true);
+						npc.resetPath();
+					}
+					if (!player.inCombat()) {
+						if (npc != null) {
+							npc.face(player);
+							player.face(npc);
+						}
+					}
+
+					player.setBusy(true);
+					player.resetPath();
+
+					return invoke(1, 0);
+				});
+
+				int state = 1;
 
 				for (final String message : messages) {
 					addState(state++, () -> {
@@ -1481,27 +1499,78 @@ public class Functions {
 									return null;
 								}
 							}
-							if (npc != null) {
-								npc.resetPath();
-								npc.setBusyTimer(4);
-							}
-							if (!player.inCombat()) {
-								if (npc != null) {
-									npc.face(player);
-									player.face(npc);
-								}
-								player.setBusyTimer(4);
-								player.resetPath();
-							}
+
 							player.getUpdateFlags().setChatMessage(new ChatMessage(player, message, (npc == null ? player : npc)));
 						}
 
-						return nextState( 4);
+						return invokeNextState( 3);
 					});
 				}
 
 				// Add a final state ... We just want to emulate the last sleep() before notifying
 				addState(state, () -> {
+					if (npc != null) {
+						npc.setBusy(false);
+					}
+
+					player.setBusy(false);
+
+					return null;
+				});
+			}
+		};
+	}
+
+	public static GameNotifyEvent npcDialogue(final Player player, final Npc npc, final String... messages) {
+		return npcDialogue(player, npc, 3, messages);
+	}
+
+	/**
+	 * Npc chat method
+	 *
+	 * @param player
+	 * @param npc
+	 * @param messages - String array of npc dialogue lines.
+	 */
+	public static GameNotifyEvent npcDialogue(final Player player, final Npc npc, final int delay, final String... messages) {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "playerTalk Notifier") {
+			@Override public void init(){
+				addState(0, () -> {
+					npc.setBusy(true);
+					npc.resetPath();
+					player.setBusy(true);
+					player.resetPath();
+
+					if (!player.inCombat()) {
+						npc.face(player);
+						player.face(npc);
+					}
+
+					return invoke(1, 0);
+				});
+
+				int state = 1;
+
+				for (final String message : messages) {
+					addState(state++, () -> {
+						if (!message.equalsIgnoreCase("null")) {
+							if (npc.isRemoved()) {
+								player.setBusy(false);
+								return null;
+							}
+
+							npc.getUpdateFlags().setChatMessage(new ChatMessage(npc, message, player));
+						}
+
+						return invokeNextState( delay);
+					});
+				}
+
+				// Add a final state ... We just want to emulate the last sleep() before notifying
+				addState(state, () -> {
+					npc.setBusy(false);
+					player.setBusy(false);
+
 					return null;
 				});
 			}
@@ -1644,23 +1713,9 @@ public class Functions {
 		player.setBusyTimer(0);
 	}
 
-	public static void npcSpeakLine(final Player player, final Npc npc, final String message) {
-		if (!message.equalsIgnoreCase("null")) {
-			if (npc.isRemoved()) {
-				player.setBusy(false);
-				return;
-			}
-				npc.resetPath();
-				player.resetPath();
-
-				npc.getUpdateFlags().setChatMessage(new ChatMessage(npc, message, player));
-
-				npc.face(player);
-				if (!player.inCombat()) {
-					player.face(npc);
-				}
-		}
-	}
+	/**
+	 * Fully converted after here
+	 */
 
 	/**
 	 * Npc chat method
@@ -1670,29 +1725,26 @@ public class Functions {
 	 * @param messages - String array of npc dialogue lines.
 	 */
 	public static void npcTalk(final Player player, final Npc npc, final int delay, final String... messages) {
+		npc.setBusy(true);
+		player.setBusy(true);
 		for (final String message : messages) {
 			if (!message.equalsIgnoreCase("null")) {
 				if (npc.isRemoved()) {
 					player.setBusy(false);
 					return;
 				}
-				npc.setBusy(true);
-				player.setBusy(true);
-				player.getWorld().getServer().post(() -> {
-					npc.resetPath();
-					player.resetPath();
+				npc.resetPath();
+				player.resetPath();
 
-					npc.getUpdateFlags().setChatMessage(new ChatMessage(npc, message, player));
+				npc.getUpdateFlags().setChatMessage(new ChatMessage(npc, message, player));
 
-					npc.face(player);
-					if (!player.inCombat()) {
-						player.face(npc);
-					}
-				}, "NPC Talk");
+				npc.face(player);
+				if (!player.inCombat()) {
+					player.face(npc);
+				}
 			}
 
 			sleep(delay);
-
 		}
 		npc.setBusy(false);
 		player.setBusy(false);
@@ -1702,9 +1754,6 @@ public class Functions {
 		npcTalk(player, npc, 1900, messages);
 	}
 
-	/**
-	 * Fully converted after here
-	 */
 
 	public static void doGate(final Player p, final GameObject object) {
 		doGate(p, object, 181);

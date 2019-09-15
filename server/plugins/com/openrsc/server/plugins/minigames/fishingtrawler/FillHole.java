@@ -23,7 +23,7 @@ public class FillHole implements ObjectActionExecutiveListener, ObjectActionList
 					} else {
 						getPlayerOwner().message("you'll need some swamp paste to fill that");
 					}
-					return nextState(1);
+					return invokeNextState(1);
 				});
 				addState(1, () -> {
 					getPlayerOwner().setBusy(false);

@@ -50,6 +50,8 @@ public abstract class GameStateEvent extends GameTickEvent {
 		if (result == null) {
 			stop();
 		} else {
+			LOGGER.info(getDescriptor() + " : " + getOwner() + " : Calling Next State : State " + result.getState() + " : Delay " + result.getDelay());
+
 			setState(result.getState());
 			setDelayTicks(result.getDelay());
 			if (result.getDelay() == 0) {
@@ -88,23 +90,43 @@ public abstract class GameStateEvent extends GameTickEvent {
 		});
 	}
 
-	public StateEventContext nextState(int delay) {
-		return invoke(++eventState, delay);
+	public StateEventContext invokeNextState() {
+		return invokeNextState(0);
 	}
 
-	public StateEventContext invoke(int state, int delay) {
+	public StateEventContext invokeNextState(final int delay) {
+		return invoke(getState() + 1, delay);
+	}
+
+	public StateEventContext invoke(final int state) {
+		return invoke(state, 0);
+	}
+
+	public StateEventContext invoke(final int state, final int delay) {
 		return new StateEventContext(state, delay);
 	}
 
-	public StateEventContext endOnNotify(GameNotifyEvent child) {
+	public StateEventContext endOnNotify(final GameNotifyEvent child) {
 		return endOnNotify(child, 0);
 	}
 
-	public StateEventContext endOnNotify(GameNotifyEvent child, int delayAfter) {
+	public StateEventContext endOnNotify(final GameNotifyEvent child, final int delayAfter) {
 		return invokeOnNotify(child, STATE_ENDED, delayAfter);
 	}
 
-	public StateEventContext invokeOnNotify(GameNotifyEvent child, int state, int delay) {
+	public StateEventContext invokeNextStateOnNotify(final GameNotifyEvent child) {
+		return invokeNextStateOnNotify(child, 0);
+	}
+
+	public StateEventContext invokeNextStateOnNotify(final GameNotifyEvent child, final int delay) {
+		return invokeOnNotify(child, getState() + 1, delay);
+	}
+
+	public StateEventContext invokeOnNotify(final GameNotifyEvent child, final int state) {
+		return invokeOnNotify(child, state, 0);
+	}
+
+	public StateEventContext invokeOnNotify(final GameNotifyEvent child, final int state, final int delay) {
 		getWorld().getServer().getGameEventHandler().add(child);
 		linkNotifier(child);
 		this.child.setReturnState(state);

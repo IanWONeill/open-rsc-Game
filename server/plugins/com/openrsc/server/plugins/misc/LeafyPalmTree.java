@@ -25,7 +25,7 @@ public class LeafyPalmTree implements ObjectActionListener, ObjectActionExecutiv
 							return null;
 						}
 						getPlayerOwner().message("You give the palm tree a good shake.");
-						return nextState(2);
+						return invokeNextState(2);
 					});
 				addState(1, () -> {
 					getPlayerOwner().message("A palm leaf falls down.");

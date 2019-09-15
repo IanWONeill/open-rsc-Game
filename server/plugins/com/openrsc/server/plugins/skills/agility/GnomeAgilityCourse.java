@@ -55,27 +55,27 @@ public class GnomeAgilityCourse implements ObjectActionListener, ObjectActionExe
 								public void init() {
 									addState(0, () -> {
 										movePlayer(getPlayerOwner(), 692, 494);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(1, () -> {
 										movePlayer(getPlayerOwner(), 692, 495);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(2, () -> {
 										movePlayer(getPlayerOwner(), 692, 496);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(3, () -> {
 										movePlayer(getPlayerOwner(), 692, 497);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(4, () -> {
 										movePlayer(getPlayerOwner(), 692, 498);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(5, () -> {
 										movePlayer(getPlayerOwner(), 692, 499);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(6, () -> {
 										p.message("and walk across");
@@ -132,7 +132,7 @@ public class GnomeAgilityCourse implements ObjectActionListener, ObjectActionExe
 								public void init() {
 									addState(0, () -> {
 										getPlayerOwner().message("you hold on tight");
-										return nextState(4);
+										return invokeNextState(4);
 									});
 									addState(1, () -> {
 										movePlayer(getPlayerOwner(), 685, 2396);
@@ -174,7 +174,7 @@ public class GnomeAgilityCourse implements ObjectActionListener, ObjectActionExe
 									addState(0, () -> {
 										getPlayerOwner().message("and run towards the net");
 										movePlayer(getPlayerOwner(), getPlayerOwner().getX(), initialY - 2);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(1, () -> {
 										movePlayer(getPlayerOwner(), getPlayerOwner().getX(), initialY - 2);

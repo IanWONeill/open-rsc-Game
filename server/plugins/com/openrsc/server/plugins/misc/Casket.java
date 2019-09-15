@@ -26,7 +26,7 @@ public class Casket implements InvActionListener, InvActionExecutiveListener {
 					if (item.getID() == ItemId.CASKET.id()) {
 						getPlayerOwner().setBusy(true);
 						getPlayerOwner().message("you open the casket");
-						return nextState(3);
+						return invokeNextState(3);
 					}
 					return null;
 				});

@@ -20,7 +20,7 @@ public class Dummy implements ObjectActionListener, ObjectActionExecutiveListene
 			public void init() {
 				addState(0, () -> {
 						getPlayerOwner().message("You swing at the dummy");
-						return nextState(5);
+						return invokeNextState(5);
 					});
 				addState(1, () -> {
 					if (obj.getID() == 49) { // Dummy

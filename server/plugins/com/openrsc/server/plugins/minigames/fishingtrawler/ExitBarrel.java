@@ -19,15 +19,15 @@ public class ExitBarrel implements ObjectActionListener, ObjectActionExecutiveLi
 			public void init() {
 				addState(0, () -> {
 					getPlayerOwner().message("you climb onto the floating barrel");
-					return nextState(3);
+					return invokeNextState(3);
 				});
 				addState(1, () -> {
 					getPlayerOwner().message("and begin to kick your way to the shore");
-					return nextState(3);
+					return invokeNextState(3);
 				});
 				addState(2, () -> {
 					getPlayerOwner().message("you make it to the shore tired and weary");
-					return nextState(3);
+					return invokeNextState(3);
 				});
 				addState(3, () -> {
 					getPlayerOwner().teleport(550, 711);

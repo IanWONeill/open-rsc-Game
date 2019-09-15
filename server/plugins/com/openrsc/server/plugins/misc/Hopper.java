@@ -51,7 +51,7 @@ public class Hopper implements InvUseOnObjectListener, InvUseOnObjectExecutiveLi
 			public void init() {
 				addState(0, () -> {
 						getPlayerOwner().message("You operate the hopper");
-						return nextState(1);
+						return invokeNextState(1);
 					});
 
 				addState(1, () -> {

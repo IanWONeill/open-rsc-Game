@@ -27,7 +27,7 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 				addState(0, () -> {
 					if (item.getID() == ItemId.SWAMP_TOAD.id()) {
 						getPlayerOwner().message("you pull the legs off the toad");
-						return nextState(3);
+						return invokeNextState(3);
 					}
 					return null;
 				});
@@ -55,7 +55,7 @@ public class SwampToads implements PickupListener, PickupExecutiveListener, InvA
 						getPlayerOwner().message("you pick up the swamp toad");
 						if (DataConversions.random(0, 10) >= 3) {
 							getPlayerOwner().message("but it jumps out of your hands..");
-							return nextState(3);
+							return invokeNextState(3);
 						}
 
 						i.remove();

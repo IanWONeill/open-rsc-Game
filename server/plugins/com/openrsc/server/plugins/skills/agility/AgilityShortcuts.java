@@ -140,30 +140,30 @@ public class AgilityShortcuts implements ObjectActionListener,
 									});
 									addState(8, () -> {
 										getPlayerOwner().damage((getCurrentLevel(getPlayerOwner(), Skills.HITS) / 10));
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(9, () -> {
 										getPlayerOwner().teleport(458, 836);
 										getPlayerOwner().damage((getCurrentLevel(getPlayerOwner(), Skills.HITS) / 10));
-										return nextState(2);
+										return invokeNextState(2);
 									});
 									addState(10, () -> {
 										playerTalk(getPlayerOwner(),  "* Gulp! *");
-										return nextState(6);
+										return invokeNextState(6);
 									});
 									addState(11, () -> {
 										getPlayerOwner().teleport(459, 841);
 										playerTalk(getPlayerOwner(),  "* Gulp! *");
-										return nextState(5);
+										return invokeNextState(5);
 									});
 									addState(12, () -> {
 										getPlayerOwner().message("You just manage to drag your pitiful frame onto the river bank.");
 										playerTalk(getPlayerOwner(), "* Gasp! *");
-										return nextState(3);
+										return invokeNextState(3);
 									});
 									addState(13, () -> {
 										getPlayerOwner().damage((getCurrentLevel(getPlayerOwner(), Skills.HITS) / 10));
-										return nextState(2);
+										return invokeNextState(2);
 									});
 									addState(14, () -> {
 										getPlayerOwner().message("Though you nearly drowned in the river!");
@@ -203,7 +203,7 @@ public class AgilityShortcuts implements ObjectActionListener,
 												getPlayerOwner().teleport(450, 828);
 												message(getPlayerOwner(), "You fall and hurt yourself.");
 												getPlayerOwner().damage((getCurrentLevel(getPlayerOwner(), Skills.HITS) / 10));
-												return nextState(1);
+												return invokeNextState(1);
 											});
 											addState(1, () -> {
 												getPlayerOwner().teleport(449, 828);
@@ -238,7 +238,7 @@ public class AgilityShortcuts implements ObjectActionListener,
 								public void init() {
 									addState(0, () -> {
 										getPlayerOwner().message("You grab the vine and try and swing across");
-										return nextState(2);
+										return invokeNextState(2);
 									});
 									addState(1, () -> {
 										movePlayer(getPlayerOwner(), 511, 669);
@@ -261,7 +261,7 @@ public class AgilityShortcuts implements ObjectActionListener,
 								public void init() {
 									addState(0, () -> {
 										getPlayerOwner().message("You grab the vine and try and swing across");
-										return nextState(2);
+										return invokeNextState(2);
 									});
 									addState(1, () -> {
 										movePlayer(getPlayerOwner(), 508, 668);
@@ -321,19 +321,19 @@ public class AgilityShortcuts implements ObjectActionListener,
 									addState(0, () -> {
 										getPlayerOwner().message("You stand on the slippery log");
 										movePlayer(getPlayerOwner(), 595, 458);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(1, () -> {
 										movePlayer(getPlayerOwner(), 594, 458);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(2, () -> {
 										movePlayer(getPlayerOwner(), 593, 458);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(3, () -> {
 										movePlayer(getPlayerOwner(), 592, 458);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(4, () -> {
 										getPlayerOwner().message("and you walk across");
@@ -356,19 +356,19 @@ public class AgilityShortcuts implements ObjectActionListener,
 									addState(0, () -> {
 										getPlayerOwner().message("You stand on the slippery log");
 										movePlayer(getPlayerOwner(), 595, 458);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(1, () -> {
 										movePlayer(getPlayerOwner(), 596, 458);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(2, () -> {
 										movePlayer(getPlayerOwner(), 597, 458);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(3, () -> {
 										movePlayer(getPlayerOwner(), 598, 458);
-										return nextState(1);
+										return invokeNextState(1);
 									});
 									addState(4, () -> {
 										getPlayerOwner().message("and you walk across");
@@ -467,7 +467,7 @@ public class AgilityShortcuts implements ObjectActionListener,
 										movePlayer(p, 601, 3563);
 										getPlayerOwner().message("You skillfully balance across the hole");
 										getPlayerOwner().incExp(Skills.AGILITY, 90, true);
-										return nextState(2);
+										return invokeNextState(2);
 									});
 									addState(1, () -> {
 										getPlayerOwner().setBusy(false);
@@ -501,7 +501,7 @@ public class AgilityShortcuts implements ObjectActionListener,
 										movePlayer(getPlayerOwner(), 601, 3557);
 										getPlayerOwner().message("You skillfully balance across the hole");
 										getPlayerOwner().incExp(Skills.AGILITY, 90, true);
-										return nextState(2);
+										return invokeNextState(2);
 									});
 									addState(1, () -> {
 										getPlayerOwner().setBusy(false);

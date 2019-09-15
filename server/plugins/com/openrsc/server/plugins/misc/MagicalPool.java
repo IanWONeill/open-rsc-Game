@@ -76,13 +76,13 @@ public class MagicalPool implements ObjectActionListener, ObjectActionExecutiveL
 					}
 					if (obj.getID() == 1166) {
 						getPlayerOwner().message("you step into the sparkling water");
-						return nextState(2);
+						return invokeNextState(2);
 					}
 					return null;
 				});
 				addState(1, () -> {
 					getPlayerOwner().message("you feel energy rush through your veins");
-					return nextState(2);
+					return invokeNextState(2);
 
 				});
 				addState(2, () -> {
