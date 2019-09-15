@@ -37,8 +37,9 @@ public abstract class GameStateEvent extends GameTickEvent {
 
 	@Override
 	public void run() {
-		if (getState() == STATE_WAITING_FOR_NOTIFY)
+		if (getState() == STATE_WAITING_FOR_NOTIFY) {
 			return;
+		}
 
 		if(getState() == STATE_ENDED) {
 			stop();

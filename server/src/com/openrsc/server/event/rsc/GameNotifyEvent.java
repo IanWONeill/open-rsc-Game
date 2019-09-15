@@ -19,14 +19,22 @@ public abstract class GameNotifyEvent extends GameStateEvent {
 		super(world, owner, ticks, descriptor);
 	}
 
+	@Override
+	public void stop() {
+		super.stop();
+		trigger();
+	}
+
 	public void setParentEvent(GameStateEvent event) {
 		this.parentEvent = event;
 	}
 
 	public void trigger() {
-		triggered = true;
-		restoreParent();
-		onTriggered();
+		if(!isTriggered()) {
+			triggered = true;
+			restoreParent();
+			onTriggered();
+		}
 	}
 
 	public void onTriggered() {}

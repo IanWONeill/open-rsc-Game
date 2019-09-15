@@ -68,7 +68,7 @@ public abstract class GameTickEvent {
 		return running && ticksBeforeRun <= 0;
 	}
 
-	public final void stop() {
+	public void stop() {
 		LOGGER.info("Stopping : " + getDescriptor() + " : " + getOwner());
 		running = false;
 	}

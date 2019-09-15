@@ -64,7 +64,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 							return null;
 						}
 						if (getPlayerOwner().getCache().hasKey("bank_pin") && !getPlayerOwner().getAttribute("bankpin", false)) {
-							GameNotifyEvent pinevent = getBankPinInput(getPlayerOwner(), this);
+							GameNotifyEvent pinevent = getBankPinEntered(getPlayerOwner());
 							return invokeOnNotify(pinevent, 3, 0);
 						}
 						return invoke(4, 0);
@@ -77,7 +77,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 						return invokeOnNotify(event, 12, 0);
 					} else if ((menu == 2 || menu == 3) && getPlayerOwner().getWorld().getServer().getConfig().SPAWN_AUCTION_NPCS) {
 						if (getPlayerOwner().getCache().hasKey("bank_pin") && !getPlayerOwner().getAttribute("bankpin", false)) {
-							GameNotifyEvent event = getBankPinInput(getPlayerOwner(), this);
+							GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
 							return invokeOnNotify(event, 19, 0);
 						}
 					}
@@ -161,21 +161,21 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					int bankPinMenu = (int)getNotifyEvent().getObjectOut("int_option");
 					if (bankPinMenu == 0) {
 						if (!getPlayerOwner().getCache().hasKey("bank_pin")) {
-							GameNotifyEvent event = getBankPinInput(getPlayerOwner(), this);
+							GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
 							return invokeOnNotify(event, 13, 0);
 						} else {
 							ActionSender.sendBox(getPlayerOwner(), "You already have a bank pin", false);
 						}
 					} else if (bankPinMenu == 1) {
 						if (getPlayerOwner().getCache().hasKey("bank_pin")) {
-							GameNotifyEvent event = getBankPinInput(getPlayerOwner(), this);
+							GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
 							return invokeOnNotify(event, 14, 0);
 						} else {
 							getPlayerOwner().message("You don't have a bank pin");
 						}
 					} else if (bankPinMenu == 2) {
 						if (getPlayerOwner().getCache().hasKey("bank_pin")) {
-							GameNotifyEvent event = getBankPinInput(getPlayerOwner(), this);
+							GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
 							return invokeOnNotify(event, 16, 0);
 						} else {
 							getPlayerOwner().message("You don't have a bank pin");
@@ -227,7 +227,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 						npc.setBusy(false);
 						return null;
 					}
-					GameNotifyEvent event = getBankPinInput(getPlayerOwner(), this);
+					GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
 					return invokeOnNotify(event, 15, 0);
 				});
 				addState(15, () -> {
@@ -366,7 +366,7 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 			public void init() {
 				addState(0, () -> {
 					if (getPlayerOwner().getCache().hasKey("bank_pin") && !getPlayerOwner().getAttribute("bankpin", false)) {
-						GameNotifyEvent event = getBankPinInput(getPlayerOwner(), this);
+						GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
 						return invokeOnNotify(event,1, 0);
 					}
 					return invoke(2, 0);

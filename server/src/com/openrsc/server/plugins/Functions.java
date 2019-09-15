@@ -5,7 +5,6 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.event.SingleEvent;
 import com.openrsc.server.event.custom.UndergroundPassMessages;
 import com.openrsc.server.event.rsc.GameNotifyEvent;
-import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.model.MenuOptionListener;
 import com.openrsc.server.model.Path;
@@ -1379,18 +1378,14 @@ public class Functions {
 				});
 				addState(2, () -> {
 					player.teleport(x2, y2, bubble);
-					trigger();
 					return null;
 				});
 			}
 		};
 	}
 
-	/*
-	 * Remove parent argument in each of these calls.
-	 */
-	public static GameNotifyEvent getBankPinInput(Player player, GameStateEvent parent) {
-		return new GameNotifyEvent(player.getWorld(), player, 0, "getBankPinInput Notifier") {
+	public static GameNotifyEvent getBankPinEntered(Player player) {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "getBankPinEntered Notifier") {
 			@Override
 			public void init() {
 				addState(0, () -> {
@@ -1403,16 +1398,17 @@ public class Functions {
 				addState(1, () -> {
 					String enteredPin = player.getAttribute("bank_pin_entered", null);
 					if (enteredPin != null) {
-						trigger();
 						addObjectOut("string_pin", enteredPin);
+
+						return null;
 					}
 
-					return isTriggered() ? null : invoke(1, 1);
+					return invoke(1, 1);
 				});
 			}
 		};
 	}
-	
+
 
 	public static GameNotifyEvent showPlayerMenu(final Player player, final String... options) {
 		return showPlayerMenu(player, null, true, options);
@@ -1472,7 +1468,7 @@ public class Functions {
 	 * @param messages
 	 */
 	public static GameNotifyEvent playerDialogue(final Player player, final Npc npc, final String... messages) {
-		GameNotifyEvent event = new GameNotifyEvent(player.getWorld(), player, 0, "playerTalk Notifier") {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "playerTalk Notifier") {
 			@Override public void init(){
 				int state = 0;
 
@@ -1482,7 +1478,6 @@ public class Functions {
 							if (npc != null) {
 								if (npc.isRemoved()) {
 									player.setBusy(false);
-									trigger();
 									return null;
 								}
 							}
@@ -1507,12 +1502,81 @@ public class Functions {
 
 				// Add a final state ... We just want to emulate the last sleep() before notifying
 				addState(state, () -> {
-					trigger();
 					return null;
 				});
 			}
 		};
-		return event;
+	}
+
+	public static GameNotifyEvent handleGate(final Player p, final GameObject object) {
+		return handleGate(p, object, 181);
+	}
+
+
+	public static GameNotifyEvent handleGate(final Player p, final GameObject object, final int replaceID) {
+		return handleGate(p, object, replaceID, null);
+	}
+
+	public static GameNotifyEvent handleGate(final Player p, final GameObject object, final int replaceID, final Point destination) {
+		return new GameNotifyEvent(p.getWorld(), p, 0, "handleGate Notifier") {
+			@Override public void init(){
+				addState(0, () -> {
+					p.setBusy(true);
+					// 0 - East
+					// 1 - Diagonal S- NE
+					// 2 - South
+					// 3 - Diagonal S-NW
+					// 4- West
+					// 5 - Diagonal N-NE
+					// 6 - North
+					// 7 - Diagonal N-W
+					// 8 - N->S
+					p.playSound("opendoor");
+					removeObject(object);
+					registerObject(new GameObject(object.getWorld(), object.getLocation(), replaceID, object.getDirection(), object.getType()));
+
+					int dir = object.getDirection();
+					if (destination != null && Math.abs(p.getX() - destination.getX()) <= 5 && Math.abs(p.getY() - destination.getY()) <= 5) {
+						movePlayer(p, destination.getX(), destination.getY());
+					} else if (dir == 0) {
+						if (p.getX() >= object.getX()) {
+							movePlayer(p, object.getX() - 1, object.getY());
+						} else {
+							movePlayer(p, object.getX(), object.getY());
+						}
+					} else if (dir == 2) {
+						if (p.getY() <= object.getY()) {
+							movePlayer(p, object.getX(), object.getY() + 1);
+						} else {
+							movePlayer(p, object.getX(), object.getY());
+						}
+					} else if (dir == 4) {
+						if (p.getX() > object.getX()) {
+							movePlayer(p, object.getX(), object.getY());
+						} else {
+							movePlayer(p, object.getX() + 1, object.getY());
+						}
+					} else if (dir == 6) {
+						if (p.getY() >= object.getY()) {
+							movePlayer(p, object.getX(), object.getY() - 1);
+						} else {
+							movePlayer(p, object.getX(), object.getY());
+						}
+					} else {
+						p.message("Failure - Contact an administrator");
+					}
+
+					return invoke(1, 2);
+				});
+
+				addState(1, () -> {
+					registerObject(new GameObject(object.getWorld(), object.getLoc()));
+					p.setBusy(false);
+
+					return null;
+				});
+			}
+		};
 	}
 
 	/*
@@ -1529,66 +1593,6 @@ public class Functions {
 			Thread.sleep(delay);
 		} catch (final InterruptedException e) {
 		}*/
-	}
-
-	public static void doGate(final Player p, final GameObject object) {
-		doGate(p, object, 181);
-	}
-
-
-	public static void doGate(final Player p, final GameObject object, int replaceID) {
-		doGate(p, object, replaceID, null);
-	}
-
-	public static void doGate(final Player p, final GameObject object, int replaceID, Point destination) {
-		p.setBusyTimer(1);
-		// 0 - East
-		// 1 - Diagonal S- NE
-		// 2 - South
-		// 3 - Diagonal S-NW
-		// 4- West
-		// 5 - Diagonal N-NE
-		// 6 - North
-		// 7 - Diagonal N-W
-		// 8 - N->S
-		p.playSound("opendoor");
-		removeObject(object);
-		registerObject(new GameObject(object.getWorld(), object.getLocation(), replaceID, object.getDirection(), object.getType()));
-
-		int dir = object.getDirection();
-		if (destination != null && Math.abs(p.getX() - destination.getX()) <= 5 && Math.abs(p.getY() - destination.getY()) <= 5) {
-			movePlayer(p, destination.getX(), destination.getY());
-		} else if (dir == 0) {
-			if (p.getX() >= object.getX()) {
-				movePlayer(p, object.getX() - 1, object.getY());
-			} else {
-				movePlayer(p, object.getX(), object.getY());
-			}
-		} else if (dir == 2) {
-			if (p.getY() <= object.getY()) {
-				movePlayer(p, object.getX(), object.getY() + 1);
-			} else {
-				movePlayer(p, object.getX(), object.getY());
-			}
-		} else if (dir == 4) {
-			if (p.getX() > object.getX()) {
-				movePlayer(p, object.getX(), object.getY());
-			} else {
-				movePlayer(p, object.getX() + 1, object.getY());
-			}
-		} else if (dir == 6) {
-			if (p.getY() >= object.getY()) {
-				movePlayer(p, object.getX(), object.getY() - 1);
-			} else {
-				movePlayer(p, object.getX(), object.getY());
-			}
-		} else {
-			p.message("Failure - Contact an administrator");
-		}
-
-		sleep(1200);
-
-		registerObject(new GameObject(object.getWorld(), object.getLoc()));
 	}
 
 	/**
@@ -1701,6 +1705,66 @@ public class Functions {
 	/**
 	 * Fully converted after here
 	 */
+
+	public static void doGate(final Player p, final GameObject object) {
+		doGate(p, object, 181);
+	}
+
+
+	public static void doGate(final Player p, final GameObject object, int replaceID) {
+		doGate(p, object, replaceID, null);
+	}
+
+	public static void doGate(final Player p, final GameObject object, int replaceID, Point destination) {
+		p.setBusyTimer(1);
+		// 0 - East
+		// 1 - Diagonal S- NE
+		// 2 - South
+		// 3 - Diagonal S-NW
+		// 4- West
+		// 5 - Diagonal N-NE
+		// 6 - North
+		// 7 - Diagonal N-W
+		// 8 - N->S
+		p.playSound("opendoor");
+		removeObject(object);
+		registerObject(new GameObject(object.getWorld(), object.getLocation(), replaceID, object.getDirection(), object.getType()));
+
+		int dir = object.getDirection();
+		if (destination != null && Math.abs(p.getX() - destination.getX()) <= 5 && Math.abs(p.getY() - destination.getY()) <= 5) {
+			movePlayer(p, destination.getX(), destination.getY());
+		} else if (dir == 0) {
+			if (p.getX() >= object.getX()) {
+				movePlayer(p, object.getX() - 1, object.getY());
+			} else {
+				movePlayer(p, object.getX(), object.getY());
+			}
+		} else if (dir == 2) {
+			if (p.getY() <= object.getY()) {
+				movePlayer(p, object.getX(), object.getY() + 1);
+			} else {
+				movePlayer(p, object.getX(), object.getY());
+			}
+		} else if (dir == 4) {
+			if (p.getX() > object.getX()) {
+				movePlayer(p, object.getX(), object.getY());
+			} else {
+				movePlayer(p, object.getX() + 1, object.getY());
+			}
+		} else if (dir == 6) {
+			if (p.getY() >= object.getY()) {
+				movePlayer(p, object.getX(), object.getY() - 1);
+			} else {
+				movePlayer(p, object.getX(), object.getY());
+			}
+		} else {
+			p.message("Failure - Contact an administrator");
+		}
+
+		sleep(1200);
+
+		registerObject(new GameObject(object.getWorld(), object.getLoc()));
+	}
 	
 	public static int showMenu(final Player player, final String... options) {
 		return showMenu(player, null, true, options);
