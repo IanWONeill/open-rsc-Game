@@ -1412,8 +1412,17 @@ public class Functions {
 			}
 		};
 	}
+	
+
+	public static GameNotifyEvent showPlayerMenu(final Player player, final String... options) {
+		return showPlayerMenu(player, null, true, options);
+	}
 
 	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final String... options) {
+		return showPlayerMenu(player, npc, options);
+	}
+
+	public static GameNotifyEvent showPlayerMenu(final Player player, final Npc npc, final boolean doPlayerDialogue, final String... options) {
 		return new GameNotifyEvent(player.getWorld(), player, 0, "showPlayerMenu Notifier") {
 			@Override public void init(){
 				addState(0, () -> {
@@ -1435,15 +1444,13 @@ public class Functions {
 
 				addState(1, () -> {
 					if (player.shouldBreakMenu(npc)) {
-						player.setBusy(false);
-						player.setOption(-1);
 						trigger();
 						getParentEvent().stop();
 					}
 
 					if(isTriggered()) {
-						if(player.getOption() >= 0 && options[player.getOption()] != null) {
-							GameNotifyEvent notifier = playerTalk(this, player, npc, options[player.getOption()]);
+						if(doPlayerDialogue && player.getOption() >= 0 && options[player.getOption()] != null) {
+							GameNotifyEvent notifier = playerDialogue(player, npc, options[player.getOption()]);
 							return endOnNotify(notifier);
 						}
 
@@ -1458,12 +1465,13 @@ public class Functions {
 
 	/**
 	 * Player message(s), each message has 4 tick delay between.
+	 * Formerly: playerTalk
 	 *
 	 * @param player
 	 * @param npc
 	 * @param messages
 	 */
-	public static GameNotifyEvent playerTalk(final GameStateEvent parent, final Player player, final Npc npc, final String... messages) {
+	public static GameNotifyEvent playerDialogue(final Player player, final Npc npc, final String... messages) {
 		GameNotifyEvent event = new GameNotifyEvent(player.getWorld(), player, 0, "playerTalk Notifier") {
 			@Override public void init(){
 				int state = 0;
@@ -1691,7 +1699,7 @@ public class Functions {
 	}
 
 	/**
-	 * Mostly converted after here
+	 * Fully converted after here
 	 */
 	
 	public static int showMenu(final Player player, final String... options) {
@@ -1753,10 +1761,6 @@ public class Functions {
 			return -1;
 		}
 	}
-
-	/**
-	 * Fully converted after here
-	 */
 
 	/**
 	 * Player message(s), each message has 2.2s delay between.

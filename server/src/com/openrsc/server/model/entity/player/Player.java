@@ -51,8 +51,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.openrsc.server.plugins.Functions.sleep;
-
 /**
  * A single player.
  */
@@ -2945,20 +2943,25 @@ public final class Player extends Mob {
 	public boolean shouldBreakMenu(Npc npc) {
 		if (npc != null) {
 			if (npc.isRemoved()) {
+
 				this.resetMenuHandler();
 				this.setOption(-1);
 				this.setBusy(false);
+
 				return true;
 			}
+
 			npc.setBusy(true);
 		}
 
 		if (this.checkUnderAttack())
 		{
 			this.releaseUnderAttack();
-			if (npc != null) {
-				npc.setBusy(false);
-			}
+
+			this.resetMenuHandler();
+			this.setOption(-1);
+			this.setBusy(false);
+
 			return true;
 		}
 		return false;
