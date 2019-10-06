@@ -88,7 +88,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 
 	public void addState(final int state, final Callable<StateEventContext> block) {
 		if(state < 0) {
-			LOGGER.error("Invalid addState() for Event \"" + getDescriptor() + "\"");
+			LOGGER.error("Invalid addState(" + state + ") for Event \"" + getDescriptor() + "\"");
 			return;
 		}
 
@@ -162,7 +162,13 @@ public abstract class GameStateEvent extends GameTickEvent {
 		return this.eventState;
 	}
 
-	private void setState(int state) { this.eventState = state; }
+	public void setState(int state) {
+		if(state < 0 && (state != STATE_CLEANUP && state != STATE_ENDED && state != STATE_WAITING_FOR_NOTIFY)) {
+			LOGGER.error("Invalid setState(" + state + ") for Event \"" + getDescriptor() + "\"");
+			return;
+		}
+		this.eventState = state;
+	}
 
 	public void setNotifyEvent(GameNotifyEvent event) {
 		this.child = event;
