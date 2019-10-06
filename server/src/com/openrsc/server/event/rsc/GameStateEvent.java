@@ -13,6 +13,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 
 	private final int STATE_WAITING_FOR_NOTIFY = -1;
 	private final int STATE_ENDED = -2;
+	private final int STATE_CLEANUP = -3;
 
 
 	/**
@@ -24,7 +25,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 	private Map<Integer, StateEventTask> tasks = new HashMap<>();
 	private GameNotifyEvent child = null;
 
-	public GameStateEvent(World world, Mob owner, int initTickDelay, String descriptor) {
+	public GameStateEvent(final World world, final Mob owner, final int initTickDelay, final String descriptor) {
 		super(world, owner, initTickDelay, descriptor);
 		this.init();
 	}
@@ -39,9 +40,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 	public void run() {
 		if (getState() == STATE_WAITING_FOR_NOTIFY) {
 			return;
-		}
-
-		if(getState() == STATE_ENDED) {
+		} else if(getState() == STATE_ENDED) {
 			stop();
 			return;
 		}
@@ -60,22 +59,47 @@ public abstract class GameStateEvent extends GameTickEvent {
 		}
 	}
 
+	public void stop() {
+		super.stop();
+		if(hasState(STATE_CLEANUP)) {
+			setState(STATE_CLEANUP);
+			action();
+			LOGGER.info(getDescriptor() + " : " + getOwner() + " : Calling Cleanup");
+		}
+	}
+
+	public boolean hasState(final int state) {
+		return tasks.containsKey(state);
+	}
+
 	private StateEventContext action() {
+		return action(getState());
+	}
+
+	private StateEventContext action(final int state) {
 		StateEventContext result = null;
 		try {
-			result = tasks.get(getState()).call();
+			result = tasks.get(state).call();
 		} catch (Exception a) {
 			LOGGER.error("action() for Event \"" + getDescriptor() + "\": " + a.getMessage());
 		}
 		return result;
 	}
 
-	public void addState(int state, Callable<StateEventContext> block) {
-		if(state < 0 ) {
+	public void addState(final int state, final Callable<StateEventContext> block) {
+		if(state < 0) {
 			LOGGER.error("Invalid addState() for Event \"" + getDescriptor() + "\"");
 			return;
 		}
 
+		addStateInternal(state, block);
+	}
+
+	public void addCleanupState(final Callable<StateEventContext> block) {
+		addStateInternal(STATE_CLEANUP, block);
+	}
+
+	private void addStateInternal(final int state, final Callable<StateEventContext> block) {
 		tasks.put(state, new StateEventTask() {
 			@Override
 			public StateEventContext call() {
@@ -138,7 +162,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 		return this.eventState;
 	}
 
-	public void setState(int state) { this.eventState = state; }
+	private void setState(int state) { this.eventState = state; }
 
 	public void setNotifyEvent(GameNotifyEvent event) {
 		this.child = event;
