@@ -44,6 +44,11 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 
 		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
+				addCleanupState(() -> {
+					getPlayerOwner().setBusy(false);
+					npc.setBusy(false);
+					return null;
+				});
 				addState(0, () -> {
 					GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "Good day" + (npc.getID() == 617 ? " Bwana" : "") + ", how may I help you?");
 					return invokeNextStateOnNotify(notifier);
@@ -57,8 +62,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					if (menu == 0) {
 						if (getPlayerOwner().isIronMan(2)) {
 							getPlayerOwner().message("As an Ultimate Iron Man, you cannot use the bank.");
-							getPlayerOwner().setBusy(false);
-							npc.setBusy(false);
 							return null;
 						}
 						if (getPlayerOwner().getCache().hasKey("bank_pin") && !getPlayerOwner().getAttribute("bankpin", false)) {
@@ -79,8 +82,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 							return invokeOnNotify(event, 19, 0);
 						}
 					}
-					npc.setBusy(false);
-					getPlayerOwner().setBusy(false);
 					return null;
 				});
 				addState(3, () -> {
@@ -97,8 +98,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					}
 					if (!getPlayerOwner().getCache().getString("bank_pin").equals(pin)) {
 						ActionSender.sendBox(getPlayerOwner(), "Incorrect bank pin", false);
-						getPlayerOwner().setBusy(false);
-						npc.setBusy(false);
 						return null;
 					}
 					getPlayerOwner().setAttribute("bankpin", true);
@@ -112,8 +111,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 				addState(5, () -> {
 					ActionSender.showBank(getPlayerOwner());
 					getPlayerOwner().setAccessingBank(true);
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
 					return null;
 				});
 				addState(6, () -> {
@@ -134,9 +131,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 						final GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "Yes we did, but people kept on coming into our branches outside of varrock");
 						return invokeOnNotify(notifier, 10);
 					}
-
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
 					return null;
 				});
 				addState(9, () -> {
@@ -175,16 +169,12 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 							getPlayerOwner().message("You don't have a bank pin");
 						}
 					}
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
 					return null;
 				});
 				addState(13, () -> {
 					String bankPin = (String)getNotifyEvent().getObjectOut("string_pin");
 					if (bankPin == "cancel") {
 						ActionSender.sendBox(getPlayerOwner(), "You have not entered a bank pin.%No bank pin set.", false);
-						getPlayerOwner().setBusy(false);
-						npc.setBusy(false);
 						return null;
 					}
 					try {
@@ -199,8 +189,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					} catch (SQLException e) {
 						LOGGER.catching(e);
 					}
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
 					return null;
 				});
 				addState(14, () -> {
@@ -217,8 +205,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					}
 					if (!getPlayerOwner().getCache().getString("bank_pin").equals(bankPin)) {
 						ActionSender.sendBox(getPlayerOwner(), "Incorrect bank pin", false);
-						getPlayerOwner().setBusy(false);
-						npc.setBusy(false);
 						return null;
 					}
 					GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
@@ -229,8 +215,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 						String changeTo = (String)getNotifyEvent().getObjectOut("string_pin");
 						if (changeTo == "cancel") {
 							ActionSender.sendBox(getPlayerOwner(), "You have not entered a bank pin.%No bank pin set.", false);
-							getPlayerOwner().setBusy(false);
-							npc.setBusy(false);
 							return null;
 						}
 						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
@@ -244,8 +228,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					} catch (SQLException e) {
 						LOGGER.catching(e);
 					}
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
 					return null;
 				});
 				addState(16, () -> {
@@ -262,8 +244,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					}
 					if (!getPlayerOwner().getCache().getString("bank_pin").equals(bankPin)) {
 						ActionSender.sendBox(getPlayerOwner(), "Incorrect bank pin", false);
-						getPlayerOwner().setBusy(false);
-						npc.setBusy(false);
 						return null;
 					}
 					if (getPlayerOwner().getIronMan() > 0 && getPlayerOwner().getIronManRestriction() == 0) {
@@ -272,8 +252,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					}
 					getPlayerOwner().getCache().remove("bank_pin");
 					ActionSender.sendBox(getPlayerOwner(), "Your bank pin is removed", false);
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
 					return null;
 				});
 				addState(17, () -> {
@@ -292,8 +270,6 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					} else if (deleteMenu == 1) {
 						getPlayerOwner().message("You decide to not remove your Bank PIN.");
 					}
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
 					return null;
 				});
 				addState(19, () -> {
@@ -310,14 +286,10 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					}
 					if (!getPlayerOwner().getCache().getString("bank_pin").equals(pin)) {
 						ActionSender.sendBox(getPlayerOwner(), "Incorrect bank pin", false);
-						getPlayerOwner().setBusy(false);
-						npc.setBusy(false);
 						return null;
 					}
 					getPlayerOwner().setAttribute("bankpin", true);
 					ActionSender.sendBox(getPlayerOwner(), "Bank pin correct", false);
-					getPlayerOwner().setBusy(false);
-					npc.setBusy(false);
 					getPlayerOwner().getWorld().getMarket().addPlayerCollectItemsTask(getPlayerOwner());
 					return null;
 				});

@@ -688,7 +688,7 @@ public abstract class Mob extends Entity {
 		return busyTimer - System.currentTimeMillis() > 0 || busy.get();
 	}
 
-	public synchronized void setBusy(boolean busy) {
+	public void setBusy(boolean busy) {
 		this.busy.set(busy);
 	}
 
