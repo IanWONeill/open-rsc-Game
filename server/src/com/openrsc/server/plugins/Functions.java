@@ -1557,7 +1557,7 @@ public class Functions {
 							npc.getUpdateFlags().setChatMessage(new ChatMessage(npc, message, player));
 						}
 
-						return invokeNextState( delay);
+						return invokeNextState(delay);
 					});
 				}
 
