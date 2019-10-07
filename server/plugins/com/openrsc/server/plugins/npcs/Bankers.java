@@ -50,6 +50,8 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 					return null;
 				});
 				addState(0, () -> {
+					getPlayerOwner().setBusy(true);
+					npc.setBusy(true);
 					GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "Good day" + (npc.getID() == 617 ? " Bwana" : "") + ", how may I help you?");
 					return invokeNextStateOnNotify(notifier);
 				});

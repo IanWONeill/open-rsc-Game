@@ -1472,7 +1472,7 @@ public class Functions {
 			@Override public void init(){
 				addState(0, () -> {
 					if (npc != null) {
-						npc.setBusy(true);
+						npc.setBusyTimer(messages.length);
 						npc.resetPath();
 					}
 					if (!player.inCombat()) {
@@ -1482,7 +1482,7 @@ public class Functions {
 						}
 					}
 
-					player.setBusy(true);
+					player.setBusyTimer(messages.length);
 					player.resetPath();
 
 					return invoke(1, 0);
@@ -1495,7 +1495,7 @@ public class Functions {
 						if (!message.equalsIgnoreCase("null")) {
 							if (npc != null) {
 								if (npc.isRemoved()) {
-									player.setBusy(false);
+									player.setBusyTimer(0);
 									return null;
 								}
 							}
@@ -1509,11 +1509,6 @@ public class Functions {
 
 				// Add a final state ... We just want to emulate the last sleep() before notifying
 				addState(state, () -> {
-					if (npc != null) {
-						npc.setBusy(false);
-					}
-
-					player.setBusy(false);
 
 					return null;
 				});
@@ -1536,9 +1531,9 @@ public class Functions {
 		return new GameNotifyEvent(player.getWorld(), player, 0, "playerTalk Notifier") {
 			@Override public void init(){
 				addState(0, () -> {
-					npc.setBusy(true);
+					npc.setBusyTimer(messages.length);
 					npc.resetPath();
-					player.setBusy(true);
+					player.setBusyTimer(messages.length);
 					player.resetPath();
 
 					if (!player.inCombat()) {
@@ -1555,7 +1550,7 @@ public class Functions {
 					addState(state++, () -> {
 						if (!message.equalsIgnoreCase("null")) {
 							if (npc.isRemoved()) {
-								player.setBusy(false);
+								player.setBusyTimer(0);
 								return null;
 							}
 
@@ -1568,8 +1563,6 @@ public class Functions {
 
 				// Add a final state ... We just want to emulate the last sleep() before notifying
 				addState(state, () -> {
-					npc.setBusy(false);
-					player.setBusy(false);
 
 					return null;
 				});
@@ -1590,7 +1583,7 @@ public class Functions {
 		return new GameNotifyEvent(p.getWorld(), p, 0, "handleGate Notifier") {
 			@Override public void init(){
 				addState(0, () -> {
-					p.setBusy(true);
+					p.setBusyTimer(2);
 					// 0 - East
 					// 1 - Diagonal S- NE
 					// 2 - South
@@ -1640,7 +1633,6 @@ public class Functions {
 
 				addState(1, () -> {
 					registerObject(new GameObject(object.getWorld(), object.getLoc()));
-					p.setBusy(false);
 
 					return null;
 				});
@@ -1670,11 +1662,11 @@ public class Functions {
 	 * @param player
 	 * @param messages
 	 */
-	public static void message(final Player player, int delay, final String... messages) {
+	public static void message(final Player player, final int delay, final String... messages) {
 		message(player, null, delay, messages);
 	}
 
-	public static void message(final Player player, final Npc npc, int delay, final String... messages) {
+	public static void message(final Player player, final Npc npc, final int delay, final String... messages) {
 		int delayTicks = (int)Math.ceil((double)delay / (double)player.getWorld().getServer().getConfig().GAME_TICK);
 		for (final String message : messages) {
 			if (!message.equalsIgnoreCase("null")) {

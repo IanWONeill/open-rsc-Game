@@ -2946,12 +2946,9 @@ public final class Player extends Mob {
 
 				this.resetMenuHandler();
 				this.setOption(-1);
-				this.setBusy(false);
 
 				return true;
 			}
-
-			npc.setBusy(true);
 		}
 
 		if (this.checkUnderAttack())
@@ -2960,7 +2957,6 @@ public final class Player extends Mob {
 
 			this.resetMenuHandler();
 			this.setOption(-1);
-			this.setBusy(false);
 
 			return true;
 		}
