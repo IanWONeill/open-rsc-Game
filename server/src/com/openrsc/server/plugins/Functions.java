@@ -1459,20 +1459,25 @@ public class Functions {
 		};
 	}
 
-	/**
-	 * Player message(s), each message has 4 tick delay between.
-	 * Formerly: playerTalk
-	 *
-	 * @param player
-	 * @param npc
-	 * @param messages
-	 */
 	public static GameNotifyEvent playerDialogue(final Player player, final Npc npc, final String... messages) {
+		return playerDialogue(player, npc, 3, messages);
+	}
+
+		/**
+		 * Player message(s).
+		 * Formerly: playerTalk
+		 *
+		 * @param player
+		 * @param npc
+		 * @param delay
+		 * @param messages
+		 */
+	public static GameNotifyEvent playerDialogue(final Player player, final Npc npc, final int delay, final String... messages) {
 		return new GameNotifyEvent(player.getWorld(), player, 0, "playerTalk Notifier") {
 			@Override public void init(){
 				addState(0, () -> {
 					if (npc != null) {
-						npc.setBusyTimer(messages.length * 3);
+						npc.setBusyTimer(messages.length * delay);
 						npc.resetPath();
 					}
 					if (!player.inCombat()) {
@@ -1482,7 +1487,7 @@ public class Functions {
 						}
 					}
 
-					player.setBusyTimer(messages.length * 3);
+					player.setBusyTimer(messages.length * delay);
 					player.resetPath();
 
 					return invoke(1, 0);
@@ -1503,13 +1508,12 @@ public class Functions {
 							player.getUpdateFlags().setChatMessage(new ChatMessage(player, message, (npc == null ? player : npc)));
 						}
 
-						return invokeNextState( 3);
+						return invokeNextState(delay);
 					});
 				}
 
 				// Add a final state ... We just want to emulate the last sleep() before notifying
 				addState(state, () -> {
-					System.out.println("playerDialogue " + player + " " + npc + " last state");
 					return null;
 				});
 			}
@@ -1563,8 +1567,62 @@ public class Functions {
 
 				// Add a final state ... We just want to emulate the last sleep() before notifying
 				addState(state, () -> {
-					System.out.println("npcDiaglogue " + player + " " + npc + " last state");
+					return null;
+				});
+			}
+		};
+	}
 
+	public static GameNotifyEvent questMessage(final Player player, final String... messages) {
+		return questMessage(player, 3, messages);
+	}
+
+	public static GameNotifyEvent questMessage(final Player player, final int delay, final String... messages) {
+		return questMessage(player, null, delay, messages);
+	}
+
+	public static GameNotifyEvent questMessage(final Player player, final Npc npc, final int delay, final String... messages) {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "questMessage Notifier") {
+			@Override public void init(){
+				addState(0, () -> {
+					if (npc != null) {
+						npc.setBusyTimer(messages.length * delay);
+						npc.resetPath();
+					}
+					if (!player.inCombat()) {
+						if (npc != null) {
+							npc.face(player);
+							player.face(npc);
+						}
+					}
+
+					player.setBusyTimer(messages.length * delay);
+					player.resetPath();
+
+					return invoke(1, 0);
+				});
+
+				int state = 1;
+
+				for (final String message : messages) {
+					addState(state++, () -> {
+						if (!message.equalsIgnoreCase("null")) {
+							if (npc != null) {
+								if (npc.isRemoved()) {
+									player.setBusyTimer(0);
+									return null;
+								}
+							}
+
+							player.message(message);
+						}
+
+						return invokeNextState(delay);
+					});
+				}
+
+				// Add a final state ... We just want to emulate the last sleep() before notifying
+				addState(state, () -> {
 					return null;
 				});
 			}
@@ -1574,7 +1632,6 @@ public class Functions {
 	public static GameNotifyEvent handleGate(final Player p, final GameObject object) {
 		return handleGate(p, object, 181);
 	}
-
 
 	public static GameNotifyEvent handleGate(final Player p, final GameObject object, final int replaceID) {
 		return handleGate(p, object, replaceID, null);
@@ -1641,8 +1698,8 @@ public class Functions {
 		};
 	}
 
-	/*
-	 * All of this below here needs to either be removed or converted to using a GameNotifyEvent when the code is completed.
+	/**
+	 * Fully converted after here ... Need to be removed for final 4.0.0 code
 	 */
 
 	public static void sleep(final int delay) {
@@ -1705,10 +1762,6 @@ public class Functions {
 		}
 		player.setBusyTimer(0);
 	}
-
-	/**
-	 * Fully converted after here
-	 */
 
 	/**
 	 * Npc chat method
