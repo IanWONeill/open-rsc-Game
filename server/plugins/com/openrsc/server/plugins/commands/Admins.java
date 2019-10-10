@@ -98,15 +98,13 @@ public final class Admins implements CommandListener {
 
 					int count1 = 0;
 					if (cmd.equalsIgnoreCase("cleannpcs")) {
-						player.getWorld().getServer().submitTask(() -> {
-							for (Npc n : player.getWorld().getNpcs()) {
-								if (n.getOpponent() instanceof Player) {
-									if (n.getOpponent().isUnregistering()) {
-										n.setOpponent(null);
-									}
+						for (Npc n : player.getWorld().getNpcs()) {
+							if (n.getOpponent() instanceof Player) {
+								if (n.getOpponent().isUnregistering()) {
+									n.setOpponent(null);
 								}
 							}
-						});
+						}
 						player.message(messagePrefix + "Cleaned " + count1 + " NPC opponent references.");
 					} else if (cmd.equalsIgnoreCase("saveall")) {
 						int count = 0;
@@ -116,19 +114,17 @@ public final class Admins implements CommandListener {
 						}
 						player.message(messagePrefix + "Saved " + count + " players on server!");
 					} else if (cmd.equalsIgnoreCase("cleanregions")) {
-						player.getWorld().getServer().submitTask(() -> {
-							final int HORIZONTAL_PLANES = (Constants.MAX_WIDTH / Constants.REGION_SIZE) + 1;
-							final int VERTICAL_PLANES = (Constants.MAX_HEIGHT / Constants.REGION_SIZE) + 1;
-							for (int x = 0; x < HORIZONTAL_PLANES; ++x) {
-								for (int y = 0; y < VERTICAL_PLANES; ++y) {
-									Region r = player.getWorld().getRegionManager().getRegion(x * Constants.REGION_SIZE,
-										y * Constants.REGION_SIZE);
-									if (r != null) {
-										r.getPlayers().removeIf(Entity::isRemoved);
-									}
+						final int HORIZONTAL_PLANES = (Constants.MAX_WIDTH / Constants.REGION_SIZE) + 1;
+						final int VERTICAL_PLANES = (Constants.MAX_HEIGHT / Constants.REGION_SIZE) + 1;
+						for (int x = 0; x < HORIZONTAL_PLANES; ++x) {
+							for (int y = 0; y < VERTICAL_PLANES; ++y) {
+								Region r = player.getWorld().getRegionManager().getRegion(x * Constants.REGION_SIZE,
+									y * Constants.REGION_SIZE);
+								if (r != null) {
+									r.getPlayers().removeIf(Entity::isRemoved);
 								}
 							}
-						});
+						}
 						player.message(messagePrefix + "Cleaned " + count1 + " regions.");
 					} else if (cmd.equalsIgnoreCase("holidaydrop")) {
 						if (args.length < 2) {

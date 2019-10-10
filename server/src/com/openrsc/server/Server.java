@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.content.achievement.AchievementSystem;
 import com.openrsc.server.event.DelayedEvent;
-import com.openrsc.server.event.PluginsUseThisEvent;
 import com.openrsc.server.event.SingleEvent;
 import com.openrsc.server.event.custom.MonitoringEvent;
 import com.openrsc.server.event.rsc.GameTickEvent;
@@ -279,28 +278,6 @@ public final class Server implements Runnable {
 			serverChannel.channel().disconnect();
 		} catch (Exception exception) {
 		}
-	}
-
-	public void submitTask(Runnable r) {
-		// TODO: This should be used very sparingly. Use outside of Commands is essentially unwarranted.
-		scheduledExecutor.submit(r);
-	}
-
-	public void post(Runnable r, int delay, String descriptor) {
-		getGameEventHandler().add(new PluginsUseThisEvent(getWorld(), delay, descriptor) {
-			@Override
-			public void action() {
-				try {
-					r.run();
-				} catch (Throwable e) {
-					LOGGER.catching(e);
-				}
-			}
-		});
-	}
-
-	public void post(Runnable r, String descriptor) {
-		post(r, 0, descriptor);
 	}
 
 	public void run() {
