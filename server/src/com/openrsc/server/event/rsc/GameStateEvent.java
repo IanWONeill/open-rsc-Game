@@ -170,13 +170,13 @@ public abstract class GameStateEvent extends GameTickEvent {
 		this.eventState = state;
 	}
 
-	public void setNotifyEvent(GameNotifyEvent event) {
+	public void setNotifyEvent(final GameNotifyEvent event) {
 		this.child = event;
 	}
 
 	public GameNotifyEvent getNotifyEvent() { return this.child; }
 
-	private void linkNotifier(GameNotifyEvent child) {
+	private void linkNotifier(final GameNotifyEvent child) {
 		child.setParentEvent(this);
 		setNotifyEvent(child);
 	}

@@ -1704,22 +1704,8 @@ public class Functions {
 
 	public static void sleep(final int delay) {
 		// TODO: This should not exist.
-		/*try {
-			if (Thread.currentThread().getName().toLowerCase().contains("gamethread"))
-				return;
-			// System.out.println("Sleeping on " +
-			// Thread.currentThread().getName().toLowerCase());
-			Thread.sleep(delay);
-		} catch (final InterruptedException e) {
-		}*/
 	}
 
-	/**
-	 * Displays server message(s) with 2.2 second delay.
-	 *
-	 * @param player
-	 * @param messages
-	 */
 	public static void message(final Player player, final int delay, final String... messages) {
 		message(player, null, delay, messages);
 	}
@@ -1743,12 +1729,6 @@ public class Functions {
 		player.setBusy(false);
 	}
 
-	/**
-	 * Displays server message(s) with 2.2 second delay.
-	 *
-	 * @param player
-	 * @param messages
-	 */
 	public static void message(final Player player, final String... messages) {
 		for (final String message : messages) {
 			if (!message.equalsIgnoreCase("null")) {
@@ -1763,13 +1743,6 @@ public class Functions {
 		player.setBusyTimer(0);
 	}
 
-	/**
-	 * Npc chat method
-	 *
-	 * @param player
-	 * @param npc
-	 * @param messages - String array of npc dialogue lines.
-	 */
 	public static void npcTalk(final Player player, final Npc npc, final int delay, final String... messages) {
 		npc.setBusy(true);
 		player.setBusy(true);
@@ -1921,13 +1894,6 @@ public class Functions {
 		}
 	}
 
-	/**
-	 * Player message(s), each message has 2.2s delay between.
-	 *
-	 * @param player
-	 * @param npc
-	 * @param messages
-	 */
 	public static void playerTalk(final Player player, final Npc npc, final String... messages) {
 		for (final String message : messages) {
 			if (!message.equalsIgnoreCase("null")) {
