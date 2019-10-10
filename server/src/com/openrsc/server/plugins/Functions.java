@@ -1425,12 +1425,12 @@ public class Functions {
 					final GameNotifyEvent event = this;
 
 					player.resetMenuHandler();
+					player.setOption(-1);
 					player.setMenuHandler(new MenuOptionListener(options) {
 						@Override
 						public void handleReply(final int option, final String reply) {
 							player.setOption(option);
 							event.addObjectOut("int_option", option);
-							event.trigger();
 						}
 					});
 					ActionSender.sendMenu(player, options);
@@ -1440,11 +1440,11 @@ public class Functions {
 
 				addState(1, () -> {
 					if (player.shouldBreakMenu(npc)) {
-						trigger();
 						getParentEvent().stop();
+						return null;
 					}
 
-					if(isTriggered()) {
+					if(hasObjectOut("int_option")) {
 						if(doPlayerDialogue && player.getOption() >= 0 && options[player.getOption()] != null) {
 							GameNotifyEvent notifier = playerDialogue(player, npc, options[player.getOption()]);
 							return endOnNotify(notifier);
@@ -1472,7 +1472,7 @@ public class Functions {
 			@Override public void init(){
 				addState(0, () -> {
 					if (npc != null) {
-						npc.setBusyTimer(messages.length);
+						npc.setBusyTimer(messages.length * 3);
 						npc.resetPath();
 					}
 					if (!player.inCombat()) {
@@ -1482,7 +1482,7 @@ public class Functions {
 						}
 					}
 
-					player.setBusyTimer(messages.length);
+					player.setBusyTimer(messages.length * 3);
 					player.resetPath();
 
 					return invoke(1, 0);
@@ -1509,7 +1509,7 @@ public class Functions {
 
 				// Add a final state ... We just want to emulate the last sleep() before notifying
 				addState(state, () -> {
-
+					System.out.println("playerDialogue " + player + " " + npc + " last state");
 					return null;
 				});
 			}
@@ -1531,9 +1531,9 @@ public class Functions {
 		return new GameNotifyEvent(player.getWorld(), player, 0, "playerTalk Notifier") {
 			@Override public void init(){
 				addState(0, () -> {
-					npc.setBusyTimer(messages.length);
+					npc.setBusyTimer(messages.length*delay);
 					npc.resetPath();
-					player.setBusyTimer(messages.length);
+					player.setBusyTimer(messages.length*delay);
 					player.resetPath();
 
 					if (!player.inCombat()) {
@@ -1563,6 +1563,7 @@ public class Functions {
 
 				// Add a final state ... We just want to emulate the last sleep() before notifying
 				addState(state, () -> {
+					System.out.println("npcDiaglogue " + player + " " + npc + " last state");
 
 					return null;
 				});
@@ -1806,7 +1807,7 @@ public class Functions {
 
 		registerObject(new GameObject(object.getWorld(), object.getLoc()));
 	}
-	
+
 	public static int showMenu(final Player player, final String... options) {
 		return showMenu(player, null, true, options);
 	}

@@ -15,7 +15,7 @@ public abstract class GameNotifyEvent extends GameStateEvent {
 	private int returnDelay;
 	private boolean triggered = false;
 
-	public GameNotifyEvent(World world, Mob owner, int ticks, String descriptor) {
+	public GameNotifyEvent(final World world, final Mob owner, final int ticks, final String descriptor) {
 		super(world, owner, ticks, descriptor);
 	}
 
@@ -25,7 +25,7 @@ public abstract class GameNotifyEvent extends GameStateEvent {
 		trigger();
 	}
 
-	public void setParentEvent(GameStateEvent event) {
+	public void setParentEvent(final GameStateEvent event) {
 		this.parentEvent = event;
 	}
 
@@ -46,27 +46,35 @@ public abstract class GameNotifyEvent extends GameStateEvent {
 
 	public boolean isTriggered() { return triggered; }
 
-	public void addObjectOut(String name, Object item) {
+	public void addObjectOut(final String name, final Object item) {
 		outObjects.put(name, item);
 	}
 
-	public void addObjectIn(String name, Object item) {
+	public void addObjectIn(final String name, final Object item) {
 		inObjects.put(name, item);
 	}
 
-	public Object getObjectOut(String name) {
+	public Object getObjectOut(final String name) {
 		return outObjects.get(name);
 	}
 
-	public Object getObjectIn(String name) {
+	public boolean hasObjectOut(final String name) {
+		return outObjects.containsKey(name);
+	}
+
+	public Object getObjectIn(final String name) {
 		return inObjects.get(name);
+	}
+
+	public boolean hasObjectIn(final String name) {
+		return inObjects.containsKey(name);
 	}
 
 	public int getReturnState() {
 		return returnState;
 	}
 
-	public void setReturnState(int returnState) {
+	public void setReturnState(final int returnState) {
 		this.returnState = returnState;
 	}
 
@@ -74,7 +82,7 @@ public abstract class GameNotifyEvent extends GameStateEvent {
 		return returnDelay;
 	}
 
-	public void setReturnDelay(int returnDelay) {
+	public void setReturnDelay(final int returnDelay) {
 		this.returnDelay = returnDelay;
 	}
 
