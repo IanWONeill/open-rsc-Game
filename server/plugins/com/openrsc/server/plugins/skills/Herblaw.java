@@ -52,8 +52,8 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 			return false;
 		}
 		if (player.getSkills().getLevel(Skills.HERBLAW) < herb.getLevelRequired()) {
-			player.message("You cannot identify this herb");
-			player.message("you need a higher herblaw level");
+			player.playerServerMessage(MessageType.QUEST, "You cannot identify this herb");
+			player.playerServerMessage(MessageType.QUEST, "you need a higher herblaw level");
 			return false;
 		}
 		if (player.getQuestStage(Quests.DRUIDIC_RITUAL) != -1) {
@@ -65,8 +65,8 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 			@Override
 			public void action() {
 				if (getOwner().getSkills().getLevel(Skills.HERBLAW) < herb.getLevelRequired()) {
-					getOwner().message("You cannot identify this herb");
-					getOwner().message("you need a higher herblaw level");
+					getOwner().playerServerMessage(MessageType.QUEST, "You cannot identify this herb");
+					getOwner().playerServerMessage(MessageType.QUEST, "you need a higher herblaw level");
 					interrupt();
 					return;
 				}
@@ -79,7 +79,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 				Item newItem = new Item(herb.getNewId());
 				if (getOwner().getInventory().remove(item.getID(),1,false) > -1) {
 					getOwner().getInventory().add(newItem,true);
-					getOwner().message("This herb is " + newItem.getDef(getWorld()).getName());
+					getOwner().playerServerMessage(MessageType.QUEST, "This herb is " + newItem.getDef(getWorld()).getName());
 					getOwner().incExp(Skills.HERBLAW, herb.getExp(), true);
 				}
 				getOwner().setBusy(false);
@@ -116,10 +116,10 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 						makeLiquid(player, item, usedWith, false);
 					} else if (usedWith.getID() == com.openrsc.server.constants.ItemId.UNFINISHED_POTION.id() && (item.getID() == com.openrsc.server.constants.ItemId.GROUND_BAT_BONES.id() || item.getID() == com.openrsc.server.constants.ItemId.GUAM_LEAF.id())) {
 						makeLiquid(player, usedWith, item, true);
-					} else if (usedWith.getID() == com.openrsc.server.constants.ItemId.NITROGLYCERIN.id() && item.getID() == com.openrsc.server.constants.ItemId.AMMONIUM_NITRATE.id()
-						|| usedWith.getID() == com.openrsc.server.constants.ItemId.AMMONIUM_NITRATE.id() && item.getID() == com.openrsc.server.constants.ItemId.NITROGLYCERIN.id()) {
-						if (player.getSkills().getLevel(Skills.HERBLAW) < 10) {
-							player.message("You need to have a herblaw level of 10 or over to mix this liquid");
+		} else if (usedWith.getID() == com.openrsc.server.constants.ItemId.NITROGLYCERIN.id() && item.getID() == com.openrsc.server.constants.ItemId.AMMONIUM_NITRATE.id()
+				|| usedWith.getID() == com.openrsc.server.constants.ItemId.AMMONIUM_NITRATE.id() && item.getID() == com.openrsc.server.constants.ItemId.NITROGLYCERIN.id()) {
+			if (player.getSkills().getLevel(Skills.HERBLAW) < 10) {
+				player.playerServerMessage(MessageType.QUEST, "You need to have a herblaw level of 10 or over to mix this liquid");
 							return null;
 						}
 						if (player.getQuestStage(Quests.DRUIDIC_RITUAL) != -1) {
@@ -135,7 +135,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 					} else if (usedWith.getID() == com.openrsc.server.constants.ItemId.GROUND_CHARCOAL.id() && item.getID() == com.openrsc.server.constants.ItemId.MIXED_CHEMICALS_1.id()
 						|| usedWith.getID() == com.openrsc.server.constants.ItemId.MIXED_CHEMICALS_1.id() && item.getID() == com.openrsc.server.constants.ItemId.GROUND_CHARCOAL.id()) {
 						if (player.getSkills().getLevel(Skills.HERBLAW) < 10) {
-							player.message("You need to have a herblaw level of 10 or over to mix this liquid");
+				player.playerServerMessage(MessageType.QUEST, "You need to have a herblaw level of 10 or over to mix this liquid");
 							return null;
 						}
 						if (player.getQuestStage(Quests.DRUIDIC_RITUAL) != -1) {
@@ -150,8 +150,8 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 						player.getInventory().replace(com.openrsc.server.constants.ItemId.MIXED_CHEMICALS_1.id(), com.openrsc.server.constants.ItemId.MIXED_CHEMICALS_2.id());
 					} else if (usedWith.getID() == com.openrsc.server.constants.ItemId.ARCENIA_ROOT.id() && item.getID() == com.openrsc.server.constants.ItemId.MIXED_CHEMICALS_2.id()
 						|| usedWith.getID() == com.openrsc.server.constants.ItemId.MIXED_CHEMICALS_2.id() && item.getID() == com.openrsc.server.constants.ItemId.ARCENIA_ROOT.id()) {
-						if (player.getSkills().getLevel(Skills.HERBLAW) < 10) {
-							player.message("You need to have a herblaw level of 10 or over to mix this liquid");
+			if (player.getSkills().getLevel(Skills.HERBLAW) < 10) {
+				player.playerServerMessage(MessageType.QUEST, "You need to have a herblaw level of 10 or over to mix this liquid");
 							return null;
 						}
 						if (player.getQuestStage(Quests.DRUIDIC_RITUAL) != -1) {
@@ -168,7 +168,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 					} else if (usedWith.getID() == com.openrsc.server.constants.ItemId.UNFINISHED_HARRALANDER_POTION.id() && item.getID() == com.openrsc.server.constants.ItemId.BLAMISH_SNAIL_SLIME.id()
 						|| usedWith.getID() == com.openrsc.server.constants.ItemId.BLAMISH_SNAIL_SLIME.id() && item.getID() == com.openrsc.server.constants.ItemId.UNFINISHED_HARRALANDER_POTION.id()) {
 						if (player.getSkills().getLevel(Skills.HERBLAW) < 25) {
-							player.message("You need a level of 25 herblaw to mix this potion");
+				player.playerServerMessage(MessageType.QUEST, "You need a herblaw level of 25 to make this potion");
 							return null;
 						}
 						if (player.getQuestStage(Quests.DRUIDIC_RITUAL) != -1) {
@@ -182,7 +182,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 					} else if (usedWith.getID() == com.openrsc.server.constants.ItemId.SNAKES_WEED_SOLUTION.id() && item.getID() == com.openrsc.server.constants.ItemId.ARDRIGAL.id()
 						|| usedWith.getID() == com.openrsc.server.constants.ItemId.ARDRIGAL.id() && item.getID() == com.openrsc.server.constants.ItemId.SNAKES_WEED_SOLUTION.id()) {
 						if (player.getSkills().getLevel(Skills.HERBLAW) < 45) {
-							player.message("You need to have a herblaw level of 45 or over to mix this potion");
+				player.playerServerMessage(MessageType.QUEST, "You need to have a herblaw level of 45 or over to mix this potion");
 							return null;
 						}
 						if (player.getQuestStage(Quests.DRUIDIC_RITUAL) != -1) {
@@ -202,7 +202,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 					} else if (usedWith.getID() == com.openrsc.server.constants.ItemId.ARDRIGAL_SOLUTION.id() && item.getID() == com.openrsc.server.constants.ItemId.SNAKE_WEED.id()
 						|| usedWith.getID() == com.openrsc.server.constants.ItemId.SNAKE_WEED.id() && item.getID() == com.openrsc.server.constants.ItemId.ARDRIGAL_SOLUTION.id()) {
 						if (player.getSkills().getLevel(Skills.HERBLAW) < 45) {
-							player.message("You need to have a herblaw level of 45 or over to mix this potion");
+				player.playerServerMessage(MessageType.QUEST, "You need to have a herblaw level of 45 or over to mix this potion");
 							return null;
 						}
 						if (player.getQuestStage(Quests.DRUIDIC_RITUAL) != -1) {
@@ -313,7 +313,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 			@Override
 			public void action() {
 				if (getOwner().getSkills().getLevel(Skills.HERBLAW) < herbDef.getReqLevel()) {
-					getOwner().message("you need level " + herbDef.getReqLevel()
+					getOwner().playerServerMessage(MessageType.QUEST, "you need level " + herbDef.getReqLevel()
 						+ " herblaw to make this potion");
 					interrupt();
 					return;
@@ -328,7 +328,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 					getOwner().getInventory().remove(vial.getID(), 1);
 					getOwner().getInventory().remove(herb.getID(), 1);
 					getOwner().playSound("mix");
-					getOwner().message("You put the " + herb.getDef(getWorld()).getName()
+					getOwner().playerServerMessage(MessageType.QUEST, "You put the " + herb.getDef(getWorld()).getName()
 						+ " into the vial of water");
 					getOwner().getInventory().add(
 						new Item(herbDef.getPotionId(), 1));
@@ -370,7 +370,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 			@Override
 			public void action() {
 				if (getOwner().getSkills().getLevel(Skills.HERBLAW) < def.getReqLevel()) {
-					getOwner().message("You need a herblaw level of "
+					getOwner().playerServerMessage(MessageType.QUEST, "You need a herblaw level of "
 						+ def.getReqLevel() + " to make this potion");
 					interrupt();
 					return;
@@ -386,7 +386,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 						showBubble(getOwner(), bubbleItem.get());
 					}
 					getOwner().playSound("mix");
-					getOwner().message("You mix the " + second.getDef(getWorld()).getName()
+					getOwner().playerServerMessage(MessageType.QUEST, "You mix the " + second.getDef(getWorld()).getName()
 						+ " into your potion");
 					getOwner().getInventory().remove(second.getID(), 1);
 					getOwner().getInventory().remove(unfinished.getID(), 1);
@@ -407,12 +407,12 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 		}
 		if (unfinishedPot.getID() == com.openrsc.server.constants.ItemId.UNFINISHED_POTION.id() && (ingredient.getID() == com.openrsc.server.constants.ItemId.GROUND_BAT_BONES.id() || ingredient.getID() == com.openrsc.server.constants.ItemId.GUAM_LEAF.id())
 			|| ingredient.getID() == com.openrsc.server.constants.ItemId.UNFINISHED_POTION.id() && (unfinishedPot.getID() == com.openrsc.server.constants.ItemId.GROUND_BAT_BONES.id() || unfinishedPot.getID() == com.openrsc.server.constants.ItemId.GUAM_LEAF.id())) {
-			p.message("You mix the liquid with the " + ingredient.getDef(p.getWorld()).getName().toLowerCase());
+			p.playerServerMessage(MessageType.QUEST, "You mix the liquid with the " + ingredient.getDef(p.getWorld()).getName().toLowerCase());
 			p.message("Bang!!!");
 			displayTeleportBubble(p, p.getX(), p.getY(), true);
 			p.damage(8);
 			playerTalk(p, null, "Ow!");
-			p.message("You mixed this ingredients incorrectly and the mixture exploded!");
+			p.playerServerMessage(MessageType.QUEST, "You mixed this ingredients incorrectly and the mixture exploded!");
 			p.getInventory().remove(unfinishedPot.getID(), 1);
 			p.getInventory().remove(ingredient.getID(), 1);
 			p.getInventory().add(new Item(com.openrsc.server.constants.ItemId.EMPTY_VIAL.id(), 1));
@@ -421,7 +421,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 		if (unfinishedPot.getID() == com.openrsc.server.constants.ItemId.UNFINISHED_OGRE_POTION.id() && ingredient.getID() == com.openrsc.server.constants.ItemId.GROUND_BAT_BONES.id()
 			|| unfinishedPot.getID() == com.openrsc.server.constants.ItemId.GROUND_BAT_BONES.id() && ingredient.getID() == com.openrsc.server.constants.ItemId.UNFINISHED_OGRE_POTION.id()) {
 			if (p.getSkills().getLevel(Skills.HERBLAW) < 14) {
-				p.message("You need to have a herblaw level of 14 or over to mix this liquid");
+				p.playerServerMessage(MessageType.QUEST, "You need to have a herblaw level of 14 or over to mix this liquid");
 				return false;
 			}
 			if (p.getQuestStage(Quests.DRUIDIC_RITUAL) != -1) {
@@ -439,8 +439,8 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 				} else {
 					showBubble(p, ingredient);
 				}
-				p.message("You mix the " + ingredient.getDef(p.getWorld()).getName().toLowerCase() + " into the liquid");
-				p.message("You produce a strong potion");
+				p.playerServerMessage(MessageType.QUEST, "You mix the " + ingredient.getDef(p.getWorld()).getName().toLowerCase() + " into the liquid");
+				p.playerServerMessage(MessageType.QUEST, "You produce a strong potion");
 				p.getInventory().remove(ingredient.getID(), 1);
 				p.getInventory().remove(unfinishedPot.getID(), 1);
 				p.getInventory().add(new Item(com.openrsc.server.constants.ItemId.OGRE_POTION.id(), 1));
@@ -489,7 +489,7 @@ public class Herblaw implements InvActionListener, InvUseOnItemListener,
 			public void action() {
 				if (getOwner().getInventory().remove(item) > -1) {
 					if (item.getID() != com.openrsc.server.constants.ItemId.A_LUMP_OF_CHARCOAL.id()) {
-						getOwner().message("You grind the " + item.getDef(getWorld()).getName()
+						getOwner().playerServerMessage(MessageType.QUEST, "You grind the " + item.getDef(getWorld()).getName()
 							+ " to dust");
 					}
 					showBubble(getOwner(), new Item(ItemId.PESTLE_AND_MORTAR.id()));

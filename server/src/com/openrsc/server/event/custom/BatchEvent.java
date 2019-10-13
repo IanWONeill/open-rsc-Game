@@ -18,9 +18,9 @@ public abstract class BatchEvent extends DelayedEvent {
 		else if (repeatFor > 1000) this.repeatFor = repeatFor - 1000; // Mining default
 		else this.repeatFor = 1; // Always 1, otherwise.
 		ActionSender.sendProgressBar(owner, delay, repeatFor);
-		owner.setBusyTimer(getDelayTicks() + 1);
+		owner.setBusyTimer(delay + repeatFor);
 	}
-	
+
 	public BatchEvent(World world, Player owner, int delay, String descriptor, int repeatFor) {
 		this(world, owner, delay, descriptor, repeatFor, true);
 	}

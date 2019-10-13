@@ -131,7 +131,7 @@ public class Necromancer implements PlayerAttackNpcListener, PlayerAttackNpcExec
 	public boolean blockTalkToNpc(Player p, Npc n) {
 		return n.getID() == NpcId.NECROMANCER.id();
 	}
-	
+
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, Npc n) {
 		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {

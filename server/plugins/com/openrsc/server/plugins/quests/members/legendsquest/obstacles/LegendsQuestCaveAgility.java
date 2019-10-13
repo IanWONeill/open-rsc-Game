@@ -46,7 +46,7 @@ public class LegendsQuestCaveAgility implements ObjectActionListener, ObjectActi
 								p.setBusy(false);
 								return null;
 							}
-							if (Formulae.failCalculation(p, Skills.AGILITY, 50)) {
+							if (succeed(p, 50)) {
 								p.message("You manage to keep your balance.");
 								p.teleport(obj.getX(), obj.getY());
 								p.incExp(Skills.AGILITY, 20, true);
@@ -56,24 +56,19 @@ public class LegendsQuestCaveAgility implements ObjectActionListener, ObjectActi
 								int failScene = DataConversions.random(0, 10);
 								if (failScene == 0) {
 									p.message("...but you luckily avoid any damage.");
-								}
-								else if (failScene <= 2) {
+								} else if (failScene <= 2) {
 									p.damage(DataConversions.random(3, 6));
 									p.message("...and take a bit of damage.");
-								}
-								else if (failScene <= 5) {
+								} else if (failScene <= 5) {
 									p.damage(DataConversions.random(7, 11));
 									p.message("...and take some damage.");
-								}
-								else if (failScene <= 7) {
+								} else if (failScene <= 7) {
 									p.damage(DataConversions.random(12, 16));
 									p.message("...and take damage.");
-								}
-								else if (failScene <= 9) {
+								} else if (failScene <= 9) {
 									p.damage(DataConversions.random(17, 23));
 									p.message("...and are injured.");
-								}
-								else {
+								} else {
 									p.damage(DataConversions.random(24, 31));
 									p.message("...and take some major damage.");
 								}
@@ -86,7 +81,7 @@ public class LegendsQuestCaveAgility implements ObjectActionListener, ObjectActi
 								p.setBusy(false);
 								return null;
 							}
-							if (Formulae.failCalculation(p, Skills.AGILITY, 50)) {
+							if (succeed(p, 50)) {
 								if (p.getX() <= 419) {
 									p.message("You climb down the steps.");
 									p.teleport(421, 3707);
@@ -115,7 +110,7 @@ public class LegendsQuestCaveAgility implements ObjectActionListener, ObjectActi
 								p.setBusy(false);
 								return null;
 							}
-							if (Formulae.failCalculation(p, Skills.AGILITY, 50)) {
+							if (succeed(p, 50)) {
 								if (p.getY() <= 3702) {
 									p.message("You climb down the steps.");
 									p.teleport(419, 3704);
@@ -173,7 +168,7 @@ public class LegendsQuestCaveAgility implements ObjectActionListener, ObjectActi
 								p.setBusy(false);
 								return null;
 							}
-							if (Formulae.failCalculation(p, Skills.AGILITY, 50)) {
+							if (succeed(p, 50)) {
 								if (p.getY() >= 3706) {
 									p.message("You climb down the steps.");
 									p.teleport(426, 3704);
@@ -201,6 +196,10 @@ public class LegendsQuestCaveAgility implements ObjectActionListener, ObjectActi
 
 					return null;
 				});
+			}
+
+			boolean succeed(Player player, int req) {
+				return Formulae.calcProductionSuccessful(req, getCurrentLevel(player, Skills.AGILITY), false, req + 30);
 			}
 		};
 	}

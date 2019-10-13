@@ -6,6 +6,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
+import com.openrsc.server.util.rsc.DataConversions;
 
 import static com.openrsc.server.plugins.Functions.*;
 
@@ -24,7 +25,7 @@ public class Warrior implements TalkToNpcListener, TalkToNpcExecutiveListener {
 			public void init() {
 				addState(0, () -> {
 					if (n.getID() == WARRIOR) {
-						int chatRandom = p.getRandom().nextInt(17);
+						int chatRandom = DataConversions.random(0, 17);
 						playerTalk(p, n, "Hello", "How's it going?");
 						if (chatRandom == 0) {
 							npcTalk(p, n, "Very well, thank you");

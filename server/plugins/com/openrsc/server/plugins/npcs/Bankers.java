@@ -9,13 +9,9 @@ import com.openrsc.server.plugins.listeners.action.NpcCommandListener;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.NpcCommandExecutiveListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
-import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import static com.openrsc.server.plugins.Functions.*;
@@ -66,45 +62,28 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 							getPlayerOwner().message("As an Ultimate Iron Man, you cannot use the bank.");
 							return null;
 						}
-						if (getPlayerOwner().getCache().hasKey("bank_pin") && !getPlayerOwner().getAttribute("bankpin", false)) {
-							GameNotifyEvent pinevent = getBankPinEntered(getPlayerOwner());
-							return invokeOnNotify(pinevent, 3, 0);
-						}
-						return invoke(4, 0);
+						GameNotifyEvent pinevent = validateBankPin(getPlayerOwner());
+						return invokeOnNotify(pinevent, 3, 0);
 					} else if (menu == 1) {
 						GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "This is a branch of the bank of Runescape");
 						return invokeOnNotify(notifier, 6);
 					} else if (menu == 2 && getPlayerOwner().getWorld().getServer().getConfig().WANT_BANK_PINS) {
-						GameNotifyEvent event = showPlayerMenu(getPlayerOwner(), npc,
+						GameNotifyEvent event = showPlayerMenu(getPlayerOwner(), npc, false,
 							"Set a bank pin", "Change bank pin", "Delete bank pin");
 						return invokeOnNotify(event, 12, 0);
 					} else if ((menu == 2 || menu == 3) && getPlayerOwner().getWorld().getServer().getConfig().SPAWN_AUCTION_NPCS) {
-						if (getPlayerOwner().getCache().hasKey("bank_pin") && !getPlayerOwner().getAttribute("bankpin", false)) {
-							GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
-							return invokeOnNotify(event, 19, 0);
-						}
+						GameNotifyEvent event = validateBankPin(getPlayerOwner());
+						return invokeOnNotify(event, 15, 0);
 					}
 					return null;
 				});
 				addState(3, () -> {
-					String pin = (String)getNotifyEvent().getObjectOut("string_pin");
-					try {
-						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
-						statement.setString(1, getPlayerOwner().getUsername());
-						ResultSet result = statement.executeQuery();
-						if (result.next()) {
-							pin = DataConversions.hashPassword(pin, result.getString("salt"));
-						}
-					} catch (SQLException e) {
-						LOGGER.catching(e);
+					if(getPlayerOwner().getAttribute("bankpin", false)) {
+						return invoke(4, 0);
 					}
-					if (!getPlayerOwner().getCache().getString("bank_pin").equals(pin)) {
-						ActionSender.sendBox(getPlayerOwner(), "Incorrect bank pin", false);
+					else {
 						return null;
 					}
-					getPlayerOwner().setAttribute("bankpin", true);
-					getPlayerOwner().message("You have correctly entered your PIN");
-					return invoke(4, 0);
 				});
 				addState(4, () -> {
 					final GameNotifyEvent notifier = npcDialogue(getPlayerOwner(), npc, "Certainly " + (getPlayerOwner().isMale() ? "Sir" : "Miss"));
@@ -150,148 +129,41 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 				addState(12, () -> {
 					int bankPinMenu = (int)getNotifyEvent().getObjectOut("int_option");
 					if (bankPinMenu == 0) {
-						if (!getPlayerOwner().getCache().hasKey("bank_pin")) {
-							GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
-							return invokeOnNotify(event, 13, 0);
-						} else {
-							ActionSender.sendBox(getPlayerOwner(), "You already have a bank pin", false);
-						}
+						GameNotifyEvent event = setBankPin(getPlayerOwner());
+						return endOnNotify(event);
 					} else if (bankPinMenu == 1) {
-						if (getPlayerOwner().getCache().hasKey("bank_pin")) {
-							GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
-							return invokeOnNotify(event, 14, 0);
-						} else {
-							getPlayerOwner().message("You don't have a bank pin");
-						}
+						GameNotifyEvent event = changeBankPin(getPlayerOwner());
+						return endOnNotify(event);
 					} else if (bankPinMenu == 2) {
-						if (getPlayerOwner().getCache().hasKey("bank_pin")) {
-							GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
-							return invokeOnNotify(event, 16, 0);
-						} else {
-							getPlayerOwner().message("You don't have a bank pin");
+						if (getPlayerOwner().getIronMan() > 0 && getPlayerOwner().getIronManRestriction() == 0) {
+							getPlayerOwner().message("Deleting your bankpin results in permanent iron man restriction");
+							return invoke(13, 3);
 						}
+						GameNotifyEvent event = removeBankPin(getPlayerOwner());
+						return endOnNotify(event);
 					}
 					return null;
 				});
 				addState(13, () -> {
-					String bankPin = (String)getNotifyEvent().getObjectOut("string_pin");
-					if (bankPin == "cancel") {
-						ActionSender.sendBox(getPlayerOwner(), "You have not entered a bank pin.%No bank pin set.", false);
-						return null;
-					}
-					try {
-						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
-						statement.setString(1, getPlayerOwner().getUsername());
-						ResultSet result = statement.executeQuery();
-						if (result.next()) {
-							bankPin = DataConversions.hashPassword(bankPin, result.getString("salt"));
-							getPlayerOwner().getCache().store("bank_pin", bankPin);
-							ActionSender.sendBox(getPlayerOwner(), "You have set your bank pin.", false);
-						}
-					} catch (SQLException e) {
-						LOGGER.catching(e);
-					}
-					return null;
-				});
-				addState(14, () -> {
-					String bankPin = (String)getNotifyEvent().getObjectOut("string_pin");
-					try {
-						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
-						statement.setString(1, getPlayerOwner().getUsername());
-						ResultSet result = statement.executeQuery();
-						if (result.next()) {
-							bankPin = DataConversions.hashPassword(bankPin, result.getString("salt"));
-						}
-					} catch (SQLException e) {
-						LOGGER.catching(e);
-					}
-					if (!getPlayerOwner().getCache().getString("bank_pin").equals(bankPin)) {
-						ActionSender.sendBox(getPlayerOwner(), "Incorrect bank pin", false);
-						return null;
-					}
-					GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
-					return invokeOnNotify(event, 15, 0);
-				});
-				addState(15, () -> {
-					try {
-						String changeTo = (String)getNotifyEvent().getObjectOut("string_pin");
-						if (changeTo == "cancel") {
-							ActionSender.sendBox(getPlayerOwner(), "You have not entered a bank pin.%No bank pin set.", false);
-							return null;
-						}
-						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
-						statement.setString(1, getPlayerOwner().getUsername());
-						ResultSet result = statement.executeQuery();
-						if (result.next()) {
-							changeTo = DataConversions.hashPassword(changeTo, result.getString("salt"));
-							getPlayerOwner().getCache().store("bank_pin", changeTo);
-							ActionSender.sendBox(getPlayerOwner(), "You have set your bank pin.", false);
-						}
-					} catch (SQLException e) {
-						LOGGER.catching(e);
-					}
-					return null;
-				});
-				addState(16, () -> {
-					String bankPin = (String)getNotifyEvent().getObjectOut("string_pin");
-					try {
-						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
-						statement.setString(1, getPlayerOwner().getUsername());
-						ResultSet result = statement.executeQuery();
-						if (result.next()) {
-							bankPin = DataConversions.hashPassword(bankPin, result.getString("salt"));
-						}
-					} catch (SQLException e) {
-						LOGGER.catching(e);
-					}
-					if (!getPlayerOwner().getCache().getString("bank_pin").equals(bankPin)) {
-						ActionSender.sendBox(getPlayerOwner(), "Incorrect bank pin", false);
-						return null;
-					}
-					if (getPlayerOwner().getIronMan() > 0 && getPlayerOwner().getIronManRestriction() == 0) {
-						getPlayerOwner().message("Deleting your bankpin results in permanent iron man restriction");
-						return invoke(17, 3);
-					}
-					getPlayerOwner().getCache().remove("bank_pin");
-					ActionSender.sendBox(getPlayerOwner(), "Your bank pin is removed", false);
-					return null;
-				});
-				addState(17, () -> {
 					getPlayerOwner().message("Are you sure you want to do it?");
 					GameNotifyEvent event = showPlayerMenu(getPlayerOwner(), npc, "I want to do it!", "No thanks.");
-					return invokeOnNotify(event, 18, 0);
+					return invokeOnNotify(event, 14, 0);
 				});
-				addState(18, () -> {
+				addState(14, () -> {
 					int deleteMenu = (int)getNotifyEvent().getObjectOut("int_option");
 					if (deleteMenu == 0) {
-						getPlayerOwner().getCache().remove("bank_pin");
-						ActionSender.sendBox(getPlayerOwner(), "Your bank pin is removed", false);
-						getPlayerOwner().message("Your iron man restriction status is now permanent.");
-						getPlayerOwner().setIronManRestriction(1);
-						ActionSender.sendIronManMode(getPlayerOwner());
+						GameNotifyEvent event = removeBankPin(getPlayerOwner());
+						return endOnNotify(event);
 					} else if (deleteMenu == 1) {
 						getPlayerOwner().message("You decide to not remove your Bank PIN.");
 					}
 					return null;
 				});
-				addState(19, () -> {
-					String pin = (String)getNotifyEvent().getObjectOut("string_pin");
-					try {
-						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
-						statement.setString(1, getPlayerOwner().getUsername());
-						ResultSet result = statement.executeQuery();
-						if (result.next()) {
-							pin = DataConversions.hashPassword(pin, result.getString("salt"));
-						}
-					} catch (SQLException e) {
-						LOGGER.catching(e);
-					}
-					if (!getPlayerOwner().getCache().getString("bank_pin").equals(pin)) {
-						ActionSender.sendBox(getPlayerOwner(), "Incorrect bank pin", false);
+				addState(15, () -> {
+					if(!getPlayerOwner().getAttribute("bankpin", false)) {
 						return null;
 					}
-					getPlayerOwner().setAttribute("bankpin", true);
-					ActionSender.sendBox(getPlayerOwner(), "Bank pin correct", false);
+
 					getPlayerOwner().getWorld().getMarket().addPlayerCollectItemsTask(getPlayerOwner());
 					return null;
 				});
@@ -332,33 +204,24 @@ public class Bankers implements TalkToNpcExecutiveListener, TalkToNpcListener, N
 	private void quickFeature(Npc npc, Player player, boolean auction) {
 		player.getWorld().getServer().getGameEventHandler().add(new GameStateEvent(player.getWorld(), player, 0, "Bank Quick Access") {
 			public void init() {
+				addCleanupState(() -> {
+					getPlayerOwner().setBusy(false);
+					npc.setBusy(false);
+					return null;
+				});
 				addState(0, () -> {
-					if (getPlayerOwner().getCache().hasKey("bank_pin") && !getPlayerOwner().getAttribute("bankpin", false)) {
-						GameNotifyEvent event = getBankPinEntered(getPlayerOwner());
-						return invokeOnNotify(event,1, 0);
-					}
-					return invoke(2, 0);
+					getPlayerOwner().setBusy(true);
+					npc.setBusy(true);
+					GameNotifyEvent event = validateBankPin(getPlayerOwner());
+					return invokeOnNotify(event,1, 0);
 				});
 				addState(1, () -> {
-					String pin = (String)getNotifyEvent().getObjectOut("string_pin");
-					try {
-						PreparedStatement statement = getPlayerOwner().getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + getPlayerOwner().getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
-						statement.setString(1, getPlayerOwner().getUsername());
-						ResultSet result = statement.executeQuery();
-						if (result.next()) {
-							pin = DataConversions.hashPassword(pin, result.getString("salt"));
-						}
-					} catch (SQLException e) {
-						LOGGER.catching(e);
+					if(getPlayerOwner().getAttribute("bankpin", false)) {
+						return invoke(2, 0);
 					}
-					if (!getPlayerOwner().getCache().getString("bank_pin").equals(pin)) {
-						ActionSender.sendBox(getPlayerOwner(), "Incorrect bank pin", false);
+					else {
 						return null;
 					}
-					getPlayerOwner().setAttribute("bankpin", true);
-					getPlayerOwner().message("You have correctly entered your PIN");
-
-					return invoke(2, 0);
 				});
 				addState(2, () -> {
 					if (auction) {

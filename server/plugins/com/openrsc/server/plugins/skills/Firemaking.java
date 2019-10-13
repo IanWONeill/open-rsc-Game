@@ -19,10 +19,10 @@ import com.openrsc.server.plugins.listeners.executive.InvUseOnGroundItemExecutiv
 import com.openrsc.server.plugins.listeners.executive.InvUseOnItemExecutiveListener;
 import com.openrsc.server.util.rsc.CollisionFlag;
 import com.openrsc.server.util.rsc.Formulae;
+import com.openrsc.server.util.rsc.MessageType;
 
 import static com.openrsc.server.plugins.Functions.compareItemsIds;
 import static com.openrsc.server.plugins.Functions.inArray;
-import static com.openrsc.server.plugins.Functions.message;
 
 public class Firemaking implements InvUseOnGroundItemListener, InvUseOnGroundItemExecutiveListener, InvUseOnItemListener, InvUseOnItemExecutiveListener {
 
@@ -30,7 +30,7 @@ public class Firemaking implements InvUseOnGroundItemListener, InvUseOnGroundIte
 	/**
 	 * LOG IDs
 	 **/
-	private static int[] LOGS = {ItemId.LOGS.id(), ItemId.OAK_LOGS.id(), ItemId.WILLOW_LOGS.id(), 
+	private static int[] LOGS = {ItemId.LOGS.id(), ItemId.OAK_LOGS.id(), ItemId.WILLOW_LOGS.id(),
 			ItemId.MAPLE_LOGS.id(), ItemId.YEW_LOGS.id(), ItemId.MAGIC_LOGS.id()};
 
 	@Override
@@ -77,49 +77,53 @@ public class Firemaking implements InvUseOnGroundItemListener, InvUseOnGroundIte
 		}
 
 		if (player.getViewArea().getGameObject(gItem.getLocation()) != null) {
-			player.message("You can't light a fire here");
+			player.playerServerMessage(MessageType.QUEST, "You can't light a fire here");
 			return;
 		}
 
 		player.getUpdateFlags().setActionBubble(new Bubble(player, TINDERBOX));
-		player.message("You attempt to light the logs");
+		player.playerServerMessage(MessageType.QUEST, "You attempt to light the logs");
+		player.setBatchEvent(new BatchEvent(player.getWorld(), player, 1200, "Normal Firemaking Logs Lit", Formulae.getRepeatTimes(player, Skills.FIREMAKING), false) {
+			@Override
+			public void action() {
+				if (Formulae.lightLogs(getOwner().getSkills().getLevel(Skills.FIREMAKING))) {
 
-		if (Formulae.lightLogs(player.getSkills().getLevel(Skills.FIREMAKING))) {
+					getOwner().getWorld().getServer().getGameEventHandler().add(
+						new SingleEvent(getOwner().getWorld(), getOwner(), 1200, "Light Logs") {
+							@Override
+							public void action() {
+								getOwner().playerServerMessage(MessageType.QUEST, "The fire catches and the logs begin to burn");
+								getWorld().unregisterItem(gItem);
 
-			player.getWorld().getServer().getGameEventHandler().add(
-				new SingleEvent(player.getWorld(), player, 1200, "Light Logs") {
-					@Override
-					public void action() {
-						getOwner().message("The fire catches and the logs begin to burn");
-						getWorld().unregisterItem(gItem);
+								final GameObject fire = new GameObject(getWorld(), gItem.getLocation(), 97, 0, 0);
+								getWorld().registerGameObject(fire);
 
-						final GameObject fire = new GameObject(getWorld(), gItem.getLocation(), 97, 0, 0);
-						getWorld().registerGameObject(fire);
-
-						getWorld().getServer().getGameEventHandler().add(
-							new SingleEvent(getWorld(), null, def.getLength(), "Light Logs Fire Removal") {
-								@Override
-								public void action() {
-									if (fire != null) {
-										getWorld().registerItem(new GroundItem(
-											getWorld(),
-											ItemId.ASHES.id(),
-											fire.getX(),
-											fire.getY(),
-											1, (Player) null));
-										getWorld().unregisterGameObject(fire);
+								getWorld().getServer().getGameEventHandler().add(
+									new SingleEvent(getWorld(), null, def.getLength(), "Light Logs Fire Removal") {
+										@Override
+										public void action() {
+											if (fire != null) {
+												getWorld().registerItem(new GroundItem(
+													getWorld(),
+													ItemId.ASHES.id(),
+													fire.getX(),
+													fire.getY(),
+													1, (Player) null));
+												getWorld().unregisterGameObject(fire);
+											}
+										}
 									}
-								}
+								);
+								getOwner().incExp(Skills.FIREMAKING, getExp(getOwner().getSkills().getMaxStat(Skills.FIREMAKING), 25), true);
 							}
-						);
-						getOwner().incExp(Skills.FIREMAKING, getExp(player.getSkills().getMaxStat(Skills.FIREMAKING), 25), true);
-					}
+						}
+					);
+				} else {
+					getOwner().playerServerMessage(MessageType.QUEST, "You fail to light a fire");
+					getOwner().getUpdateFlags().setActionBubble(new Bubble(getOwner(), TINDERBOX));
 				}
-			);
-		} else {
-			message(player, 1200, "You fail to light a fire");
-			player.getUpdateFlags().setActionBubble(new Bubble(player, TINDERBOX));
-		}
+			}
+		});
 	}
 
 	private void handleCustomFiremaking(final GroundItem gItem, Player player) {
@@ -136,12 +140,12 @@ public class Firemaking implements InvUseOnGroundItemListener, InvUseOnGroundIte
 		}
 
 		if (player.getViewArea().getGameObject(gItem.getLocation()) != null) {
-			player.message("You can't light a fire here");
+			player.playerServerMessage(MessageType.QUEST, "You can't light a fire here");
 			return;
 		}
 
 		player.getUpdateFlags().setActionBubble(new Bubble(player, TINDERBOX));
-		player.message("You attempt to light the logs");
+		player.playerServerMessage(MessageType.QUEST, "You attempt to light the logs");
 		player.setBatchEvent(new BatchEvent(player.getWorld(), player, 1200, "Firemaking Logs Lit", Formulae.getRepeatTimes(player, Skills.FIREMAKING), false) {
 			@Override
 			public void action() {
@@ -207,7 +211,7 @@ public class Firemaking implements InvUseOnGroundItemListener, InvUseOnGroundIte
 						}
 					}
 				} else {
-					getOwner().message("You fail to light a fire");
+					getOwner().playerServerMessage(MessageType.QUEST, "You fail to light a fire");
 					getOwner().getUpdateFlags().setActionBubble(new Bubble((getOwner()), TINDERBOX));
 				}
 			}
@@ -226,7 +230,7 @@ public class Firemaking implements InvUseOnGroundItemListener, InvUseOnGroundIte
 			public void init() {
 				addState(0, () -> {
 					if (item1.getID() == TINDERBOX && inArray(item2.getID(), LOGS) || item2.getID() == TINDERBOX && inArray(item1.getID(), LOGS)) {
-						player.message("I think you should put the logs down before you light them!");
+						player.playerServerMessage(MessageType.QUEST, "I think you should put the logs down before you light them!");
 					}
 
 					return null;

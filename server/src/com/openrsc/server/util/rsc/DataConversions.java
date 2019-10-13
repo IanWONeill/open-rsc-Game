@@ -2,6 +2,7 @@ package com.openrsc.server.util.rsc;
 
 import com.openrsc.server.model.Point;
 import com.openrsc.server.net.Packet;
+import com.openrsc.server.util.BCrypt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,6 +19,7 @@ import java.security.SecureRandom;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.Random;
 
@@ -47,6 +49,8 @@ public final class DataConversions {
 		'%', '"', '[', ']', '{', '}', '~', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
 		'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
 		'U', 'V', 'W', 'X', 'Y', 'Z', '<', '>', '^', '_',};
+	private static final int bcryptWorkFactor = 10;
+	private static final String bcryptTest = "$2y$"+bcryptWorkFactor+"$";
 	private static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss dd-MM-yy");
 	private static MessageDigest md5, sha1, sha512;
 	private static Random rand = new Random();
@@ -118,6 +122,7 @@ public final class DataConversions {
 	}
 
 	public static String generateSalt() {
+		// This is legacy code since we moved to bcrypt
 		int len = 30;
 		StringBuilder sb = new StringBuilder(len);
 		for (int i = 0; i < len; i++) {
@@ -129,13 +134,103 @@ public final class DataConversions {
 		return sb.toString();
 	}
 
-	public static String hashPassword(String password, String salt) {
-		return DataConversions.sha512(salt + DataConversions.md5(password));
+	private static String hashPasswordCompatibility(final String password, final String salt) {
+		boolean doCompatibility = salt != null && !salt.isEmpty();
+		return doCompatibility ? DataConversions.sha512(salt + DataConversions.md5(password)) : password;
+	}
+
+	private static String bcryptHashPassword(final String passwordPlainText) {
+		return BCrypt.hashpw(passwordPlainText, BCrypt.gensalt(bcryptWorkFactor, secureRandom));
+	}
+
+	public static final String hashPassword(final String passwordPlainText, final String salt) {
+		if(passwordPlainText == null || passwordPlainText.isEmpty())
+			return null;
+
+		final String passwordCompatHashed = hashPasswordCompatibility(passwordPlainText, salt);
+		return bcryptHashPassword(passwordCompatHashed);
+	}
+
+	public static final boolean checkPassword(final String passwordPlainText, final String salt, final String passwordHashed) {
+		if(passwordPlainText == null || passwordPlainText.isEmpty() || passwordHashed == null || passwordHashed.isEmpty())
+			return false;
+
+		final String plainTextCompatHashed = hashPasswordCompatibility(passwordPlainText, salt);
+
+		// Password is in old DB format.
+		if(passwordNeedsRehash(passwordHashed)) {
+			return plainTextCompatHashed.equals(passwordHashed);
+		}
+
+		return BCrypt.checkpw(plainTextCompatHashed, passwordHashed);
+	}
+
+	public static final boolean passwordNeedsRehash(final String passwordHashed) {
+		return passwordHashed.length() < bcryptTest.length() || !passwordHashed.substring(0, bcryptTest.length()).equals(bcryptTest);
 	}
 
 	private static String toHex(byte[] bytes) {
 		// change below to lower or uppercase X to control case of output
 		return String.format("%0" + (bytes.length << 1) + "x", new BigInteger(1, bytes));
+	}
+
+	public static boolean isValidEmailAddress(String email) {
+		boolean stricterFilter = true;
+		String stricterFilterString = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}";
+		String laxString = ".+@.+\\.[A-Za-z]{2}[A-Za-z]*";
+		String emailRegex = stricterFilter ? stricterFilterString : laxString;
+		java.util.regex.Pattern p = java.util.regex.Pattern.compile(emailRegex);
+		java.util.regex.Matcher m = p.matcher(email);
+		return m.matches();
+	}
+
+	public static String updateIfEmpty(String checkedS, String otherS) {
+		return (checkedS == null || checkedS.length() < 2) ? otherS : checkedS;
+	}
+
+	public static String normalize(String s, int len) {
+		String res = addCharacters(s, len);
+		res = res.replaceAll("[\\s_]+","_");
+		char[] chars = res.trim().toCharArray();
+		if (chars.length > 0 && chars[0] == '_')
+			chars[0] = ' ';
+		if (chars.length > 0 && chars[chars.length-1] == '_')
+			chars[chars.length-1] = ' ';
+		return String.valueOf(chars).toLowerCase().trim();
+	}
+
+	public static String maxLenString(String s, int len, boolean trim) {
+		String res = s;
+		if (trim) res = s.trim();
+		if (res.length() > len) {
+			res = res.substring(0, len);
+		}
+		return res;
+	}
+
+	public static String addCharacters(String s, int i) {
+		String s1 = "";
+		for (int j = 0; j < i; j++)
+			if (j >= s.length()) {
+				s1 = s1 + " ";
+			} else {
+				char c = s.charAt(j);
+				if (c >= 'a' && c <= 'z')
+					s1 = s1 + c;
+				else if (c >= 'A' && c <= 'Z')
+					s1 = s1 + c;
+				else if (c >= '0' && c <= '9')
+					s1 = s1 + c;
+				else
+					s1 = s1 + '_';
+			}
+
+		return s1;
+	}
+
+	public static int getDaysSinceTime(Long time) {
+		long now = Calendar.getInstance().getTimeInMillis() / 1000;
+		return (int) ((now - time) / 86400);
 	}
 
 	public static String formatString(String str, int length) {

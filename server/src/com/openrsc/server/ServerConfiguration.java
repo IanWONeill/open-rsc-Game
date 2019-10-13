@@ -61,11 +61,16 @@ public class ServerConfiguration {
 	 */
 	public int MAX_PLAYERS = 100;
 	/**
+	 * the maximum allowed players per IP to connect
+	 */
+	public int MAX_PLAYERS_PER_IP = 5;
+	/**
 	 * the port the server is hosted on
 	 */
 	public int SERVER_PORT = 43594;
 	/**
 	 * idle timer to force a player logout for standing in the same spot
+	 *
 	 */
 	public int IDLE_TIMER = 300000; // 5 minutes
 	/**
@@ -154,6 +159,30 @@ public class ServerConfiguration {
 	 */
 	public int NPC_BLOCKING = 2;
 	/**
+	 * The maximum amount of connections allowed at any one time per IP
+	 */
+	public static int MAX_CONNECTIONS_PER_IP = 6;
+	/**
+	 * The maximum amount of connection attempts per second for each IP address
+	 */
+	public static int MAX_CONNECTIONS_PER_SECOND = 5;
+	/**
+	 * The maximum amount of packets per second for each IP address
+	 */
+	public static int MAX_PACKETS_PER_SECOND = 20;
+	/**
+	 * The maximum amount of login attempts allowed per IP per second
+	 */
+	public static int MAX_LOGINS_PER_SECOND = 1;
+	/**
+	 * The maximum amount of password/recovery attempts allowed per IP per 5 minutes
+	 */
+	public static int MAX_PASSWORD_GUESSES_PER_FIVE_MINUTES = 10;
+	/**
+	 * The amount of time in minutes that users who network flood the server will be IP banned for
+	 */
+	public static int NETWORK_FLOOD_IP_BAN_MINUTES = 15;
+	/**
 	 * where the server will look for other configuration files
 	 */
 	public String CONFIG_DIR = "conf" + File.separator + "server";
@@ -240,6 +269,7 @@ public class ServerConfiguration {
 	public boolean WANT_CUSTOM_WALK_SPEED = false;
 	public int MAX_TICKS_UNTIL_FULL_WALKING_SPEED = 5;
 	public boolean WANT_IMPROVED_PATHFINDING = false;
+	public boolean WANT_PASSWORD_MASSAGE = true;
 	//strict check on level requirements for "glitched" validations on rsc
 	public boolean STRICT_CHECK_ALL = false;
 	public boolean STRICT_PDART_CHECK = false;
@@ -299,7 +329,8 @@ public class ServerConfiguration {
 		SERVER_NAME_WELCOME = props.getProperty("server_name_welcome");
 		WELCOME_TEXT = props.getProperty("welcome_text");
 		SERVER_LOCATION = props.getProperty("server_location");
-		MAX_PLAYERS = Integer.parseInt(props.getProperty("maxplayers"));
+		MAX_PLAYERS = Integer.parseInt(props.getProperty("max_players"));
+		MAX_PLAYERS_PER_IP = Integer.parseInt(props.getProperty("max_players_per_ip"));
 		MYSQL_USER = props.getProperty("mysql_user");
 		MYSQL_PASS = props.getProperty("mysql_pass");
 		MYSQL_DB = props.getProperty("mysql_db");
@@ -434,6 +465,16 @@ public class ServerConfiguration {
 		// Walking/running related
 		MAX_WALKING_SPEED = Integer.parseInt(props.getProperty("max_walking_speed"));
 		MAX_TICKS_UNTIL_FULL_WALKING_SPEED = Integer.parseInt(props.getProperty("max_ticks_until_full_walking_speed"));
+
+		MAX_CONNECTIONS_PER_IP = Integer.parseInt(props.getProperty("max_connections_per_ip"));
+		MAX_CONNECTIONS_PER_SECOND = Integer.parseInt(props.getProperty("max_connections_per_second"));
+		MAX_PACKETS_PER_SECOND = Integer.parseInt(props.getProperty("max_packets_per_second"));
+		MAX_LOGINS_PER_SECOND = Integer.parseInt(props.getProperty("max_logins_per_second"));
+		MAX_PASSWORD_GUESSES_PER_FIVE_MINUTES = Integer.parseInt(props.getProperty("max_password_guesses_per_five_minutes"));
+		NETWORK_FLOOD_IP_BAN_MINUTES = Integer.parseInt(props.getProperty("network_flood_ip_ban_minutes"));
+
+		String wantPasswordMassage = props.getProperty("want_password_massage");
+		WANT_PASSWORD_MASSAGE = wantPasswordMassage != null ? Boolean.parseBoolean(props.getProperty("want_password_massage")) : WANT_PASSWORD_MASSAGE;
 
 		// Make sure config doesn't exceed max values
 		if (VIEW_DISTANCE > 4)
