@@ -10,7 +10,6 @@ public class MenuReplyHandler implements PacketHandler {
 	public void handlePacket(Packet p, final Player player) throws Exception {
 		final MenuOptionListener menuHandler = player.getMenuHandler();
 		final int option = p.readByte();
-
 		if (player.getMenu() != null) {
 			player.getMenu().handleReply(player, option);
 		} else if (menuHandler != null) {
@@ -22,7 +21,7 @@ public class MenuReplyHandler implements PacketHandler {
 				: menuHandler.getOption(option);
 			player.resetMenuHandler();
 			if (reply == null) {
-				player.setSuspiciousPlayer(true);
+				player.setSuspiciousPlayer(true, "menu reply with null reply");
 			} else {
 				menuHandler.handleReply(option, reply);
 			}
