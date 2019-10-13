@@ -3,7 +3,6 @@ package com.openrsc.server.plugins.quests.members.undergroundpass.obstacles;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skills;
-import com.openrsc.server.event.custom.UndergroundPassMessages;
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -116,8 +115,8 @@ public class UndergroundPassAgilityObstacles implements ObjectActionListener, Ob
 						} else {
 							failBlackAreaObstacle(p, obj);
 						}
-						p.getWorld().getServer().getGameEventHandler()
-							.add(new UndergroundPassMessages(p.getWorld(), p, DataConversions.random(3000, 15000)));
+
+						return endOnNotify(UndergroundPassObstaclesMap1.doMessages(p, DataConversions.random(5, 24)));
 					}
 
 					return null;

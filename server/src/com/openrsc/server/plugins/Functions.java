@@ -3,7 +3,6 @@ package com.openrsc.server.plugins;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.event.SingleEvent;
-import com.openrsc.server.event.custom.UndergroundPassMessages;
 import com.openrsc.server.event.rsc.GameNotifyEvent;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.login.BankPinChangeRequest;
@@ -32,9 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
-/**
- * @author n0m
- */
 public class Functions {
 
 	public static int getWoodcutAxe(Player p) {
@@ -184,7 +180,6 @@ public class Functions {
 
 	public static void movePlayer(Player p, int x, int y) {
 		movePlayer(p, x, y, false);
-
 	}
 
 	public static void movePlayer(Player p, int x, int y, boolean worldInfo) {
@@ -778,147 +773,6 @@ public class Functions {
 		// return true;
 		// }
 		// }
-	}
-
-	public static void doLedge(final GameObject object, final Player p, int damage) {
-		p.setBusyTimer(1);
-		p.message("you climb the ledge");
-		boolean failLedge = false;
-		int random = DataConversions.getRandom().nextInt(10);
-		if (random == 5) {
-			failLedge = true;
-		} else {
-			failLedge = false;
-		}
-		if (object != null && !failLedge) {
-			if (object.getDirection() == 2 || object.getDirection() == 6) {
-				if (object.getX() == p.getX() - 1 && object.getY() == p.getY()) { // X
-					if (object.getID() == 753) {
-						p.message("and drop down to the cave floor");
-						movePlayer(p, object.getX() - 2, object.getY());
-					} else {
-						p.message("and drop down to the cave floor");
-						movePlayer(p, object.getX() - 1, object.getY());
-					}
-				} else if (object.getX() == p.getX() + 1 && object.getY() == p.getY()) { // Y
-					if (object.getID() == 753) {
-						p.message("and drop down to the cave floor");
-						movePlayer(p, object.getX() + 2, object.getY());
-					} else {
-						p.message("and drop down to the cave floor");
-						movePlayer(p, object.getX() + 1, object.getY());
-					}
-				}
-			}
-			if (object.getDirection() == 4 || object.getDirection() == 0) {
-				if (object.getX() == p.getX() && object.getY() == p.getY() + 1) { // X
-					movePlayer(p, object.getX(), object.getY() + 1);
-					p.message("and drop down to the cave floor");
-				} else if (object.getX() == p.getX() && object.getY() == p.getY() - 1) { // Y
-					movePlayer(p, object.getX(), object.getY() - 1);
-				}
-			}
-		} else {
-			p.message("but you slip");
-			p.damage(damage);
-			playerTalk(p, null, "aargh");
-		}
-	}
-
-	public static void doRock(final GameObject object, final Player p, int damage, boolean eventMessage,
-							  int spikeLocation) {
-		p.setBusyTimer(1);
-		p.message("you climb onto the rock");
-		boolean failRock = false;
-		int random = DataConversions.getRandom().nextInt(5);
-		if (random == 4) {
-			failRock = true;
-		} else {
-			failRock = false;
-		}
-		if (object != null && !failRock) {
-			if (object.getDirection() == 1 || object.getDirection() == 2 || object.getDirection() == 4
-				|| object.getDirection() == 3) {
-				if (object.getX() == p.getX() - 1 && object.getY() == p.getY()) { // X
-					movePlayer(p, object.getX() - 1, object.getY());
-				} else if (object.getX() == p.getX() + 1 && object.getY() == p.getY()) { // Y
-					movePlayer(p, object.getX() + 1, object.getY());
-				} else if (object.getX() == p.getX() && object.getY() == p.getY() + 1) { // left
-					// side
-					if (object.getID() == 749) {
-						movePlayer(p, object.getX(), object.getY() + 1);
-					} else {
-						movePlayer(p, object.getX() + 1, object.getY());
-					}
-				} else if (object.getX() == p.getX() && object.getY() == p.getY() - 1) { // right
-					// side.
-					if (object.getID() == 749) {
-						movePlayer(p, object.getX(), object.getY() - 1);
-					} else {
-						movePlayer(p, object.getX() + 1, object.getY());
-					}
-				}
-			}
-			if (object.getDirection() == 6) {
-				if (object.getX() == p.getX() && object.getY() == p.getY() + 1) { // left
-					// side
-					movePlayer(p, object.getX(), object.getY() + 1);
-				} else if (object.getX() == p.getX() && object.getY() == p.getY() - 1) { // right
-					// side.
-					movePlayer(p, object.getX(), object.getY() - 1);
-				} else if (object.getX() == p.getX() - 1 && object.getY() == p.getY()) {
-					movePlayer(p, object.getX() + 1, object.getY() + 1);
-				} else if (object.getX() == p.getX() + 1 && object.getY() == p.getY()) {
-					movePlayer(p, object.getX(), object.getY() + 1);
-				}
-			}
-			if (object.getDirection() == 0) {
-				if (object.getX() == p.getX() - 1 && object.getY() == p.getY()) { // X
-					movePlayer(p, object.getX() - 1, object.getY());
-				} else if (object.getX() == p.getX() + 1 && object.getY() == p.getY()) { // Y
-					movePlayer(p, object.getX() + 1, object.getY());
-				} else if (object.getX() == p.getX() && object.getY() == p.getY() + 1) { // left
-					// side
-					movePlayer(p, object.getX(), object.getY() + 1);
-				} else if (object.getX() == p.getX() && object.getY() == p.getY() - 1) { // right
-					// side.
-					movePlayer(p, object.getX(), object.getY() - 1);
-				}
-			}
-			if (object.getDirection() == 7) {
-				if (object.getX() == p.getX() - 1 && object.getY() == p.getY()) { // X
-					movePlayer(p, object.getX() - 1, object.getY() - 1);
-				} else if (object.getX() == p.getX() + 1 && object.getY() == p.getY()) { // Y
-					movePlayer(p, object.getX() + 1, object.getY());
-				} else if (object.getX() == p.getX() && object.getY() == p.getY() + 1) { // left
-					// side
-					movePlayer(p, object.getX(), object.getY() + 1);
-				} else if (object.getX() == p.getX() && object.getY() == p.getY() - 1) { // right
-					// side.
-					movePlayer(p, object.getX() + 1, object.getY());
-				}
-			}
-			p.message("and step down the other side");
-		} else {
-			p.message("but you slip");
-			p.damage(damage);
-			if (spikeLocation == 1) {
-				p.teleport(743, 3475);
-			} else if (spikeLocation == 2) {
-				p.teleport(748, 3482);
-			} else if (spikeLocation == 3) {
-				p.teleport(738, 3483);
-			} else if (spikeLocation == 4) {
-				p.teleport(736, 3475);
-			} else if (spikeLocation == 5) {
-				p.teleport(730, 3478);
-			}
-			playerTalk(p, null, "aargh");
-		}
-		if (eventMessage) {
-			p.getWorld().getServer().getGameEventHandler()
-				.add(new UndergroundPassMessages(p.getWorld(), p, DataConversions.random(2000, 10000)));
-		}
 	}
 
 	public static void removeObject(final GameObject o) {
