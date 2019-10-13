@@ -565,7 +565,7 @@ public final class SuperModerator implements CommandListener {
 						player.message(messagePrefix + p.getUsername() + " IP address: " + p.getCurrentIP() + " has " + count + " connections");
 						return null;
 					}
-					
+
 					return null;
 				});
 			}

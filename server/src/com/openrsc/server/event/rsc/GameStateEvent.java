@@ -64,7 +64,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 		if(hasState(STATE_CLEANUP)) {
 			setState(STATE_CLEANUP);
 			action();
-			LOGGER.info(getDescriptor() + " : " + getOwner() + " : Calling Cleanup");
+			//LOGGER.info(getDescriptor() + " : " + getOwner() + " : Calling Cleanup");
 		}
 	}
 
