@@ -109,9 +109,6 @@ public class GameTickEventHandler {
 		events.clear();
 		events.putAll(sortedHashMap);
 
-		eventsCounts.clear();
-		eventsDurations.clear();
-
 		ArrayList<Callable<Integer>> callables = new ArrayList<Callable<Integer>>();
 
 		for (final Iterator<Map.Entry<String, GameTickEvent>> it = events.entrySet().iterator(); it.hasNext(); ) {
@@ -128,6 +125,9 @@ public class GameTickEventHandler {
 		} catch (Exception e) {
 			LOGGER.catching(e);
 		}
+
+		eventsCounts.clear();
+		eventsDurations.clear();
 
 		for (final Iterator<Map.Entry<String, GameTickEvent>> it = events.entrySet().iterator(); it.hasNext(); ) {
 			GameTickEvent event = it.next().getValue();
