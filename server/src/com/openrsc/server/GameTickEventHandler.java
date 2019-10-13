@@ -5,11 +5,12 @@ import com.openrsc.server.event.rsc.GameNotifyEvent;
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.util.NamedThreadFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 public class GameTickEventHandler {
 
@@ -24,10 +25,15 @@ public class GameTickEventHandler {
 	private final HashMap<String, Integer> eventsCounts = new HashMap<String, Integer>();
 	private final HashMap<String, Long> eventsDurations = new HashMap<String, Long>();
 
+	private final ThreadPoolExecutor executor;
+
 	private final Server server;
 
 	public GameTickEventHandler(Server server) {
 		this.server = server;
+		final int nThreads = Runtime.getRuntime().availableProcessors();
+		executor = new ThreadPoolExecutor(nThreads, nThreads * 2, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), new NamedThreadFactory("GameTickEvent"));
+		executor.prestartAllCoreThreads();
 	}
 
 	public void add(GameTickEvent event) {
@@ -56,8 +62,9 @@ public class GameTickEventHandler {
 	}
 
 	public boolean contains(GameTickEvent event) {
-		if (event.getOwner() != null)
+		if (event.getOwner() != null) {
 			return events.containsKey(String.valueOf(event.getOwner().getID()));
+		}
 		return false;
 	}
 
@@ -105,18 +112,25 @@ public class GameTickEventHandler {
 		eventsCounts.clear();
 		eventsDurations.clear();
 
-		for (Iterator<Map.Entry<String, GameTickEvent>> it = events.entrySet().iterator(); it.hasNext(); ) {
+		ArrayList<Callable<Integer>> callables = new ArrayList<Callable<Integer>>();
+
+		for (final Iterator<Map.Entry<String, GameTickEvent>> it = events.entrySet().iterator(); it.hasNext(); ) {
 			GameTickEvent event = it.next().getValue();
 			if (event == null || event.getOwner() != null && event.getOwner().isUnregistering()) {
 				it.remove();
-				continue;
 			}
-			try {
-				event.doRun();
-			} catch (Exception e) {
-				LOGGER.catching(e);
-				event.stop();
-			}
+
+			callables.add(event);
+		}
+
+		try {
+			executor.invokeAll(callables);
+		} catch (Exception e) {
+			LOGGER.catching(e);
+		}
+
+		for (final Iterator<Map.Entry<String, GameTickEvent>> it = events.entrySet().iterator(); it.hasNext(); ) {
+			GameTickEvent event = it.next().getValue();
 
 			if (!eventsCounts.containsKey(event.getDescriptor())) {
 				eventsCounts.put(event.getDescriptor(), 1);

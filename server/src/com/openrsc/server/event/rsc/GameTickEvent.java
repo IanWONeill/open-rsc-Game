@@ -7,7 +7,9 @@ import com.openrsc.server.model.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class GameTickEvent {
+import java.util.concurrent.Callable;
+
+public abstract class GameTickEvent implements Callable<Integer> {
 	/**
 	 * Logger instance
 	 */
@@ -54,6 +56,18 @@ public abstract class GameTickEvent {
 		final long eventTime	= eventEnd - eventStart;
 		lastEventDuration		= eventTime;
 		return eventTime;
+	}
+
+	@Override
+	public Integer call() {
+		try {
+			doRun();
+		} catch (Exception e) {
+			LOGGER.catching(e);
+			stop();
+			return 1;
+		}
+		return 0;
 	}
 
 	public final boolean shouldRemove() {

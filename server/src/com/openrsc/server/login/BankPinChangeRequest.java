@@ -57,7 +57,7 @@ public class BankPinChangeRequest extends LoginExecutorProcess {
 			}
 
 			if(getNewBankPin() == null && getOldBankPin() == null) {
-				getPlayer().setSuspiciousPlayer(true);
+				getPlayer().setSuspiciousPlayer(true, "no new or old bank pin set when attempting to change bank pin");
 				return;
 			}
 
