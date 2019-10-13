@@ -73,7 +73,7 @@ class MeleeFormula {
 			finalAccuracy = (int) ((acc / (2.0 * (def + 1.0))) * 10000.0);
 
 		if (finalAccuracy > DataConversions.random(0, 10000)) {
-			return (int) getGaussian(1.0, source.getRandom(), maxHit);
+			return (int) getGaussian(1.0, DataConversions.getRandom(), maxHit);
 		}
 		return 0;
 	}

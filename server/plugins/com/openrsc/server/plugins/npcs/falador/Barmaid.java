@@ -9,6 +9,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
+import com.openrsc.server.util.rsc.DataConversions;
 
 import static com.openrsc.server.plugins.Functions.*;
 
@@ -20,7 +21,7 @@ public final class Barmaid implements TalkToNpcExecutiveListener,
 	public boolean blockTalkToNpc(Player p, Npc n) {
 		return n.getID() == NpcId.BARMAID.id();
 	}
-	
+
 	@Override
 	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
 		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
@@ -49,7 +50,7 @@ public final class Barmaid implements TalkToNpcExecutiveListener,
 								message(p, "You drink the cocktail",
 									"You stumble around the room");
 								drinkAle(p);
-								p.damage(p.getRandom().nextInt(2) + 1);
+								p.damage(DataConversions.random(1, 3));
 								message(p, "The barmaid giggles",
 									"The barmaid signs your card");
 								p.getCache().store("barthree", true);
@@ -64,7 +65,7 @@ public final class Barmaid implements TalkToNpcExecutiveListener,
 			}
 		};
 	}
-	
+
 	private void NORMAL_ALES(Player p, Npc n) {
 		playerTalk(p, n, "Hi, what ales are you serving?");
 		npcTalk(p,
@@ -114,20 +115,20 @@ public final class Barmaid implements TalkToNpcExecutiveListener,
 				break;
 		}
 	}
-	
+
 	private void drinkAle(Player p) {
 		int[] skillIDs = {Skills.ATTACK, Skills.DEFENSE, Skills.RANGED, Skills.FISHING};
 		for (int i = 0; i < skillIDs.length; i++) {
 			setAleEffect(p, skillIDs[i]);
 		}
 	}
-	
+
 	private void setAleEffect(Player p, int skillId) {
 		int reduction, currentStat, maxStat;
 		maxStat = p.getSkills().getMaxStat(skillId);
 		//estimated
 		reduction = maxStat < 15 ? 5 :
-			maxStat < 45 ? 6 : 
+			maxStat < 45 ? 6 :
 			maxStat < 75 ? 7 : 8;
 		currentStat = p.getSkills().getLevel(skillId);
 		if (currentStat <= 8) {

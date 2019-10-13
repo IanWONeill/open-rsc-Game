@@ -7,6 +7,7 @@ import com.openrsc.server.event.custom.BatchEvent;
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.external.ItemCraftingDef;
 import com.openrsc.server.external.ItemGemDef;
+import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
@@ -16,6 +17,7 @@ import com.openrsc.server.plugins.listeners.executive.InvUseOnItemExecutiveListe
 import com.openrsc.server.plugins.listeners.executive.InvUseOnObjectExecutiveListener;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
+import com.openrsc.server.util.rsc.MessageType;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -113,17 +115,24 @@ public class Crafting implements InvUseOnItemListener,
 		// allowed item on crafting game objects
 		if (!craftingTypeChecks(obj, item, player)) return false;
 		
-		// some furnaces the player is 2 spaces away
-		if (!player.withinRange(obj, 1) && !player.withinRange90Deg(obj, 2)) {
-			return false;
+		if (obj.getLocation().equals(Point.location(399, 840))) {
+			// furnace in shilo village
+			if ((player.getLocation().getY() == 841 && !player.withinRange(obj, 2)) && !player.withinRange90Deg(obj, 2)) {
+				return false;
+			}
+		} else {
+			// some furnaces the player is 2 spaces away
+			if (!player.withinRange(obj, 1) && !player.withinRange90Deg(obj, 2)) {
+				return false;
+			}
 		}
 		
 		if (item.getID() == ItemId.SODA_ASH.id() || item.getID() == ItemId.SAND.id()) { // Soda Ash or Sand (Glass)
 			if (player.getInventory().countId(ItemId.SODA_ASH.id()) < 1) {
-				player.message("You need some soda ash to make glass");
+				player.playerServerMessage(MessageType.QUEST, "You need some soda ash to make glass");
 				return false;
 			} else if (player.getInventory().countId(ItemId.SAND.id()) < 1) {
-				player.message("You need some sand to make glass");
+				player.playerServerMessage(MessageType.QUEST, "You need some sand to make glass");
 				return false;
 			}
 		}
@@ -258,7 +267,7 @@ public class Crafting implements InvUseOnItemListener,
 			@Override
 			public void action() {
 				if (getOwner().getSkills().getLevel(Skills.CRAFTING) < def.getReqLevel()) {
-					getOwner().message("You need a crafting skill of level " + def.getReqLevel() + " to make this");
+					getOwner().playerServerMessage(MessageType.QUEST, "You need a crafting skill of level " + def.getReqLevel() + " to make this");
 					interrupt();
 					return;
 				}
@@ -284,7 +293,7 @@ public class Crafting implements InvUseOnItemListener,
 					} else {
 						result = new Item(def.getItemID(), 1);
 					}
-					getOwner().message("You make a " + result.getDef(getWorld()).getName());
+					getOwner().playerServerMessage(MessageType.QUEST, "You make a " + result.getDef(getWorld()).getName());
 					getOwner().getInventory().add(result);
 					getOwner().incExp(Skills.CRAFTING, def.getExp(), true);
 				} else {
@@ -326,7 +335,7 @@ public class Crafting implements InvUseOnItemListener,
 			@Override
 			public void action() {
 				if (getOwner().getSkills().getLevel(Skills.CRAFTING) < 16) {
-					getOwner().message("You need a crafting skill of level 16 to make this");
+					getOwner().playerServerMessage(MessageType.QUEST, "You need a crafting skill of level 16 to make this");
 					interrupt();
 					return;
 				}
@@ -340,7 +349,7 @@ public class Crafting implements InvUseOnItemListener,
 				if (getOwner().getInventory().remove(item) > -1) {
 					showBubble(getOwner(), item);
 					Item result = new Item(results[type]);
-					getOwner().message("You make a " + result.getDef(getWorld()).getName());
+					getOwner().playerServerMessage(MessageType.QUEST, "You make a " + result.getDef(getWorld()).getName());
 					getOwner().getInventory().add(result);
 					getOwner().incExp(Skills.CRAFTING, 200, true);
 				} else {
@@ -389,7 +398,7 @@ public class Crafting implements InvUseOnItemListener,
 			@Override
 			public void action() {
 				if (getOwner().getSkills().getLevel(Skills.CRAFTING) < reqLvl) {
-					getOwner().message("You need to have a crafting of level " + reqLvl + " or higher to make " + msg.get());
+					getOwner().playerServerMessage(MessageType.QUEST, "You need to have a crafting of level " + reqLvl + " or higher to make " + msg.get());
 					interrupt();
 					return;
 				}
@@ -402,7 +411,7 @@ public class Crafting implements InvUseOnItemListener,
 				}
 				if (getOwner().getInventory().remove(item) > -1) {
 					showBubble(getOwner(), item);
-					getOwner().message("you make the clay into a " + potteryItemName(result.getDef(getWorld()).getName()));
+					getOwner().playerServerMessage(MessageType.QUEST, "you make the clay into a " + potteryItemName(result.getDef(getWorld()).getName()));
 					getOwner().getInventory().add(result);
 					getOwner().incExp(Skills.CRAFTING, exp, true);
 				} else {
@@ -446,12 +455,12 @@ public class Crafting implements InvUseOnItemListener,
 		
 		showBubble(player, item);
 		String potteryItem = potteryItemName(item.getDef(player.getWorld()).getName());
-		player.message("You put the " + potteryItem + " in the oven");
+		player.playerServerMessage(MessageType.QUEST, "You put the " + potteryItem + " in the oven");
 		player.setBatchEvent(new BatchEvent(player.getWorld(), player, 1800, "Craft Clay", player.getInventory().countId(item.getID()), false) {
 			@Override
 			public void action() {
 				if (getOwner().getSkills().getLevel(Skills.CRAFTING) < reqLvl) {
-					getOwner().message("You need to have a crafting of level " + reqLvl + " or higher to make " + msg.get());
+					getOwner().playerServerMessage(MessageType.QUEST, "You need to have a crafting of level " + reqLvl + " or higher to make " + msg.get());
 					interrupt();
 					return;
 				}
@@ -465,15 +474,15 @@ public class Crafting implements InvUseOnItemListener,
 				showBubble(getOwner(), item);
 				if (getOwner().getInventory().remove(item) > -1) {
 					if (fail) {
-						getOwner().message("The " // TODO: Check if is authentic message
+						getOwner().playerServerMessage(MessageType.QUEST, "The " // TODO: Check if is authentic message
 							+ potteryItem + " cracks in the oven, you throw it away.");
 					} else {
-						getOwner().message("the "
+						getOwner().playerServerMessage(MessageType.QUEST, "the "
 							+ potteryItem + " hardens in the oven");
 						getWorld().getServer().getGameEventHandler().add(new SingleEvent(getWorld(), getOwner(), 1800, "Remove Clay From Oven") {
 							@Override
 							public void action() {
-								getOwner().message("You remove a "
+								getOwner().playerServerMessage(MessageType.QUEST, "You remove a "
 									+ result.getDef(getWorld()).getName().toLowerCase()
 									+ " from the oven");
 								getOwner().getInventory().add(result);
@@ -495,7 +504,7 @@ public class Crafting implements InvUseOnItemListener,
 		repeatTimes = player.getInventory().countId(otherItem) < repeatTimes ? player.getInventory().countId(otherItem) : repeatTimes;
 
 		showBubble(player, item);
-		player.message("you heat the sand and soda ash in the furnace to make glass");
+		player.playerServerMessage(MessageType.QUEST, "you heat the sand and soda ash in the furnace to make glass");
 		player.setBatchEvent(new BatchEvent(player.getWorld(), player, player.getWorld().getServer().getConfig().GAME_TICK, "Craft Molten Glass", repeatTimes, false) {
 			public void action() {
 				if (getOwner().getInventory().countId(otherItem) < 1 ||
@@ -522,7 +531,7 @@ public class Crafting implements InvUseOnItemListener,
 
 				if (!isCompleted()) {
 					showBubble(getOwner(), item);
-					getOwner().message("you heat the sand and soda ash in the furnace to make glass");
+					getOwner().playerServerMessage(MessageType.QUEST, "you heat the sand and soda ash in the furnace to make glass");
 				}
 			}
 		});
@@ -539,7 +548,7 @@ public class Crafting implements InvUseOnItemListener,
 			public void action() {
 				if (getOwner().getSkills().getLevel(Skills.CRAFTING) < gemDef.getReqLevel()) {
 					boolean pluralize = gemDef.getGemID() <= ItemId.UNCUT_DRAGONSTONE.id();
-					getOwner().message(
+					getOwner().playerServerMessage(MessageType.QUEST, 
 						"you need a crafting level of " + gemDef.getReqLevel()
 							+ " to cut " + (gem.getDef(getWorld()).getName().contains("ruby") ? "rubies" : gem.getDef(getWorld()).getName().replaceFirst("(?i)uncut ", "") + (pluralize ? "s" : "")));
 					interrupt();
@@ -636,7 +645,7 @@ public class Crafting implements InvUseOnItemListener,
 					}
 				}
 				if (getOwner().getInventory().remove(glass) > -1) {
-					getOwner().message("You make a " + result.getDef(getWorld()).getName());
+					getOwner().playerServerMessage(MessageType.QUEST, "You make a " + result.getDef(getWorld()).getName());
 					getOwner().getInventory().add(result);
 					getOwner().incExp(Skills.CRAFTING, exp, true);
 				}
@@ -691,7 +700,7 @@ public class Crafting implements InvUseOnItemListener,
 			@Override
 			public void action() {
 				if (getOwner().getSkills().getLevel(Skills.CRAFTING) < reqLvl) {
-					getOwner().message("You need to have a crafting of level " + reqLvl + " or higher to make " + result.getDef(player.getWorld()).getName());
+					getOwner().playerServerMessage(MessageType.QUEST, "You need to have a crafting of level " + reqLvl + " or higher to make " + result.getDef(player.getWorld()).getName());
 					interrupt();
 					return;
 				}

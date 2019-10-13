@@ -6,6 +6,8 @@ import com.openrsc.server.event.SingleEvent;
 import com.openrsc.server.event.custom.UndergroundPassMessages;
 import com.openrsc.server.event.rsc.GameNotifyEvent;
 import com.openrsc.server.external.GameObjectLoc;
+import com.openrsc.server.login.BankPinChangeRequest;
+import com.openrsc.server.login.BankPinVerifyRequest;
 import com.openrsc.server.model.MenuOptionListener;
 import com.openrsc.server.model.Path;
 import com.openrsc.server.model.Path.PathType;
@@ -24,6 +26,7 @@ import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
+import com.openrsc.server.util.rsc.MessageType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1363,7 +1366,153 @@ public class Functions {
 		};
 	}
 
-	public static GameNotifyEvent getBankPinEntered(Player player) {
+	public static GameNotifyEvent removeBankPin(final Player player) {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "removeBankPin Notifier") {
+			private BankPinChangeRequest request;
+			private String oldPin;
+
+			@Override
+			public void init() {
+				addState(0, () -> {
+					if(!player.getCache().hasKey("bank_pin")) {
+						player.playerServerMessage(MessageType.QUEST, "You do not have a bank pin to remove");
+						return null;
+					}
+
+					return invokeOnNotify(getBankPinEntered(player), 1, 0);
+				});
+
+				addState(1, () -> {
+					oldPin = (String)getNotifyEvent().getObjectOut("string_pin");
+					request = new BankPinChangeRequest(player.getWorld().getServer(), player, oldPin, null);
+					player.getWorld().getServer().getLoginExecutor().add(request);
+					return invoke(2, 0);
+				});
+
+				addState(2, () -> {
+					if(request.isProcessed()) {
+						return null;
+					}
+
+					return invoke(2, 1);
+				});
+			}
+		};
+	}
+
+	public static GameNotifyEvent setBankPin(final Player player) {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "changeBankPin Notifier") {
+			private BankPinChangeRequest request;
+			private String newPin;
+
+			@Override
+			public void init() {
+				addState(0, () -> {
+					if(player.getCache().hasKey("bank_pin")) {
+						player.playerServerMessage(MessageType.QUEST, "You already have a bank pin");
+						return null;
+					}
+
+					return invokeOnNotify(getBankPinEntered(player), 1, 0);
+				});
+
+				addState(1, () -> {
+					newPin = (String)getNotifyEvent().getObjectOut("string_pin");
+					request = new BankPinChangeRequest(player.getWorld().getServer(), player, null, newPin);
+					player.getWorld().getServer().getLoginExecutor().add(request);
+					return invoke(2, 0);
+				});
+
+				addState(2, () -> {
+					if(request.isProcessed()) {
+						return null;
+					}
+
+					return invoke(2, 1);
+				});
+			}
+		};
+	}
+
+	public static GameNotifyEvent changeBankPin(final Player player) {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "changeBankPin Notifier") {
+			private BankPinChangeRequest request;
+			private String newPin;
+			private String oldPin;
+
+			@Override
+			public void init() {
+				addState(0, () -> {
+					if(!player.getCache().hasKey("bank_pin")) {
+						player.playerServerMessage(MessageType.QUEST, "You do not have a bank pin to change");
+						return null;
+					}
+					return invokeOnNotify(getBankPinEntered(player), 1, 0);
+				});
+
+				addState(1, () -> {
+					oldPin = (String)getNotifyEvent().getObjectOut("string_pin");
+					return invokeOnNotify(getBankPinEntered(player), 2, 0);
+				});
+
+				addState(2, () -> {
+					newPin = (String)getNotifyEvent().getObjectOut("string_pin");
+					request = new BankPinChangeRequest(player.getWorld().getServer(), player, oldPin, newPin);
+					player.getWorld().getServer().getLoginExecutor().add(request);
+					return invoke(3, 0);
+				});
+
+				addState(3, () -> {
+					if(request.isProcessed()) {
+						return null;
+					}
+
+					return invoke(3, 1);
+				});
+			}
+		};
+	}
+
+	public static GameNotifyEvent validateBankPin(final Player player) {
+		return new GameNotifyEvent(player.getWorld(), player, 0, "validateBankPin Notifier") {
+			private BankPinVerifyRequest request;
+
+			@Override
+			public void init() {
+
+				addState(0, () -> {
+					if(!player.getCache().hasKey("bank_pin")) {
+						player.setAttribute("bankpin", true);
+						return null;
+					}
+
+					if(player.getAttribute("bankpin", false)) {
+						return null;
+					}
+
+					return invokeOnNotify(getBankPinEntered(player), 1, 0);
+				});
+
+				addState(1, () -> {
+					String enteredPin = (String)getNotifyEvent().getObjectOut("string_pin");
+					request = new BankPinVerifyRequest(player.getWorld().getServer(), player, enteredPin);
+					player.getWorld().getServer().getLoginExecutor().add(request);
+
+					return invoke(2, 0);
+				});
+
+				addState(2, () -> {
+					if(request.isProcessed()) {
+						return null;
+					}
+
+					return invoke(2, 1);
+				});
+			}
+		};
+	}
+
+	private static GameNotifyEvent getBankPinEntered(Player player) {
 		return new GameNotifyEvent(player.getWorld(), player, 0, "getBankPinEntered Notifier") {
 			@Override
 			public void init() {
@@ -1593,7 +1742,7 @@ public class Functions {
 								}
 							}
 
-							player.message(message);
+							player.playerServerMessage(MessageType.QUEST, message);
 						}
 
 						return invokeNextState(delay);

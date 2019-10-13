@@ -15,10 +15,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.region.TileValue;
-import com.openrsc.server.net.DiscordService;
-import com.openrsc.server.net.RSCConnectionHandler;
-import com.openrsc.server.net.RSCProtocolDecoder;
-import com.openrsc.server.net.RSCProtocolEncoder;
+import com.openrsc.server.net.*;
 import com.openrsc.server.plugins.PluginHandler;
 import com.openrsc.server.sql.DatabaseConnection;
 import com.openrsc.server.sql.GameLogger;
@@ -54,7 +51,7 @@ public final class Server implements Runnable {
 	private final GameTickEventHandler tickEventHandler;
 	private final DiscordService discordService;
 	private final GameTickEvent monitoring;
-	private final PlayerDatabaseExecutor playerDataProcessor;
+	private final LoginExecutor loginExecutor;
 	private final ServerConfiguration config;
 	private final ScheduledExecutorService scheduledExecutor;
 	private final PluginHandler pluginHandler;
@@ -63,8 +60,11 @@ public final class Server implements Runnable {
 	private final EntityHandler entityHandler;
 	private final DatabaseConnection databaseConnection;
 	private final AchievementSystem achievementSystem;
+	private final Constants constants;
+	private final RSCPacketFilter packetFilter;
 
 	private final World world;
+	private final String name;
 
 	private DelayedEvent updateEvent;
 	private ChannelFuture serverChannel;
@@ -81,15 +81,11 @@ public final class Server implements Runnable {
 	private long timeLate = 0;
 	private long lastClientUpdate = 0;
 
-	private String name;
-
 	/*Used for pathfinding view debugger
 	JPanel2 panel = new JPanel2();
 	JFrame frame = new JFrame();
 	javax.swing.GroupLayout layout = new javax.swing.GroupLayout(panel);
 	*/
-
-	private Constants constants;
 
 	static {
 		try {
@@ -105,29 +101,37 @@ public final class Server implements Runnable {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
-		LOGGER.info("Launching Game Server...");
+	public static final Server run(final String confName) throws IOException {
+		final long startTime = System.currentTimeMillis();
+		Server server = new Server(confName);
 
-		Server server = null;
+		if(!server.isRunning()) {
+			server.start();
+		}
+		final long endTime = System.currentTimeMillis();
+
+		final long bootTime = (long) Math.ceil((double)(endTime - startTime) / 1000.0);
+
+		LOGGER.info(server.getName() + " started in " + bootTime + "s");
+
+		return server;
+	}
+
+	public static void main(String[] args){
+		LOGGER.info("Launching Game Server...");
 
 		if (args.length == 0) {
 			LOGGER.info("Server Configuration file not provided. Loading from default.conf or local.conf.");
-			server = new Server("default.conf");
 
 			try {
-				if(!server.isRunning()) {
-					server.start();
-				}
+				run("default.conf");
 			} catch (Throwable t) {
 				LOGGER.catching(t);
 			}
 		} else {
 			for (int i = 0; i < args.length; i++) {
-				server = new Server(args[i]);
 				try {
-					if(!server.isRunning()) {
-						server.start();
-					}
+					run(args[i]);
 				} catch (Throwable t) {
 					LOGGER.catching(t);
 				}
@@ -142,13 +146,15 @@ public final class Server implements Runnable {
 
 		name = getConfig().SERVER_NAME;
 
+		packetFilter = new RSCPacketFilter(this);
+
 		pluginHandler = new PluginHandler(this);
 		combatScriptLoader = new CombatScriptLoader(this);
 		constants = new Constants(this);
 		databaseConnection = new DatabaseConnection(this, "Database Connection");
 
 		discordService = new DiscordService(this);
-		playerDataProcessor = new PlayerDatabaseExecutor(this);
+		loginExecutor = new LoginExecutor(this);
 		world = new World(this);
 		tickEventHandler = new GameTickEventHandler(this);
 		gameUpdater = new GameStateUpdater(this);
@@ -233,6 +239,8 @@ public final class Server implements Runnable {
 			LOGGER.catching(t);
 			System.exit(1);
 		}
+
+		lastClientUpdate = System.currentTimeMillis();
 	}
 
 	public void start() {
@@ -241,13 +249,10 @@ public final class Server implements Runnable {
 				initialize();
 			}
 
-			lastClientUpdate = System.currentTimeMillis();
-			serverStartedTime = System.currentTimeMillis();
-
 			running = true;
 			scheduledExecutor.scheduleAtFixedRate(this, 0, 1, TimeUnit.MILLISECONDS);
 
-			playerDataProcessor.start();
+			loginExecutor.start();
 			discordService.start();
 			gameLogger.start();
 		}
@@ -258,7 +263,7 @@ public final class Server implements Runnable {
 			running = false;
 			scheduledExecutor.shutdown();
 
-			playerDataProcessor.stop();
+			loginExecutor.stop();
 			discordService.stop();
 			gameLogger.stop();
 		}
@@ -277,6 +282,7 @@ public final class Server implements Runnable {
 		try {
 			serverChannel.channel().disconnect();
 		} catch (Exception exception) {
+			LOGGER.catching(exception);
 		}
 	}
 
@@ -523,14 +529,6 @@ public final class Server implements Runnable {
 		getGameEventHandler().add(up);
 	}
 
-	public GameTickEventHandler getGameEventHandler() {
-		return tickEventHandler;
-	}
-
-	public PlayerDatabaseExecutor getPlayerDataProcessor() {
-		return playerDataProcessor;
-	}
-
 	public final long getLastGameStateDuration() {
 		return lastGameStateDuration;
 	}
@@ -543,12 +541,24 @@ public final class Server implements Runnable {
 		return lastTickDuration;
 	}
 
+	public final GameTickEventHandler getGameEventHandler() {
+		return tickEventHandler;
+	}
+
 	public final GameStateUpdater getGameUpdater() {
 		return gameUpdater;
 	}
 
 	public final DiscordService getDiscordService() {
 		return discordService;
+	}
+
+	public final LoginExecutor getLoginExecutor() {
+		return loginExecutor;
+	}
+
+	public final RSCPacketFilter getPacketFilter() {
+		return packetFilter;
 	}
 
 	public final long getLastIncomingPacketsDuration() {

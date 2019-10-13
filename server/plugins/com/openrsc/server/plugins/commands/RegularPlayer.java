@@ -65,31 +65,6 @@ public final class RegularPlayer implements CommandListener {
 						} else {
 							player.message(messagePrefix + "You are not in a gang - you need to start the shield of arrav quest");
 						}
-					} else if (cmd.equalsIgnoreCase("bankpin")) {
-						Player p = args.length > 0 && player.isAdmin() ? player.getWorld().getPlayer(DataConversions.usernameToHash(args[0])) : player;
-						if (p == null) {
-							player.message(messagePrefix + "Invalid name or player is not online");
-							return null;
-						}
-
-						String bankPin = Functions.getBankPinInput(p);
-						if (bankPin == null) {
-							player.message(messagePrefix + "Invalid bank pin");
-							return null;
-						}
-						try {
-							PreparedStatement statement = player.getWorld().getServer().getDatabaseConnection().prepareStatement("SELECT salt FROM " + player.getWorld().getServer().getConfig().MYSQL_TABLE_PREFIX + "players WHERE `username`=?");
-							statement.setString(1, player.getUsername());
-							ResultSet result = statement.executeQuery();
-							if (result.next()) {
-								bankPin = DataConversions.hashPassword(bankPin, result.getString("salt"));
-							}
-						} catch (SQLException e) {
-							LOGGER.catching(e);
-						}
-						p.getCache().store("bank_pin", bankPin);
-						//ActionSender.sendBox(p, messagePrefix + "Your new bank pin is " + bankPin, false);
-						player.message(messagePrefix + p.getUsername() + "'s bank pin has been changed");
 					} else if (cmd.equalsIgnoreCase("wilderness")) {
 						int TOTAL_PLAYERS_IN_WILDERNESS = 0;
 						int PLAYERS_IN_F2P_WILD = 0;
@@ -444,7 +419,7 @@ public final class RegularPlayer implements CommandListener {
 							+ "@whi@::event - to enter an ongoing server event %", true
 						);
 					}
-					
+
 					return null;
 				});
 			}

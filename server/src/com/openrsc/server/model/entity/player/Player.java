@@ -13,6 +13,8 @@ import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.custom.BatchEvent;
 import com.openrsc.server.event.rsc.impl.*;
 import com.openrsc.server.login.LoginRequest;
+import com.openrsc.server.login.PlayerRemoveRequest;
+import com.openrsc.server.login.PlayerSaveRequest;
 import com.openrsc.server.model.*;
 import com.openrsc.server.model.action.WalkToAction;
 import com.openrsc.server.model.container.Bank;
@@ -1048,7 +1050,7 @@ public final class Player extends Mob {
 				}
 			}
 		}
-		return points < 1 ? 1 : points;
+		return Math.max(points, 1);
 	}
 
 	public Menu getMenu() {
@@ -1113,7 +1115,7 @@ public final class Player extends Mob {
 			}
 		}
 
-		return points < 1 ? 1 : points;
+		return Math.max(points, 1);
 	}
 
 	public int getQuestPoints() {
@@ -1317,7 +1319,7 @@ public final class Player extends Mob {
 			points = getEquipment().getArmour();
 		}
 
-		return points < 1 ? 1 : points;
+		return Math.max(points, 1);
 	}
 
 	@Override
@@ -1334,7 +1336,7 @@ public final class Player extends Mob {
 		}
 
 
-		return points < 1 ? 1 : points;
+		return Math.max(points, 1);
 	}
 
 	@Override
@@ -1349,7 +1351,7 @@ public final class Player extends Mob {
 		} else {
 			points = this.getEquipment().getWeaponPower();
 		}
-		return points < 1 ? 1 : points;
+		return Math.max(points, 1);
 	}
 
 	public int[] getWornItems() {
@@ -1708,10 +1710,10 @@ public final class Player extends Mob {
 				player.incKills();
 				this.incDeaths();
 				getWorld().getServer().getGameLogger().addQuery(new LiveFeedLog(player, "has PKed <strong>" + this.getUsername() + "</strong>"));
-			} else if (stake) {
+			}/* else if (stake) { // disables duel spam in activity feed
 				getWorld().getServer().getGameLogger().addQuery(new LiveFeedLog(player,
 					"has just won a stake against <strong>" + this.getUsername() + "</strong>"));
-			}
+			}*/
 		}
 		if (stake) {
 			getDuel().dropOnDeath();
@@ -1987,7 +1989,7 @@ public final class Player extends Mob {
 	}
 
 	public void save() {
-		getWorld().getServer().getPlayerDataProcessor().addSaveRequest(this);
+		getWorld().getServer().getLoginExecutor().add(new PlayerSaveRequest(getWorld().getServer(), this));
 	}
 
 	public void logout() {
@@ -2035,7 +2037,7 @@ public final class Player extends Mob {
 		getWorld().getClanManager().checkAndUnattachFromClan(this);
 		getWorld().getPartyManager().checkAndUnattachFromParty(this);
 
-		getWorld().getServer().getPlayerDataProcessor().addRemoveRequest(this);
+		getWorld().getServer().getLoginExecutor().add(new PlayerRemoveRequest(getWorld().getServer(), this));
 	}
 
 	public void sendMemberErrorMessage() {
@@ -2057,7 +2059,7 @@ public final class Player extends Mob {
 	public void sendMiniGameComplete(int miniGameId, Optional<String> message) {
 		getWorld().getMiniGame(miniGameId).handleReward(this);
 		getWorld().getServer().getGameLogger().addQuery(new LiveFeedLog(this, "just completed <strong><font color=#00FF00>" + getWorld().getMiniGame(miniGameId).getMiniGameName()
-			+ "</font></strong> minigame! " + (message.isPresent() ? message.get() : "")));
+			+ "</font></strong> minigame! " + (message.orElse(""))));
 	}
 
 	public void setAccessingBank(boolean b) {
@@ -2335,15 +2337,14 @@ public final class Player extends Mob {
 		if (getCache().hasKey("elixir_time")) {
 			int now = (int) (System.currentTimeMillis() / 1000);
 			int time = ((int) getCache().getLong("elixir_time") - now);
-			return (time < 0) ? 0 : time;
+			return Math.max(time, 0);
 		}
 		return 0;
 	}
 
 	public void addElixir(int seconds) {
-		long elixirTime = seconds;
 		long now = System.currentTimeMillis() / 1000;
-		long experience = (now + elixirTime);
+		long experience = (now + (long) seconds);
 		getCache().store("elixir_time", experience);
 	}
 

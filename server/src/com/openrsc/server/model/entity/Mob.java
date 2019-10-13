@@ -18,14 +18,16 @@ import com.openrsc.server.model.states.Action;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.util.rsc.CollisionFlag;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.openrsc.server.plugins.Functions.sleep;
 
 public abstract class Mob extends Entity {
 
@@ -105,7 +107,6 @@ public abstract class Mob extends Entity {
 	 * Used to block new requests when we are in the middle of one
 	 */
 	private final AtomicBoolean busy = new AtomicBoolean(false);
-	private final Random random = new Random();
 	/**
 	 * The path we are walking
 	 */
@@ -299,7 +300,9 @@ public abstract class Mob extends Entity {
 			if (o.getGameObjectDef().getType() == 2 || o.getGameObjectDef().getType() == 3) {
 				return getX() >= low.getX() && getX() <= high.getX() && getY() >= low.getY() && getY() <= high.getY();
 			} else {
-				return canReach(low.getX(), high.getX(), low.getY(), high.getY()) || closeSpecObject(o);
+				return canReach(low.getX(), high.getX(), low.getY(), high.getY())
+						|| (finishedPath() && canReachDiagonal(low.getX(), high.getX(), low.getY(), high.getY()))
+						|| closeSpecObject(o);
 			}
 		} else if (o.getType() == 1) {
 			return getX() >= low.getX() && getX() <= high.getX() && getY() >= low.getY() && getY() <= high.getY();
@@ -346,6 +349,29 @@ public abstract class Mob extends Entity {
 			&& (CollisionFlag.WALL_SOUTH & getWorld().getTile(getX(), getY() - 1).traversalMask) == 0) {
 			return true;
 		}
+		return false;
+	}
+
+	private boolean canReachx(int minX, int maxX, int minY, int maxY) {
+		if (getX() >= minX && getX() <= maxX && getY() >= minY && getY() <= maxY) {
+			return true;
+		}
+		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() && maxY >= getY()
+			&& (getWorld().getTile(getX() - 1, getY()).traversalMask & CollisionFlag.WALL_WEST) == 0) {
+			return true;
+		}
+		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() >= minY && maxY >= getY()
+			&& (CollisionFlag.WALL_EAST & getWorld().getTile(getX() + 1, getY()).traversalMask) == 0) {
+			return true;
+		}
+		if (minX <= getX() && maxX >= getX() && getY() - 1 >= minY && maxY >= getY() - 1
+			&& (CollisionFlag.WALL_SOUTH & getWorld().getTile(getX(), getY() - 1).traversalMask) == 0) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean canReachDiagonal(int minX, int maxX, int minY, int maxY) {
 		if (minX <= getX() && getX() <= maxX && minY <= getY() + 1 && maxY >= getY() + 1
 			&& (CollisionFlag.WALL_NORTH & getWorld().getTile(getX(), getY() + 1).traversalMask) == 0) {
 			return true;
@@ -367,26 +393,6 @@ public abstract class Mob extends Entity {
 			return true;
 		}
 		return false;
-	}
-
-	private boolean canReachx(int minX, int maxX, int minY, int maxY) {
-		if (getX() >= minX && getX() <= maxX && getY() >= minY && getY() <= maxY) {
-			return true;
-		}
-		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() && maxY >= getY()
-			&& (getWorld().getTile(getX() - 1, getY()).traversalMask & CollisionFlag.WALL_WEST) == 0) {
-			return true;
-		}
-		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() >= minY && maxY >= getY()
-			&& (CollisionFlag.WALL_EAST & getWorld().getTile(getX() + 1, getY()).traversalMask) == 0) {
-			return true;
-		}
-		if (minX <= getX() && maxX >= getX() && getY() - 1 >= minY && maxY >= getY() - 1
-			&& (CollisionFlag.WALL_SOUTH & getWorld().getTile(getX(), getY() - 1).traversalMask) == 0) {
-			return true;
-		}
-		return minX <= getX() && getX() <= maxX && minY <= getY() + 1 && maxY >= getY() + 1
-			&& (CollisionFlag.WALL_NORTH & getWorld().getTile(getX(), getY() + 1).traversalMask) == 0;
 	}
 
 	public final boolean canReach(Entity e) {
@@ -631,10 +637,6 @@ public abstract class Mob extends Entity {
 		lastCombatWith = opponent;
 	}
 
-	public Random getRandom() {
-		return random;
-	}
-
 	public int getSprite() {
 		return mobSprite;
 	}
@@ -730,12 +732,12 @@ public abstract class Mob extends Entity {
 	}
 
 	/**
-	 * Sets the number of ticks in the future when player should be freed from the busy mode.
+	 * Sets the time when player should be freed from the busy mode.
 	 *
 	 * @param i
 	 */
 	public void setBusyTimer(int i) {
-		this.busyTimer = System.currentTimeMillis() + (i * getWorld().getServer().getConfig().GAME_TICK);
+		this.busyTimer = System.currentTimeMillis() + i;
 	}
 
 	public void setCombatTimer() {
@@ -779,6 +781,7 @@ public abstract class Mob extends Entity {
 		if (newStat > this.getSkills().getLevel(affectedStat)) {
 			this.getSkills().setLevel(affectedStat, newStat);
 		}
+		sleep(1200);
 		if (left <= 0) {
 			//player.message("You have finished your potion");
 		} else {
@@ -842,6 +845,7 @@ public abstract class Mob extends Entity {
 					((Npc) victim).produceUnderAttack();
 				}
 			}
+			Functions.sleep(1);
 
 			resetPath();
 			resetRange();
@@ -1038,7 +1042,7 @@ public abstract class Mob extends Entity {
 
 	public boolean rankCheckInvisible(Mob m) {
 		if(!(this instanceof Player) || !(m instanceof Player)) {
-			return true;
+			return false;
 		}
 
 		Player visionPlayer = (Player) this;
@@ -1053,7 +1057,7 @@ public abstract class Mob extends Entity {
 
 	public boolean rankCheckInvulnerable(Mob m) {
 		if(!(this instanceof Player) || !(m instanceof Player)) {
-			return true;
+			return false;
 		}
 
 		Player visionPlayer = (Player) this;

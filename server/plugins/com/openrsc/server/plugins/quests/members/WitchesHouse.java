@@ -32,7 +32,7 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 	 * room and rat appears on the same coord Rat is never removed untill you
 	 * use magnet room inbounds : MIN X: 356 MAX X: 357 MIN Y: 494 MAX Y: 496
 	 */
-	
+
 	private static final int WITCHES_HOUSE_CUPBOARD_OPEN = 259;
 	private static final int WITCHES_HOUSE_CUPBOARD_CLOSED = 258;
 
@@ -268,9 +268,9 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 						if (shouldShock) {
 							int damage;
 							if (p.getSkills().getLevel(Skills.HITS) < 20) {
-								damage = p.getRandom().nextInt(9) + 1;
+								damage = DataConversions.random(1, 10);
 							} else {
-								damage = p.getRandom().nextInt(14) + 1;
+								damage = DataConversions.random(1, 15);
 							}
 							p.damage(damage);
 						} else {
@@ -451,7 +451,7 @@ public class WitchesHouse implements QuestInterface, TalkToNpcListener,
 	private boolean wearingInsulatingGloves(Player p) {
 		return p.getInventory().wielding(ItemId.LEATHER_GLOVES.id()) || p.getInventory().wielding(ItemId.ICE_GLOVES.id());
 	}
-	
+
 	//considerations: sq/kite shields, med/large helms, plate-bodies/plate-tops/chains, legs/skirts
 	public static final int[] METAL_ARMOURS = {
 		//plate bodies

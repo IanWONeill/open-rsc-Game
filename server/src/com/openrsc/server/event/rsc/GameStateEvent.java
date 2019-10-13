@@ -49,7 +49,7 @@ public abstract class GameStateEvent extends GameTickEvent {
 		if (result == null) {
 			stop();
 		} else {
-			LOGGER.info(getDescriptor() + " : " + getOwner() + " : Calling Next State : State " + result.getState() + " : Delay " + result.getDelay());
+			//LOGGER.info(getDescriptor() + " : " + getOwner() + " : Calling Next State : State " + result.getState() + " : Delay " + result.getDelay());
 
 			setState(result.getState());
 			setDelayTicks(result.getDelay());

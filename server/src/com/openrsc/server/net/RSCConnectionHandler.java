@@ -14,32 +14,35 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jboss.netty.channel.ChannelHandler;
 
-/**
- * @author Imposter
- */
+import java.net.InetSocketAddress;
+
 public class RSCConnectionHandler extends ChannelInboundHandlerAdapter implements ChannelHandler {
-	public static final AttributeKey<ConnectionAttachment> attachment = AttributeKey.valueOf("conn-attachment");
-	private LoginPacketHandler loginHandler = new LoginPacketHandler();
 	private static final Logger LOGGER = LogManager.getLogger();
 
+	public static final AttributeKey<ConnectionAttachment> attachment = AttributeKey.valueOf("conn-attachment");
+
+	private final LoginPacketHandler loginHandler;
 	private final Server server;
 
-	public RSCConnectionHandler(Server server) {
+	public RSCConnectionHandler(final Server server) {
+		super();
+
 		this.server = server;
+		this.loginHandler = new LoginPacketHandler();
 	}
 
 	@Override
-	public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
-		final Channel channel = ctx.channel();
-		channel.close();
+	public void channelInactive(final ChannelHandlerContext ctx)  {
+		ctx.channel().close();
 	}
 
 	@Override
-	public void channelRead(final ChannelHandlerContext ctx, final Object message) throws Exception {
+	public void channelRead(final ChannelHandlerContext ctx, final Object message) {
 		try {
 			final Channel channel = ctx.channel();
 
-			if (message instanceof Packet) {
+			if(message instanceof Packet) {
+
 				final Packet packet = (Packet) message;
 				Player player = null;
 				ConnectionAttachment att = channel.attr(attachment).get();
@@ -47,12 +50,24 @@ public class RSCConnectionHandler extends ChannelInboundHandlerAdapter implement
 					player = att.player.get();
 				}
 				if (player == null) {
-					if (packet.getID() == 19) ActionSender.sendInitialServerConfigs(getServer(), channel);
-					else loginHandler.processLogin(packet, channel, getServer());
-				} else {
-					if (loginHandler != null) {
-						loginHandler = null;
+					if (packet.getID() == 19) {
+						if (!getServer().getPacketFilter().shouldAllowPacket(ctx.channel(), false)) {
+							ctx.channel().close();
+
+							return;
+						}
+
+						ActionSender.sendInitialServerConfigs(getServer(), channel);
+					} else {
+						loginHandler.processLogin(packet, channel, getServer());
 					}
+				} else {
+					if (!getServer().getPacketFilter().shouldAllowPacket(ctx.channel(), true)) {
+						ctx.channel().close();
+
+						return;
+					}
+
 					player.addToPacketQueue(packet);
 				}
 			}
@@ -64,15 +79,27 @@ public class RSCConnectionHandler extends ChannelInboundHandlerAdapter implement
 	}
 
 	@Override
-	public void channelRegistered(final ChannelHandlerContext ctx) throws Exception {
+	public void channelRegistered(final ChannelHandlerContext ctx) {
+		final String hostAddress = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress().getHostAddress();
+
+		if(!getServer().getPacketFilter().shouldAllowConnection(ctx.channel(), hostAddress, false)) {
+			getServer().getPacketFilter().ipBanHost(hostAddress, System.currentTimeMillis() + getServer().getConfig().NETWORK_FLOOD_IP_BAN_MINUTES * 60 * 1000);
+			ctx.channel().close();
+
+			return;
+		}
+
 		//final ConnectionAttachment att = new ConnectionAttachment();
 		//ctx.channel().attr(attachment).set(att);
 	}
 
 	@Override
-	public void channelUnregistered(final ChannelHandlerContext ctx) throws Exception {
+	public void channelUnregistered(final ChannelHandlerContext ctx) {
+		final String hostAddress = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress().getHostAddress();
 		final Channel channel = ctx.channel();
 		final ConnectionAttachment conn_attachment = channel.attr(attachment).get();
+
+		getServer().getPacketFilter().removeConnection(hostAddress, channel);
 
 		Player player = null;
 		if (conn_attachment != null) {
@@ -84,14 +111,14 @@ public class RSCConnectionHandler extends ChannelInboundHandlerAdapter implement
 	}
 
 	@Override
-	public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable e) throws Exception {
+	public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable e)  {
 		if (!getServer().getConfig().IGNORED_NETWORK_EXCEPTIONS.stream().anyMatch($it -> Objects.equal($it, e.getMessage()))) {
-			 System.out.println("Exception caught in thread!\n" + e);
+			System.out.println("Exception caught in thread!\n" + e);
 
-			 for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-				 System.out.println(ste);
-			 }
-			 LOGGER.catching(e);
+			for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+				System.out.println(ste);
+			}
+			LOGGER.catching(e);
 		}
 
 		if (ctx.channel().isActive())
@@ -103,7 +130,7 @@ public class RSCConnectionHandler extends ChannelInboundHandlerAdapter implement
 		ctx.flush();
 	}
 
-	public Server getServer() {
+	public final Server getServer() {
 		return server;
 	}
 }

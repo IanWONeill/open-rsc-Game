@@ -5,6 +5,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
+import com.openrsc.server.util.rsc.DataConversions;
 
 import static com.openrsc.server.plugins.Functions.*;
 
@@ -20,7 +21,7 @@ public class Thief implements TalkToNpcListener, TalkToNpcExecutiveListener {
 		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
 			public void init() {
 				addState(0, () -> {
-					int mood = p.getRandom().nextInt(13);
+					int mood = DataConversions.random(0, 13);
 
 					playerTalk(p, n, "Hello", "How's it going?");
 
