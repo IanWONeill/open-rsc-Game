@@ -101,7 +101,7 @@ public final class Server implements Runnable {
 		}
 	}
 
-	public static final Server run(final String confName) throws IOException {
+	public static final Server startServer(final String confName) throws IOException {
 		final long startTime = System.currentTimeMillis();
 		Server server = new Server(confName);
 
@@ -124,14 +124,14 @@ public final class Server implements Runnable {
 			LOGGER.info("Server Configuration file not provided. Loading from default.conf or local.conf.");
 
 			try {
-				run("default.conf");
+				startServer("default.conf");
 			} catch (Throwable t) {
 				LOGGER.catching(t);
 			}
 		} else {
 			for (int i = 0; i < args.length; i++) {
 				try {
-					run(args[i]);
+					startServer(args[i]);
 				} catch (Throwable t) {
 					LOGGER.catching(t);
 				}
