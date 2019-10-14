@@ -32,7 +32,7 @@ public class GameTickEventHandler {
 	public GameTickEventHandler(Server server) {
 		this.server = server;
 		final int nThreads = Runtime.getRuntime().availableProcessors();
-		executor = new ThreadPoolExecutor(nThreads, nThreads * 2, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), new NamedThreadFactory("GameTickEvent"));
+		executor = new ThreadPoolExecutor(nThreads, nThreads * 2, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), new NamedThreadFactory(getServer().getName() + " : EventHandler"));
 		executor.prestartAllCoreThreads();
 	}
 
