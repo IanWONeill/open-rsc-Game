@@ -77,39 +77,9 @@ public class GameTickEventHandler {
 			}
 		}
 
-		// Sort the Events Hashmap such that the following execution order is preserved: GameStateEvent -> GameNotifyEvent -> Everything else
-		List list = new LinkedList(events.entrySet());
-		Collections.sort(list, (Object o1, Object o2) -> {
-			if((o1 instanceof GameNotifyEvent) && !(o2 instanceof GameNotifyEvent)) {
-				return -1;
-			}
-			else if (!(o1 instanceof GameNotifyEvent) && (o2 instanceof GameNotifyEvent)){
-				 return 1;
-			}
-			else if(o1 instanceof GameNotifyEvent && o2 instanceof GameNotifyEvent) {
-				return 0;
-			}
-			else {
-				if((o1 instanceof GameStateEvent) && !(o2 instanceof GameStateEvent)) {
-					return -1;
-				}
-				else if (!(o1 instanceof GameStateEvent) && (o2 instanceof GameStateEvent)){
-					return 1;
-				}
-				else {
-					return 0;
-				}
-			}
-		});
-		HashMap sortedHashMap = new LinkedHashMap();
-		for (Iterator it = list.iterator(); it.hasNext(); ) {
-			Map.Entry entry = (Map.Entry) it.next();
-			sortedHashMap.put(entry.getKey(), entry.getValue());
-		}
-		events.clear();
-		events.putAll(sortedHashMap);
-
-		ArrayList<Callable<Integer>> callables = new ArrayList<Callable<Integer>>();
+		ArrayList<Callable<Integer>> notifyEvents = new ArrayList<Callable<Integer>>();
+		ArrayList<Callable<Integer>> stateEvents = new ArrayList<Callable<Integer>>();
+		ArrayList<Callable<Integer>> tickEvents = new ArrayList<Callable<Integer>>();
 
 		for (final Iterator<Map.Entry<String, GameTickEvent>> it = events.entrySet().iterator(); it.hasNext(); ) {
 			GameTickEvent event = it.next().getValue();
@@ -117,11 +87,25 @@ public class GameTickEventHandler {
 				it.remove();
 			}
 
-			callables.add(event);
+			// Doing this in stages to ensure that GameNotifyEvents are processed before GameStateEvents and GameStateEvents before all other events
+			if(event instanceof GameNotifyEvent) {
+				notifyEvents.add(event);
+			} else if (event instanceof GameStateEvent) {
+				stateEvents.add(event);
+			} else {
+				tickEvents.add(event);
+			}
 		}
 
 		try {
-			executor.invokeAll(callables);
+			executor.invokeAll(notifyEvents);
+			executor.invokeAll(stateEvents);
+			executor.invokeAll(tickEvents);
+			/*List<Future<Integer>> futures = executor.invokeAll(callables);
+			for (int i = 0; i < futures.size(); i++) {
+				Future<Integer> future = futures.get(i);
+				final int returnCode = future.get();
+			}*/
 		} catch (Exception e) {
 			LOGGER.catching(e);
 		}
