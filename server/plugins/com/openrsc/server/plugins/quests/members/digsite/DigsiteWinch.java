@@ -1,173 +1,168 @@
 package com.openrsc.server.plugins.quests.members.digsite;
 
-import com.openrsc.server.constants.*;
+
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.Quests;
+import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.World;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.plugins.listeners.action.InvUseOnObjectListener;
 import com.openrsc.server.plugins.listeners.action.ObjectActionListener;
 import com.openrsc.server.plugins.listeners.executive.InvUseOnObjectExecutiveListener;
 import com.openrsc.server.plugins.listeners.executive.ObjectActionExecutiveListener;
 import com.openrsc.server.util.rsc.MessageType;
+import java.util.concurrent.Callable;
 
-import static com.openrsc.server.plugins.Functions.getCurrentLevel;
-import static com.openrsc.server.plugins.Functions.getNearestNpc;
-import static com.openrsc.server.plugins.Functions.inArray;
-import static com.openrsc.server.plugins.Functions.message;
-import static com.openrsc.server.plugins.Functions.npcTalk;
-import static com.openrsc.server.plugins.Functions.playerTalk;
-import static com.openrsc.server.plugins.Functions.spawnNpc;
 
-public class DigsiteWinch implements ObjectActionListener, ObjectActionExecutiveListener, InvUseOnObjectListener, InvUseOnObjectExecutiveListener {
+public class DigsiteWinch implements InvUseOnObjectListener , ObjectActionListener , InvUseOnObjectExecutiveListener , ObjectActionExecutiveListener {
+    private static final int[] WINCH = new int[]{ 1095, 1053 };
 
-	private static final int[] WINCH = {1095, 1053};
+    @Override
+    public boolean blockObjectAction(GameObject obj, String command, Player player) {
+        return Functions.inArray(obj.getID(), DigsiteWinch.WINCH);
+    }
 
-	@Override
-	public boolean blockObjectAction(GameObject obj, String command, Player player) {
-		return inArray(obj.getID(), WINCH);
-	}
+    @Override
+    public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (Functions.inArray(obj.getID(), DigsiteWinch.WINCH)) {
+                        switch (p.getQuestStage(Quests.DIGSITE)) {
+                            case -1 :
+                                p.playerServerMessage(MessageType.QUEST, "You find yourself in a cavern...");
+                                p.teleport(19, 3385);
+                            case 0 :
+                            case 1 :
+                            case 2 :
+                            case 3 :
+                            case 4 :
+                            case 5 :
+                            case 6 :
+                                if (obj.getID() == DigsiteWinch.WINCH[0]) {
+                                    if (!p.getCache().hasKey("digsite_winshaft")) {
+                                        handleCantUseWinch(p, obj);
+                                    } else
+                                        if (!p.getCache().hasKey("winch_rope_1")) {
+                                            p.playerServerMessage(MessageType.QUEST, "You operate the winch");
+                                            p.message("The bucket descends, but does not reach the bottom");
+                                            Functions.___playerTalk(p, null, "Hey I think I could fit down here...", "I need something to help me get all the way down");
+                                        } else {
+                                            if (Functions.getCurrentLevel(p, Skills.AGILITY) < 10) {
+                                                p.message("You need an agility level of 10 to do this");
+                                                p.setBusy(false);
+                                                return null;
+                                            }
+                                            Functions.___message(p, "You try to climb down the rope", "You lower yourself into the shaft");
+                                            p.incExp(Skills.AGILITY, 20, true);
+                                            p.teleport(26, 3346);
+                                            p.playerServerMessage(MessageType.QUEST, "You find yourself in a cavern...");
+                                        }
 
-	@Override
-	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (inArray(obj.getID(), WINCH)) {
-						switch (p.getQuestStage(Quests.DIGSITE)) {
-							case -1:
-								p.playerServerMessage(MessageType.QUEST, "You find yourself in a cavern...");
-								p.teleport(19, 3385);
-							case 0:
-							case 1:
-							case 2:
-							case 3:
-							case 4:
-							case 5:
-							case 6:
-								if (obj.getID() == WINCH[0]) {
-									if (!p.getCache().hasKey("digsite_winshaft")) {
-										handleCantUseWinch(p, obj);
-									} else if (!p.getCache().hasKey("winch_rope_1")) {
-										p.playerServerMessage(MessageType.QUEST, "You operate the winch");
-										p.message("The bucket descends, but does not reach the bottom");
-										playerTalk(p, null, "Hey I think I could fit down here...", "I need something to help me get all the way down");
-									} else {
-										if (getCurrentLevel(p, Skills.AGILITY) < 10) {
-											p.message("You need an agility level of 10 to do this");
-											p.setBusy(false);
-											return null;
-										}
-										message(p, "You try to climb down the rope",
-											"You lower yourself into the shaft");
-										p.incExp(Skills.AGILITY, 20, true);
-										p.teleport(26, 3346);
-										p.playerServerMessage(MessageType.QUEST, "You find yourself in a cavern...");
-									}
+                                } else
+                                    if (obj.getID() == DigsiteWinch.WINCH[1]) {
+                                        if (!p.getCache().hasKey("digsite_winshaft")) {
+                                            handleCantUseWinch(p, obj);
+                                        } else
+                                            if (!p.getCache().hasKey("winch_rope_2")) {
+                                                p.playerServerMessage(MessageType.QUEST, "You operate the winch");
+                                                p.message("The bucket descends, but does not reach the bottom");
+                                                Functions.___playerTalk(p, null, "Hey I think I could fit down here...", "I need something to help me get all the way down");
+                                            } else {
+                                                if (Functions.getCurrentLevel(p, Skills.AGILITY) < 10) {
+                                                    p.message("You need an agility level of 10 to do this");
+                                                    p.setBusy(false);
+                                                    return null;
+                                                }
+                                                Functions.___message(p, "You try to climb down the rope", "You lower yourself into the shaft");
+                                                p.incExp(Skills.AGILITY, 20, true);
+                                                if (p.getQuestStage(Quests.DIGSITE) >= 6) {
+                                                    p.teleport(19, 3385);
+                                                } else {
+                                                    p.teleport(19, 3337);
+                                                }
+                                                p.playerServerMessage(MessageType.QUEST, "You find yourself in a cavern...");
+                                            }
 
-								}
+                                    }
 
-								else if (obj.getID() == WINCH[1]) {
-									if (!p.getCache().hasKey("digsite_winshaft")) {
-										handleCantUseWinch(p, obj);
-									} else if (!p.getCache().hasKey("winch_rope_2")) {
-										p.playerServerMessage(MessageType.QUEST, "You operate the winch");
-										p.message("The bucket descends, but does not reach the bottom");
-										playerTalk(p, null, "Hey I think I could fit down here...", "I need something to help me get all the way down");
-									} else {
-										if (getCurrentLevel(p, Skills.AGILITY) < 10) {
-											p.message("You need an agility level of 10 to do this");
-											p.setBusy(false);
-											return null;
-										}
-										message(p, "You try to climb down the rope",
-											"You lower yourself into the shaft");
-										p.incExp(Skills.AGILITY, 20, true);
-										if (p.getQuestStage(Quests.DIGSITE) >= 6) {
-											p.teleport(19, 3385);
-										} else {
-											p.teleport(19, 3337);
-										}
-										p.playerServerMessage(MessageType.QUEST, "You find yourself in a cavern...");
-									}
-								}
-						}
-					}
+                        }
+                    }
+                    return null;
+                });
+            }
+        };
+    }
 
-					return null;
-				});
-			}
-		};
-	}
+    @Override
+    public boolean blockInvUseOnObject(GameObject obj, Item item, Player p) {
+        return Functions.inArray(obj.getID(), DigsiteWinch.WINCH) && (item.getID() == ItemId.ROPE.id());
+    }
 
-	@Override
-	public boolean blockInvUseOnObject(GameObject obj, Item item, Player p) {
-		return inArray(obj.getID(), WINCH) && item.getID() == ItemId.ROPE.id();
-	}
+    @Override
+    public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (Functions.inArray(obj.getID(), DigsiteWinch.WINCH) && (item.getID() == ItemId.ROPE.id())) {
+                        if (obj.getID() == DigsiteWinch.WINCH[0]) {
+                            if (p.getCache().hasKey("digsite_winshaft")) {
+                                if (!p.getCache().hasKey("winch_rope_1")) {
+                                    p.message("You tie the rope to the bucket");
+                                    p.getCache().store("winch_rope_1", true);
+                                    p.getInventory().remove(ItemId.ROPE.id(), 1);
+                                } else {
+                                    p.message("There is already a rope tied to this bucket");
+                                }
+                            } else {
+                                Functions.___playerTalk(p, null, "Err... I have no idea why I am doing this !");
+                            }
+                        } else
+                            if (obj.getID() == DigsiteWinch.WINCH[1]) {
+                                if (p.getCache().hasKey("digsite_winshaft")) {
+                                    if (!p.getCache().hasKey("winch_rope_2")) {
+                                        p.message("You tie the rope to the bucket");
+                                        p.getCache().store("winch_rope_2", true);
+                                        p.getInventory().remove(ItemId.ROPE.id(), 1);
+                                    } else {
+                                        p.message("There is already a rope tied to this bucket");
+                                    }
+                                } else {
+                                    Functions.___playerTalk(p, null, "Err... I have no idea why I am doing this !");
+                                }
+                            }
 
-	@Override
-	public GameStateEvent onInvUseOnObject(GameObject obj, Item item, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (inArray(obj.getID(), WINCH) && item.getID() == ItemId.ROPE.id()) {
-						if (obj.getID() == WINCH[0]) {
-							if (p.getCache().hasKey("digsite_winshaft")) {
-								if (!p.getCache().hasKey("winch_rope_1")) {
-									p.message("You tie the rope to the bucket");
-									p.getCache().store("winch_rope_1", true);
-									p.getInventory().remove(ItemId.ROPE.id(), 1);
-								} else {
-									p.message("There is already a rope tied to this bucket");
-								}
-							} else {
-								playerTalk(p, null, "Err... I have no idea why I am doing this !");
-							}
-						}
-						else if (obj.getID() == WINCH[1]) {
-							if (p.getCache().hasKey("digsite_winshaft")) {
-								if (!p.getCache().hasKey("winch_rope_2")) {
-									p.message("You tie the rope to the bucket");
-									p.getCache().store("winch_rope_2", true);
-									p.getInventory().remove(ItemId.ROPE.id(), 1);
-								} else {
-									p.message("There is already a rope tied to this bucket");
-								}
-							} else {
-								playerTalk(p, null, "Err... I have no idea why I am doing this !");
-							}
-						}
-					}
+                    }
+                    return null;
+                });
+            }
+        };
+    }
 
-					return null;
-				});
-			}
-		};
-	}
-
-	private void handleCantUseWinch(Player p, GameObject obj) {
-		boolean workmanWasSpawned;
-
-		Npc workman = getNearestNpc(p, NpcId.WORKMAN.id(), 5);
-		if (workman == null) {
-			workman = spawnNpc(p.getWorld(), NpcId.WORKMAN.id(), p.getX(), p.getY(), 60000);
-			workmanWasSpawned = true;
-		} else {
-			workmanWasSpawned = false;
-			workman.resetPath();
-			workman.teleport(p.getX(), p.getY());
-		}
-		npcTalk(p, workman, "Sorry, this area is private");
-		workman.teleport(p.getX() + (obj.getID() == WINCH[0] ? +1 : -1), p.getY());
-		npcTalk(p, workman, "The only way you'll get to use these",
-			"Is by impressing the expert",
-			"Up at the centre",
-			"Find something worthwhile...",
-			"And he might let you use the winches",
-			"Until then, get lost !");
-		if (workmanWasSpawned) {
-			workman.remove();
-		}
-	}
+    private void handleCantUseWinch(Player p, GameObject obj) {
+        boolean workmanWasSpawned;
+        Npc workman = Functions.getNearestNpc(p, NpcId.WORKMAN.id(), 5);
+        if (workman == null) {
+            workman = Functions.spawnNpc(p.getWorld(), NpcId.WORKMAN.id(), p.getX(), p.getY(), 60000);
+            workmanWasSpawned = true;
+        } else {
+            workmanWasSpawned = false;
+            workman.resetPath();
+            workman.teleport(p.getX(), p.getY());
+        }
+        Functions.___npcTalk(p, workman, "Sorry, this area is private");
+        workman.teleport(p.getX() + (obj.getID() == DigsiteWinch.WINCH[0] ? +1 : -1), p.getY());
+        Functions.___npcTalk(p, workman, "The only way you'll get to use these", "Is by impressing the expert", "Up at the centre", "Find something worthwhile...", "And he might let you use the winches", "Until then, get lost !");
+        if (workmanWasSpawned) {
+            workman.remove();
+        }
+    }
 }
+

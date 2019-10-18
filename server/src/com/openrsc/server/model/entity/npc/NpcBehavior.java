@@ -4,21 +4,20 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.rsc.impl.combat.AggroEvent;
-import com.openrsc.server.external.EntityHandler;
-import com.openrsc.server.external.NPCDef;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.MessageType;
 
 import static com.openrsc.server.plugins.Functions.hasItem;
 import static com.openrsc.server.plugins.Functions.inArray;
 import static com.openrsc.server.plugins.Functions.npcYell;
-import static com.openrsc.server.plugins.Functions.playerTalk;
+import static com.openrsc.server.plugins.Functions.___playerTalk;
 import static com.openrsc.server.plugins.Functions.removeItem;
 import static com.openrsc.server.plugins.Functions.showBubble;
 
@@ -233,7 +232,7 @@ public class NpcBehavior {
 			p.playerServerMessage(MessageType.QUEST, "he takes the ball...");
 			p.playerServerMessage(MessageType.QUEST, "and pushes you to the floor");
 			p.damage((int) (Math.ceil(p.getSkills().getLevel(Skills.HITS) * 0.05)));
-			playerTalk(p, null, "ouch");
+			Functions.___playerTalk(p, null, "ouch");
 			npcYell(p, npc, "yeah");
 		}
 	}

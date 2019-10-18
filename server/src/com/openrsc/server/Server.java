@@ -250,7 +250,7 @@ public final class Server implements Runnable {
 			}
 
 			running = true;
-			scheduledExecutor.scheduleAtFixedRate(this, 0, 1, TimeUnit.MILLISECONDS);
+			scheduledExecutor.scheduleAtFixedRate(this, 0, 10, TimeUnit.MILLISECONDS);
 
 			loginExecutor.start();
 			discordService.start();

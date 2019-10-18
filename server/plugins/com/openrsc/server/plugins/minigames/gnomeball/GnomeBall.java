@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.minigames.gnomeball;
 
+
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Minigames;
 import com.openrsc.server.constants.Skills;
@@ -8,9 +9,12 @@ import com.openrsc.server.event.rsc.impl.BallProjectileEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.plugins.MiniGameInterface;
 import com.openrsc.server.plugins.listeners.action.InvActionListener;
 import com.openrsc.server.plugins.listeners.action.InvUseOnPlayerListener;
@@ -20,271 +24,275 @@ import com.openrsc.server.plugins.listeners.executive.InvActionExecutiveListener
 import com.openrsc.server.plugins.listeners.executive.InvUseOnPlayerExecutiveListener;
 import com.openrsc.server.plugins.listeners.executive.ObjectActionExecutiveListener;
 import com.openrsc.server.plugins.listeners.executive.PickupExecutiveListener;
-import com.openrsc.server.plugins.minigames.gnomeball.GnomeField.Zone;
 import com.openrsc.server.util.rsc.DataConversions;
+import java.util.concurrent.Callable;
 
-import static com.openrsc.server.plugins.Functions.*;
+import static com.openrsc.server.plugins.minigames.gnomeball.GnomeField.Zone.ZONE_1XP_INNER;
+import static com.openrsc.server.plugins.minigames.gnomeball.GnomeField.Zone.ZONE_1XP_OUTER;
+import static com.openrsc.server.plugins.minigames.gnomeball.GnomeField.Zone.ZONE_2XP_INNER;
+import static com.openrsc.server.plugins.minigames.gnomeball.GnomeField.Zone.ZONE_2XP_OUTER;
+import static com.openrsc.server.plugins.minigames.gnomeball.GnomeField.Zone.ZONE_NOT_VISIBLE;
+import static com.openrsc.server.plugins.minigames.gnomeball.GnomeField.Zone.ZONE_NO_PASS;
+import static com.openrsc.server.plugins.minigames.gnomeball.GnomeField.Zone.ZONE_OUTSIDE_THROWABLE;
+import static com.openrsc.server.plugins.minigames.gnomeball.GnomeField.Zone.ZONE_PASS;
 
-public class GnomeBall implements MiniGameInterface, InvUseOnPlayerListener, InvUseOnPlayerExecutiveListener, PickupListener, PickupExecutiveListener,
-InvActionListener, InvActionExecutiveListener, ObjectActionListener, ObjectActionExecutiveListener {
-		
-	private static final int[][] SCORES_XP = {{20, 30, 35, 40, 220} , {40, 50, 60, 70, 220}};
 
-	@Override
-	public int getMiniGameId() {
-		return Minigames.GNOME_BALL;
-	}
+public class GnomeBall implements MiniGameInterface , InvActionListener , InvUseOnPlayerListener , ObjectActionListener , PickupListener , InvActionExecutiveListener , InvUseOnPlayerExecutiveListener , ObjectActionExecutiveListener , PickupExecutiveListener {
+    private static final int[][] SCORES_XP = new int[][]{ new int[]{ 20, 30, 35, 40, 220 }, new int[]{ 40, 50, 60, 70, 220 } };
 
-	@Override
-	public String getMiniGameName() {
-		return "Gnome Ball (members)";
-	}
+    @Override
+    public int getMiniGameId() {
+        return Minigames.GNOME_BALL;
+    }
 
-	@Override
-	public boolean isMembers() {
-		return true;
-	}
+    @Override
+    public String getMiniGameName() {
+        return "Gnome Ball (members)";
+    }
 
-	@Override
-	public void handleReward(Player p) {
-		//mini-game complete handled already
-	}
-	
-	@Override
-	public GameStateEvent onInvUseOnPlayer(Player player, Player otherPlayer, Item item) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (item.getID() == ItemId.GNOME_BALL.id()) {
-						if (otherPlayer.isIronMan(1) || otherPlayer.isIronMan(2) || otherPlayer.isIronMan(3)) {
-							player.message(otherPlayer.getUsername() + " is an Iron Man. He stands alone.");
-						} else {
-							// does not matter where the players are at, neither in the field or wild,
-							// nor if they have free inventory space
-							player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, otherPlayer, 3) {
-								@Override
-								public void doSpell() {
-									if (otherPlayer.isPlayer()) {
-										player.getInventory().remove(item);
-										player.message("you throw the ball");
+    @Override
+    public boolean isMembers() {
+        return true;
+    }
 
-										// only the shops interface is reset is closed if they are accessing it
-										if (otherPlayer.accessingShop()) {
-											otherPlayer.resetShop();
-										}
+    @Override
+    public void handleReward(Player p) {
+        // mini-game complete handled already
+    }
 
-										otherPlayer.getInventory().add(item);
-										otherPlayer.message("Warning! " + player.getUsername() + " is shooting at you!");
-										otherPlayer.message("you catch the ball");
-										playerTalk(player, null, "Good catch");
-									}
-								}
-							});
-						}
-					}
+    @Override
+    public GameStateEvent onInvUseOnPlayer(Player player, Player otherPlayer, Item item) {
+        return new GameStateEvent(player.getWorld(), player, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (item.getID() == ItemId.GNOME_BALL.id()) {
+                        if ((otherPlayer.isIronMan(1) || otherPlayer.isIronMan(2)) || otherPlayer.isIronMan(3)) {
+                            player.message(otherPlayer.getUsername() + " is an Iron Man. He stands alone.");
+                        } else {
+                            // does not matter where the players are at, neither in the field or wild,
+                            // nor if they have free inventory space
+                            player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, otherPlayer, 3) {
+                                @Override
+                                public void doSpell() {
+                                    if (otherPlayer.isPlayer()) {
+                                        player.getInventory().remove(item);
+                                        player.message("you throw the ball");
+                                        // only the shops interface is reset is closed if they are accessing it
+                                        if (otherPlayer.accessingShop()) {
+                                            otherPlayer.resetShop();
+                                        }
+                                        otherPlayer.getInventory().add(item);
+                                        otherPlayer.message(("Warning! " + player.getUsername()) + " is shooting at you!");
+                                        otherPlayer.message("you catch the ball");
+                                        Functions.___playerTalk(player, null, "Good catch");
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    return null;
+                });
+            }
+        };
+    }
 
-					return null;
-				});
-			}
-		};
-	}
-	
-	@Override
-	public GameStateEvent onInvAction(Item item, Player player, String command) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					Zone playerZone = GnomeField.getInstance().resolvePositionToZone(player);
-					if (playerZone == Zone.ZONE_NO_PASS) {
-						player.message("you can't make the pass from here");
-					} else if (playerZone == Zone.ZONE_PASS) {
-						Npc gnome_team;
-						if (player.getY() <= 449) {
-							gnome_team = getNearestNpc(player, GnomeNpcs.GNOME_BALLER_NORTH, 10);
-						}
-						else {
-							gnome_team = getNearestNpc(player, GnomeNpcs.GNOME_BALLER_SOUTH, 10);
-						}
-						if (gnome_team != null) {
-							gnome_team.initializeIndirectTalkScript(player);
-						}
-					} else if (playerZone == Zone.ZONE_1XP_OUTER || playerZone == Zone.ZONE_1XP_INNER) {
-						player.setSyncAttribute("throwing_ball_game", true);
-						Npc goalie = getNearestNpc(player, GnomeNpcs.GOALIE, 15);
-						player.setBusyTimer(1);
-						player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, goalie, 3) {
-							@Override
-							public void doSpell() {
-								//logic to try to score from 1xp
-								showBubble(player, new Item(ItemId.GNOME_BALL.id()));
-								message(player, "you throw the ball at the goal");
-								removeItem(player, ItemId.GNOME_BALL.id(), 1);
-								int random = DataConversions.random(0, 4);
-								if (random < 2 + (playerZone == Zone.ZONE_1XP_INNER ? 2 : 0)) {
-									message(player, "it flys through the net...",
-										"into the hands of the goal catcher");
-									Npc cheerleader = getNearestNpc(player, GnomeNpcs.CHEERLEADER, 10);
-									if (cheerleader != null) {
-										cheerLeaderCelebrate(player, cheerleader);
-									}
-									handleScore(player, 0);
-								} else {
-									if (DataConversions.random(0, 2) < 2 || playerZone == Zone.ZONE_1XP_OUTER) {
-										message(player, "the ball flys way over the net");
-									} else {
-										message(player, "the ball just misses the net");
-									}
-								}
-							}
-						});
-					} else if (playerZone == Zone.ZONE_2XP_OUTER || playerZone == Zone.ZONE_2XP_INNER) {
-						player.setSyncAttribute("throwing_ball_game", true);
-						Npc goalie = getNearestNpc(player, GnomeNpcs.GOALIE, 15);
-						player.setBusyTimer(1);
-						player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, goalie, 3) {
-							@Override
-							public void doSpell() {
-								//logic to try to score from 2xp
-								showBubble(player, new Item(ItemId.GNOME_BALL.id()));
-								message(player, "you throw the ball at the goal");
-								removeItem(player, ItemId.GNOME_BALL.id(), 1);
-								int random = DataConversions.random(0, 9);
-								if (random < 4 + (playerZone == Zone.ZONE_2XP_INNER ? 2 : 0)) {
-									message(player, "it flys through the net...",
-										"into the hands of the goal catcher");
-									Npc cheerleader = getNearestNpc(player, GnomeNpcs.CHEERLEADER, 10);
-									if (cheerleader != null) {
-										cheerLeaderCelebrate(player, cheerleader);
-									}
-									handleScore(player, 1);
-								} else {
-									if (DataConversions.random(0, 2) < 2 || playerZone == Zone.ZONE_2XP_OUTER) {
-										message(player, "you miss by a mile!");
-									} else {
-										message(player, "the ball flys way over the net");
-									}
-								}
-							}
-						});
-					} else if (playerZone == Zone.ZONE_NOT_VISIBLE || playerZone == Zone.ZONE_OUTSIDE_THROWABLE) {
-						showBubble(player, new Item(ItemId.GNOME_BALL.id()));
-						message(player, "you throw the ball at the goal",
-							"you miss by a mile!",
-							"maybe you should try playing on the pitch!");
-					}
+    @Override
+    public GameStateEvent onInvAction(Item item, Player player, String command) {
+        return new GameStateEvent(player.getWorld(), player, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    GnomeField.Zone playerZone = GnomeField.getInstance().resolvePositionToZone(player);
+                    if (playerZone == ZONE_NO_PASS) {
+                        player.message("you can't make the pass from here");
+                    } else
+                        if (playerZone == ZONE_PASS) {
+                            Npc gnome_team;
+                            if (player.getY() <= 449) {
+                                gnome_team = Functions.getNearestNpc(player, GnomeNpcs.GNOME_BALLER_NORTH, 10);
+                            } else {
+                                gnome_team = Functions.getNearestNpc(player, GnomeNpcs.GNOME_BALLER_SOUTH, 10);
+                            }
+                            if (gnome_team != null) {
+                                gnome_team.initializeIndirectTalkScript(player);
+                            }
+                        } else
+                            if ((playerZone == ZONE_1XP_OUTER) || (playerZone == ZONE_1XP_INNER)) {
+                                player.setSyncAttribute("throwing_ball_game", true);
+                                Npc goalie = Functions.getNearestNpc(player, GnomeNpcs.GOALIE, 15);
+                                player.setBusyTimer(1);
+                                player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, goalie, 3) {
+                                    @Override
+                                    public void doSpell() {
+                                        // logic to try to score from 1xp
+                                        Functions.showBubble(player, new Item(ItemId.GNOME_BALL.id()));
+                                        Functions.___message(player, "you throw the ball at the goal");
+                                        Functions.removeItem(player, ItemId.GNOME_BALL.id(), 1);
+                                        int random = DataConversions.random(0, 4);
+                                        if (random < (2 + (playerZone == ZONE_1XP_INNER ? 2 : 0))) {
+                                            Functions.___message(player, "it flys through the net...", "into the hands of the goal catcher");
+                                            Npc cheerleader = Functions.getNearestNpc(player, GnomeNpcs.CHEERLEADER, 10);
+                                            if (cheerleader != null) {
+                                                cheerLeaderCelebrate(player, cheerleader);
+                                            }
+                                            handleScore(player, 0);
+                                        } else {
+                                            if ((DataConversions.random(0, 2) < 2) || (playerZone == ZONE_1XP_OUTER)) {
+                                                Functions.___message(player, "the ball flys way over the net");
+                                            } else {
+                                                Functions.___message(player, "the ball just misses the net");
+                                            }
+                                        }
+                                    }
+                                });
+                            } else
+                                if ((playerZone == ZONE_2XP_OUTER) || (playerZone == ZONE_2XP_INNER)) {
+                                    player.setSyncAttribute("throwing_ball_game", true);
+                                    Npc goalie = Functions.getNearestNpc(player, GnomeNpcs.GOALIE, 15);
+                                    player.setBusyTimer(1);
+                                    player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, goalie, 3) {
+                                        @Override
+                                        public void doSpell() {
+                                            // logic to try to score from 2xp
+                                            Functions.showBubble(player, new Item(ItemId.GNOME_BALL.id()));
+                                            Functions.___message(player, "you throw the ball at the goal");
+                                            Functions.removeItem(player, ItemId.GNOME_BALL.id(), 1);
+                                            int random = DataConversions.random(0, 9);
+                                            if (random < (4 + (playerZone == ZONE_2XP_INNER ? 2 : 0))) {
+                                                Functions.___message(player, "it flys through the net...", "into the hands of the goal catcher");
+                                                Npc cheerleader = Functions.getNearestNpc(player, GnomeNpcs.CHEERLEADER, 10);
+                                                if (cheerleader != null) {
+                                                    cheerLeaderCelebrate(player, cheerleader);
+                                                }
+                                                handleScore(player, 1);
+                                            } else {
+                                                if ((DataConversions.random(0, 2) < 2) || (playerZone == ZONE_2XP_OUTER)) {
+                                                    Functions.___message(player, "you miss by a mile!");
+                                                } else {
+                                                    Functions.___message(player, "the ball flys way over the net");
+                                                }
+                                            }
+                                        }
+                                    });
+                                } else
+                                    if ((playerZone == ZONE_NOT_VISIBLE) || (playerZone == ZONE_OUTSIDE_THROWABLE)) {
+                                        Functions.showBubble(player, new Item(ItemId.GNOME_BALL.id()));
+                                        Functions.___message(player, "you throw the ball at the goal", "you miss by a mile!", "maybe you should try playing on the pitch!");
+                                    }
 
-					return null;
-				});
-			}
-		};
-	}
-	
-	private void cheerLeaderCelebrate(Player p, Npc n) {
-		
-		switch(DataConversions.random(0, 2)) {
-		case 0:
-			npcTalk(p, n, "yeah", "good goal");
-			break;
-		case 1:
-			npcTalk(p, n, "yahoo", "go go traveller");
-			break;
-		case 2:
-			npcTalk(p, n, "yeah baby", "gimme a g, gimme an o, gimme an a, gimme an l");
-			break;
-		}
-	}
-	
-	private void loadIfNotMemory(Player p, String cacheName) {
-		//load from player cache if not present in memory
-		if((p.getSyncAttribute(cacheName, -1) == -1) && p.getCache().hasKey(cacheName)) {
-			p.setSyncAttribute(cacheName, p.getCache().getInt(cacheName));
-		} else if (p.getSyncAttribute(cacheName, -1) == -1) {
-			p.setSyncAttribute(cacheName, 0);
-		}
-	}
-	
-	private void handleScore(Player p, int score_zone) {
-		loadIfNotMemory(p, "gnomeball_goals");
-		int prev_goalCount = p.getAttribute("gnomeball_goals", 0);
-		p.incExp(Skills.RANGED, SCORES_XP[score_zone][prev_goalCount], true);
-		p.incExp(Skills.AGILITY, SCORES_XP[score_zone][prev_goalCount], true);
-		showScoreWindow(p, prev_goalCount+1);
-		if (prev_goalCount+1 == 5) {
-			ActionSender.sendTeleBubble(p, p.getX(), p.getY(), true);
-		}
-		p.setAttribute("gnomeball_goals", (prev_goalCount+1)%5);
-	}
-	
-	private void showScoreWindow(Player p, int goalNum) {
-		String text = "@yel@goal";
-		if (goalNum > 1) {
-			text += (" " + goalNum);
-		}
-		if (goalNum == 5) {
-			text += ("% %Well Done% %@red@Agility Bonus");
-		}
-		ActionSender.sendBox(p, text, false);
-	}
 
-	@Override
-	public GameStateEvent onPickup(Player p, GroundItem item) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (item.getID() == ItemId.GNOME_BALL.id()) {
-						if (hasItem(p, ItemId.GNOME_BALL.id())) {
-							message(p, 1200, "you can only carry one ball at a time", "otherwise it would be too easy");
-						} else {
-							p.getWorld().unregisterItem(item);
-							addItem(p, ItemId.GNOME_BALL.id(), 1);
-						}
-					}
 
-					return null;
-				});
-			}
-		};
-	}
-	
-	@Override
-	public boolean blockInvUseOnPlayer(Player player, Player otherPlayer, Item item) {
-		return item.getID() == ItemId.GNOME_BALL.id();
-	}
 
-	@Override
-	public boolean blockPickup(Player player, GroundItem item) {
-		return item.getID() == ItemId.GNOME_BALL.id();
-	}
+                    return null;
+                });
+            }
+        };
+    }
 
-	@Override
-	public boolean blockInvAction(Item item, Player p, String command) {
-		return item.getID() == ItemId.GNOME_BALL.id();
-	}
+    private void cheerLeaderCelebrate(Player p, Npc n) {
+        switch (DataConversions.random(0, 2)) {
+            case 0 :
+                Functions.___npcTalk(p, n, "yeah", "good goal");
+                break;
+            case 1 :
+                Functions.___npcTalk(p, n, "yahoo", "go go traveller");
+                break;
+            case 2 :
+                Functions.___npcTalk(p, n, "yeah baby", "gimme a g, gimme an o, gimme an a, gimme an l");
+                break;
+        }
+    }
 
-	@Override
-	public boolean blockObjectAction(GameObject obj, String command, Player player) {
-		return obj.getID() == 702;
-	}
+    private void loadIfNotMemory(Player p, String cacheName) {
+        // load from player cache if not present in memory
+        if ((p.getSyncAttribute(cacheName, -1) == (-1)) && p.getCache().hasKey(cacheName)) {
+            p.setSyncAttribute(cacheName, p.getCache().getInt(cacheName));
+        } else
+            if (p.getSyncAttribute(cacheName, -1) == (-1)) {
+                p.setSyncAttribute(cacheName, 0);
+            }
 
-	@Override
-	public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
-		return new GameStateEvent(player.getWorld(), player, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (obj.getID() == 702) {
-						if (player.getY() > 456 || !hasItem(player, ItemId.GNOME_BALL.id())) {
-							player.message("you open the gate");
-							player.message("and walk through");
-							doGate(player, obj, 357);
-						}
-						else {
-							player.message("you have to leave the ball here");
-						}
-					}
+    }
 
-					return null;
-				});
-			}
-		};
-	}
+    private void handleScore(Player p, int score_zone) {
+        loadIfNotMemory(p, "gnomeball_goals");
+        int prev_goalCount = p.getAttribute("gnomeball_goals", 0);
+        p.incExp(Skills.RANGED, GnomeBall.SCORES_XP[score_zone][prev_goalCount], true);
+        p.incExp(Skills.AGILITY, GnomeBall.SCORES_XP[score_zone][prev_goalCount], true);
+        showScoreWindow(p, prev_goalCount + 1);
+        if ((prev_goalCount + 1) == 5) {
+            ActionSender.sendTeleBubble(p, p.getX(), p.getY(), true);
+        }
+        p.setAttribute("gnomeball_goals", (prev_goalCount + 1) % 5);
+    }
+
+    private void showScoreWindow(Player p, int goalNum) {
+        String text = "@yel@goal";
+        if (goalNum > 1) {
+            text += " " + goalNum;
+        }
+        if (goalNum == 5) {
+            text += "% %Well Done% %@red@Agility Bonus";
+        }
+        ActionSender.sendBox(p, text, false);
+    }
+
+    @Override
+    public GameStateEvent onPickup(Player p, GroundItem item) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (item.getID() == ItemId.GNOME_BALL.id()) {
+                        if (Functions.hasItem(p, ItemId.GNOME_BALL.id())) {
+                            Functions.___message(p, 1200, "you can only carry one ball at a time", "otherwise it would be too easy");
+                        } else {
+                            p.getWorld().unregisterItem(item);
+                            Functions.addItem(p, ItemId.GNOME_BALL.id(), 1);
+                        }
+                    }
+                    return null;
+                });
+            }
+        };
+    }
+
+    @Override
+    public boolean blockInvUseOnPlayer(Player player, Player otherPlayer, Item item) {
+        return item.getID() == ItemId.GNOME_BALL.id();
+    }
+
+    @Override
+    public boolean blockPickup(Player player, GroundItem item) {
+        return item.getID() == ItemId.GNOME_BALL.id();
+    }
+
+    @Override
+    public boolean blockInvAction(Item item, Player p, String command) {
+        return item.getID() == ItemId.GNOME_BALL.id();
+    }
+
+    @Override
+    public boolean blockObjectAction(GameObject obj, String command, Player player) {
+        return obj.getID() == 702;
+    }
+
+    @Override
+    public GameStateEvent onObjectAction(GameObject obj, String command, Player player) {
+        return new GameStateEvent(player.getWorld(), player, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (obj.getID() == 702) {
+                        if ((player.getY() > 456) || (!Functions.hasItem(player, ItemId.GNOME_BALL.id()))) {
+                            player.message("you open the gate");
+                            player.message("and walk through");
+                            Functions.___doGate(player, obj, 357);
+                        } else {
+                            player.message("you have to leave the ball here");
+                        }
+                    }
+                    return null;
+                });
+            }
+        };
+    }
 }
+

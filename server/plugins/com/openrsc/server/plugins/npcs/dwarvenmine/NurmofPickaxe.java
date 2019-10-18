@@ -1,68 +1,67 @@
 package com.openrsc.server.plugins.npcs.dwarvenmine;
 
+
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.plugins.ShopInterface;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
+import java.util.concurrent.Callable;
 
-import static com.openrsc.server.plugins.Functions.*;
 
-public final class NurmofPickaxe implements ShopInterface,
-	TalkToNpcExecutiveListener, TalkToNpcListener {
+public final class NurmofPickaxe implements ShopInterface , TalkToNpcListener , TalkToNpcExecutiveListener {
+    private final Shop shop = new Shop(false, 25000, 100, 60, 2, new Item(ItemId.BRONZE_PICKAXE.id(), 6), new Item(ItemId.IRON_PICKAXE.id(), 5), new Item(ItemId.STEEL_PICKAXE.id(), 4), new Item(ItemId.MITHRIL_PICKAXE.id(), 3), new Item(ItemId.ADAMANTITE_PICKAXE.id(), 2), new Item(ItemId.RUNE_PICKAXE.id(), 1));
 
-	private final Shop shop = new Shop(false, 25000, 100, 60, 2, new Item(ItemId.BRONZE_PICKAXE.id(),
-		6), new Item(ItemId.IRON_PICKAXE.id(), 5), new Item(ItemId.STEEL_PICKAXE.id(), 4),
-		new Item(ItemId.MITHRIL_PICKAXE.id(), 3), new Item(ItemId.ADAMANTITE_PICKAXE.id(), 2), new Item(ItemId.RUNE_PICKAXE.id(), 1));
+    @Override
+    public boolean blockTalkToNpc(final Player p, final Npc n) {
+        return n.getID() == NpcId.NURMOF.id();
+    }
 
-	@Override
-	public boolean blockTalkToNpc(final Player p, final Npc n) {
-		return n.getID() == NpcId.NURMOF.id();
-	}
+    @Override
+    public Shop[] getShops(World world) {
+        return new Shop[]{ shop };
+    }
 
-	@Override
-	public Shop[] getShops(World world) {
-		return new Shop[]{shop};
-	}
+    @Override
+    public boolean isMembers() {
+        return false;
+    }
 
-	@Override
-	public boolean isMembers() {
-		return false;
-	}
+    @Override
+    public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    Functions.___npcTalk(p, n, "greetings welcome to my pickaxe shop", "Do you want to buy my premium quality pickaxes");
+                    int option = // do not send over
+                    Functions.___showMenu(p, n, false, "Yes please", "No thankyou", "Are your pickaxes better than other pickaxes then?");
+                    if (option == 0) {
+                        Functions.___playerTalk(p, n, "Yes please");
+                        p.setAccessingShop(shop);
+                        ActionSender.showShop(p, shop);
+                    } else
+                        if (option == 1) {
+                            Functions.___playerTalk(p, n, "No thankyou\"");
+                        } else
+                            if (option == 2) {
+                                Functions.___playerTalk(p, n, "Are your pickaxes better than other pickaxes then?");
+                                Functions.___npcTalk(p, n, "Of course they are", "My pickaxes are made of higher grade metal than your ordinary bronze pickaxes", "Allowing you to have multiple swings at a rock until you get the ore from it");
+                            }
 
-	@Override
-	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					npcTalk(p, n, "greetings welcome to my pickaxe shop",
-						"Do you want to buy my premium quality pickaxes");
 
-					int option = showMenu(p, n, false, //do not send over
-						"Yes please", "No thankyou", "Are your pickaxes better than other pickaxes then?");
-					if (option == 0) {
-						playerTalk(p, n, "Yes please");
-						p.setAccessingShop(shop);
-						ActionSender.showShop(p, shop);
-					} else if (option == 1) {
-						playerTalk(p, n, "No thankyou\"");
-					} else if (option == 2) {
-						playerTalk(p, n, "Are your pickaxes better than other pickaxes then?");
-						npcTalk(p, n, "Of course they are",
-							"My pickaxes are made of higher grade metal than your ordinary bronze pickaxes",
-							"Allowing you to have multiple swings at a rock until you get the ore from it");
-					}
-
-					return null;
-				});
-			}
-		};
-	}
+                    return null;
+                });
+            }
+        };
+    }
 }
+

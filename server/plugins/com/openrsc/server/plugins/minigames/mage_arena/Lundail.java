@@ -1,76 +1,64 @@
 package com.openrsc.server.plugins.minigames.mage_arena;
 
+
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.plugins.ShopInterface;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
+import java.util.concurrent.Callable;
 
-import static com.openrsc.server.plugins.Functions.*;
 
-public final class Lundail implements ShopInterface,
-	TalkToNpcExecutiveListener, TalkToNpcListener {
+public final class Lundail implements ShopInterface , TalkToNpcListener , TalkToNpcExecutiveListener {
+    private final Shop shop = new Shop(false, 6000, 190, 60, 10, new Item(ItemId.AIR_RUNE.id(), 100), new Item(ItemId.FIRE_RUNE.id(), 100), new Item(ItemId.WATER_RUNE.id(), 100), new Item(ItemId.EARTH_RUNE.id(), 100), new Item(ItemId.MIND_RUNE.id(), 100), new Item(ItemId.BODY_RUNE.id(), 100));
 
-	private final Shop shop = new Shop(false, 6000, 190, 60, 10, new Item(ItemId.AIR_RUNE.id(),
-		100), new Item(ItemId.FIRE_RUNE.id(), 100), new Item(ItemId.WATER_RUNE.id(), 100), new Item(ItemId.EARTH_RUNE.id(),
-		100), new Item(ItemId.MIND_RUNE.id(), 100), new Item(ItemId.BODY_RUNE.id(), 100));
+    @Override
+    public GameStateEvent onTalkToNpc(Player p, final Npc n) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    Functions.___playerTalk(p, n, "well hello sir");
+                    Functions.___npcTalk(p, n, "hello brave adventurer", "how can i help you?");
+                    int option = Functions.___showMenu(p, n, "what are you selling?", "what's that big old building behind us?");
+                    switch (option) {
+                        case 0 :
+                            Functions.___npcTalk(p, n, "why, i sell rune stones", "i've got some good stuff, real powerful little rocks", "take a look");
+                            p.setAccessingShop(shop);
+                            ActionSender.showShop(p, shop);
+                            break;
+                        case 1 :
+                            Functions.___npcTalk(p, n, "why that my friend...", "...is the mage battle arena", "top mages come from all over to compete in the arena", "few return back, most get fried...hence the smell");
+                            Functions.___npcTalk(p, n, "hmmm.. i did notice");
+                            break;
+                    }
+                    return null;
+                });
+            }
+        };
+    }
 
-	@Override
-	public GameStateEvent onTalkToNpc(Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					playerTalk(p, n, "well hello sir");
-					npcTalk(p, n, "hello brave adventurer",
-						"how can i help you?");
+    @Override
+    public boolean blockTalkToNpc(Player p, Npc n) {
+        return n.getID() == NpcId.LUNDAIL.id();
+    }
 
-					int option = showMenu(p, n, "what are you selling?",
-						"what's that big old building behind us?");
-					switch (option) {
-						case 0:
-							npcTalk(p, n, "why, i sell rune stones",
-								"i've got some good stuff, real powerful little rocks",
-								"take a look");
-							p.setAccessingShop(shop);
-							ActionSender.showShop(p, shop);
-							break;
+    @Override
+    public Shop[] getShops(World word) {
+        return new Shop[]{ shop };
+    }
 
-						case 1:
-							npcTalk(p, n, "why that my friend...",
-								"...is the mage battle arena",
-								"top mages come from all over to compete in the arena",
-								"few return back, most get fried...hence the smell");
-							npcTalk(p, n, "hmmm.. i did notice");
-							break;
-
-					}
-
-					return null;
-				});
-			}
-		};
-	}
-
-	@Override
-	public boolean blockTalkToNpc(Player p, Npc n) {
-		return n.getID() == NpcId.LUNDAIL.id();
-	}
-
-	@Override
-	public Shop[] getShops(World word) {
-		return new Shop[]{shop};
-	}
-
-	@Override
-	public boolean isMembers() {
-		return true;
-	}
-
+    @Override
+    public boolean isMembers() {
+        return true;
+    }
 }
+

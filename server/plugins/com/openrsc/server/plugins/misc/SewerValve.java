@@ -1,127 +1,136 @@
 package com.openrsc.server.plugins.misc;
 
+
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.World;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.plugins.listeners.action.ObjectActionListener;
 import com.openrsc.server.plugins.listeners.executive.ObjectActionExecutiveListener;
+import java.util.concurrent.Callable;
 
-import static com.openrsc.server.plugins.Functions.message;
 
-public class SewerValve implements ObjectActionExecutiveListener, ObjectActionListener {
+public class SewerValve implements ObjectActionListener , ObjectActionExecutiveListener {
+    private static final int SEWER_VALVE_1 = 412;
 
-	private static final int SEWER_VALVE_1 = 412;
-	private static final int SEWER_VALVE_2 = 413;
-	private static final int SEWER_VALVE_3 = 414;
-	private static final int SEWER_VALVE_4 = 415;
-	private static final int SEWER_VALVE_5 = 416;
-	private static final int LOG_RAFT = 432;
-	private static final int LOG_RAFT_BACK = 433;
+    private static final int SEWER_VALVE_2 = 413;
 
-	@Override
-	public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (obj.getID() == SEWER_VALVE_1 || obj.getID() == SEWER_VALVE_2 || obj.getID() == SEWER_VALVE_3 || obj.getID() == SEWER_VALVE_4 || obj.getID() == SEWER_VALVE_5) {
-						if (command.equalsIgnoreCase("turn left")) {
-							p.message("you turn the large metal");
-							p.message("valve to the left");
-							p.message("beneath the soil you can");
-							p.message("hear the gushing of water");
-							if (obj.getID() == SEWER_VALVE_1 && p.getCache().hasKey("VALVE_1_RIGHT")) {
-								p.getCache().remove("VALVE_1_RIGHT");
-							}
+    private static final int SEWER_VALVE_3 = 414;
 
-							if (obj.getID() == SEWER_VALVE_2 && !p.getCache().hasKey("VALVE_2_LEFT")) {
-								p.getCache().store("VALVE_2_LEFT", true);
-							}
+    private static final int SEWER_VALVE_4 = 415;
 
-							if (obj.getID() == SEWER_VALVE_3 && p.getCache().hasKey("VALVE_3_RIGHT")) {
-								p.getCache().remove("VALVE_3_RIGHT");
-							}
+    private static final int SEWER_VALVE_5 = 416;
 
-							if (obj.getID() == SEWER_VALVE_4 && p.getCache().hasKey("VALVE_4_RIGHT")) {
-								p.getCache().remove("VALVE_4_RIGHT");
-							}
+    private static final int LOG_RAFT = 432;
 
-							if (obj.getID() == SEWER_VALVE_5 && !p.getCache().hasKey("VALVE_5_LEFT")) {
-								p.getCache().store("VALVE_5_LEFT", true);
-							}
+    private static final int LOG_RAFT_BACK = 433;
 
-						} else if (command.equalsIgnoreCase("turn right")) {
-							p.message("you turn the large metal");
-							p.message("valve to the right");
-							p.message("beneath the soil you can");
-							p.message("hear the gushing of water");
-							if (obj.getID() == SEWER_VALVE_1 && !p.getCache().hasKey("VALVE_1_RIGHT")) {
-								p.getCache().store("VALVE_1_RIGHT", true);
-							}
-							if (obj.getID() == SEWER_VALVE_2 && p.getCache().hasKey("VALVE_2_LEFT")) {
-								p.getCache().remove("VALVE_2_LEFT");
-							}
-							if (obj.getID() == SEWER_VALVE_3 && !p.getCache().hasKey("VALVE_3_RIGHT")) {
-								p.getCache().store("VALVE_3_RIGHT", true);
-							}
-							if (obj.getID() == SEWER_VALVE_4 && !p.getCache().hasKey("VALVE_4_RIGHT")) {
-								p.getCache().store("VALVE_4_RIGHT", true);
-							}
-							if (obj.getID() == SEWER_VALVE_5 && p.getCache().hasKey("VALVE_5_LEFT")) {
-								p.getCache().remove("VALVE_5_LEFT");
-							}
-						}
-					}
-					if (obj.getID() == LOG_RAFT) {
-						message(p, "you carefully board the small raft");
-						if (p.getCache().hasKey("VALVE_1_RIGHT") && p.getCache().hasKey("VALVE_2_LEFT") && p.getCache().hasKey("VALVE_3_RIGHT") && p.getCache().hasKey("VALVE_4_RIGHT") && p.getCache().hasKey("VALVE_5_LEFT")) {
-							p.teleport(587, 3411);
-							p.message("the raft washes up the sewer, the sewer passages end here");
-						}
-						else if (p.getCache().hasKey("VALVE_1_RIGHT") && p.getCache().hasKey("VALVE_2_LEFT") && p.getCache().hasKey("VALVE_3_RIGHT") && p.getCache().hasKey("VALVE_4_RIGHT")) {
-							p.teleport(600, 3409);
-							p.message("the raft washes up the sewer, and stops at the fifth island");
-							p.message("You need to find the right combination");
-							p.message("of the 5 sewer valves above to get further");
-						}
-						else if (p.getCache().hasKey("VALVE_1_RIGHT") && p.getCache().hasKey("VALVE_2_LEFT") && p.getCache().hasKey("VALVE_3_RIGHT")) {
-							p.teleport(622, 3410);
-							p.message("the raft washes up the sewer, and stops at the fourth island");
-							p.message("You need to find the right combination");
-							p.message("of the 5 sewer valves above to get further");
-						}
-						else if (p.getCache().hasKey("VALVE_1_RIGHT") && p.getCache().hasKey("VALVE_2_LEFT")) {
-							p.teleport(622, 3422);
-							p.message("the raft washes up the sewer, and stops at the third island");
-							p.message("You need to find the right combination");
-							p.message("of the 5 sewer valves above to get further");
-						}
-						else if (p.getCache().hasKey("VALVE_1_RIGHT")) {
-							p.teleport(622, 3434);
-							p.message("the raft washes up the sewer, and stops at the second island");
-							p.message("You need to find the right combination");
-							p.message("of the 5 sewer valves above to get further");
-						}
-						else {
-							p.teleport(621, 3465);
-							p.message("the raft washes up the sewer, and stops at the first island");
-							p.message("You need to find the right combination");
-							p.message("of the 5 sewer valves above to get further");
-						}
-					}
-					if (obj.getID() == LOG_RAFT_BACK) {
-						p.message("the raft floats down the sewers");
-						p.message("to the cave entrance");
-						p.teleport(620, 3478);
-					}
+    @Override
+    public GameStateEvent onObjectAction(GameObject obj, String command, Player p) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (((((obj.getID() == SewerValve.SEWER_VALVE_1) || (obj.getID() == SewerValve.SEWER_VALVE_2)) || (obj.getID() == SewerValve.SEWER_VALVE_3)) || (obj.getID() == SewerValve.SEWER_VALVE_4)) || (obj.getID() == SewerValve.SEWER_VALVE_5)) {
+                        if (command.equalsIgnoreCase("turn left")) {
+                            p.message("you turn the large metal");
+                            p.message("valve to the left");
+                            p.message("beneath the soil you can");
+                            p.message("hear the gushing of water");
+                            if ((obj.getID() == SewerValve.SEWER_VALVE_1) && p.getCache().hasKey("VALVE_1_RIGHT")) {
+                                p.getCache().remove("VALVE_1_RIGHT");
+                            }
+                            if ((obj.getID() == SewerValve.SEWER_VALVE_2) && (!p.getCache().hasKey("VALVE_2_LEFT"))) {
+                                p.getCache().store("VALVE_2_LEFT", true);
+                            }
+                            if ((obj.getID() == SewerValve.SEWER_VALVE_3) && p.getCache().hasKey("VALVE_3_RIGHT")) {
+                                p.getCache().remove("VALVE_3_RIGHT");
+                            }
+                            if ((obj.getID() == SewerValve.SEWER_VALVE_4) && p.getCache().hasKey("VALVE_4_RIGHT")) {
+                                p.getCache().remove("VALVE_4_RIGHT");
+                            }
+                            if ((obj.getID() == SewerValve.SEWER_VALVE_5) && (!p.getCache().hasKey("VALVE_5_LEFT"))) {
+                                p.getCache().store("VALVE_5_LEFT", true);
+                            }
+                        } else
+                            if (command.equalsIgnoreCase("turn right")) {
+                                p.message("you turn the large metal");
+                                p.message("valve to the right");
+                                p.message("beneath the soil you can");
+                                p.message("hear the gushing of water");
+                                if ((obj.getID() == SewerValve.SEWER_VALVE_1) && (!p.getCache().hasKey("VALVE_1_RIGHT"))) {
+                                    p.getCache().store("VALVE_1_RIGHT", true);
+                                }
+                                if ((obj.getID() == SewerValve.SEWER_VALVE_2) && p.getCache().hasKey("VALVE_2_LEFT")) {
+                                    p.getCache().remove("VALVE_2_LEFT");
+                                }
+                                if ((obj.getID() == SewerValve.SEWER_VALVE_3) && (!p.getCache().hasKey("VALVE_3_RIGHT"))) {
+                                    p.getCache().store("VALVE_3_RIGHT", true);
+                                }
+                                if ((obj.getID() == SewerValve.SEWER_VALVE_4) && (!p.getCache().hasKey("VALVE_4_RIGHT"))) {
+                                    p.getCache().store("VALVE_4_RIGHT", true);
+                                }
+                                if ((obj.getID() == SewerValve.SEWER_VALVE_5) && p.getCache().hasKey("VALVE_5_LEFT")) {
+                                    p.getCache().remove("VALVE_5_LEFT");
+                                }
+                            }
 
-					return null;
-				});
-			}
-		};
-	}
+                    }
+                    if (obj.getID() == SewerValve.LOG_RAFT) {
+                        Functions.___message(p, "you carefully board the small raft");
+                        if ((((p.getCache().hasKey("VALVE_1_RIGHT") && p.getCache().hasKey("VALVE_2_LEFT")) && p.getCache().hasKey("VALVE_3_RIGHT")) && p.getCache().hasKey("VALVE_4_RIGHT")) && p.getCache().hasKey("VALVE_5_LEFT")) {
+                            p.teleport(587, 3411);
+                            p.message("the raft washes up the sewer, the sewer passages end here");
+                        } else
+                            if (((p.getCache().hasKey("VALVE_1_RIGHT") && p.getCache().hasKey("VALVE_2_LEFT")) && p.getCache().hasKey("VALVE_3_RIGHT")) && p.getCache().hasKey("VALVE_4_RIGHT")) {
+                                p.teleport(600, 3409);
+                                p.message("the raft washes up the sewer, and stops at the fifth island");
+                                p.message("You need to find the right combination");
+                                p.message("of the 5 sewer valves above to get further");
+                            } else
+                                if ((p.getCache().hasKey("VALVE_1_RIGHT") && p.getCache().hasKey("VALVE_2_LEFT")) && p.getCache().hasKey("VALVE_3_RIGHT")) {
+                                    p.teleport(622, 3410);
+                                    p.message("the raft washes up the sewer, and stops at the fourth island");
+                                    p.message("You need to find the right combination");
+                                    p.message("of the 5 sewer valves above to get further");
+                                } else
+                                    if (p.getCache().hasKey("VALVE_1_RIGHT") && p.getCache().hasKey("VALVE_2_LEFT")) {
+                                        p.teleport(622, 3422);
+                                        p.message("the raft washes up the sewer, and stops at the third island");
+                                        p.message("You need to find the right combination");
+                                        p.message("of the 5 sewer valves above to get further");
+                                    } else
+                                        if (p.getCache().hasKey("VALVE_1_RIGHT")) {
+                                            p.teleport(622, 3434);
+                                            p.message("the raft washes up the sewer, and stops at the second island");
+                                            p.message("You need to find the right combination");
+                                            p.message("of the 5 sewer valves above to get further");
+                                        } else {
+                                            p.teleport(621, 3465);
+                                            p.message("the raft washes up the sewer, and stops at the first island");
+                                            p.message("You need to find the right combination");
+                                            p.message("of the 5 sewer valves above to get further");
+                                        }
 
-	@Override
-	public boolean blockObjectAction(GameObject obj, String command, Player player) {
-		return obj.getID() == SEWER_VALVE_1 || obj.getID() == SEWER_VALVE_2 || obj.getID() == SEWER_VALVE_3 || obj.getID() == SEWER_VALVE_4 || obj.getID() == SEWER_VALVE_5 || obj.getID() == LOG_RAFT || obj.getID() == LOG_RAFT_BACK;
-	}
+
+
+
+                    }
+                    if (obj.getID() == SewerValve.LOG_RAFT_BACK) {
+                        p.message("the raft floats down the sewers");
+                        p.message("to the cave entrance");
+                        p.teleport(620, 3478);
+                    }
+                    return null;
+                });
+            }
+        };
+    }
+
+    @Override
+    public boolean blockObjectAction(GameObject obj, String command, Player player) {
+        return ((((((obj.getID() == SewerValve.SEWER_VALVE_1) || (obj.getID() == SewerValve.SEWER_VALVE_2)) || (obj.getID() == SewerValve.SEWER_VALVE_3)) || (obj.getID() == SewerValve.SEWER_VALVE_4)) || (obj.getID() == SewerValve.SEWER_VALVE_5)) || (obj.getID() == SewerValve.LOG_RAFT)) || (obj.getID() == SewerValve.LOG_RAFT_BACK);
+    }
 }
+

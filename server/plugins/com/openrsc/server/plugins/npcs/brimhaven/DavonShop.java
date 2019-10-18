@@ -1,62 +1,65 @@
 package com.openrsc.server.plugins.npcs.brimhaven;
 
+
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.plugins.ShopInterface;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
+import java.util.concurrent.Callable;
 
-import static com.openrsc.server.plugins.Functions.npcTalk;
-import static com.openrsc.server.plugins.Functions.showMenu;
 
-public class DavonShop implements ShopInterface, TalkToNpcExecutiveListener, TalkToNpcListener {
+public class DavonShop implements ShopInterface , TalkToNpcListener , TalkToNpcExecutiveListener {
+    private final Shop shop = new Shop(false, 900000000, 120, 90, 2, new Item(ItemId.UNSTRUNG_HOLY_SYMBOL_OF_SARADOMIN.id(), 0), new Item(ItemId.SAPPHIRE_AMULET_OF_MAGIC.id(), 1), new Item(ItemId.EMERALD_AMULET_OF_PROTECTION.id(), 0), new Item(ItemId.RUBY_AMULET_OF_STRENGTH.id(), 0), new Item(ItemId.DIAMOND_AMULET_OF_POWER.id(), 0));
 
-	private final Shop shop = new Shop(false, 900000000, 120, 90, 2, new Item(ItemId.UNSTRUNG_HOLY_SYMBOL_OF_SARADOMIN.id(), 0),
-			new Item(ItemId.SAPPHIRE_AMULET_OF_MAGIC.id(), 1), new Item(ItemId.EMERALD_AMULET_OF_PROTECTION.id(), 0), new Item(ItemId.RUBY_AMULET_OF_STRENGTH.id(), 0), new Item(ItemId.DIAMOND_AMULET_OF_POWER.id(), 0));
+    @Override
+    public GameStateEvent onTalkToNpc(Player p, Npc n) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    Functions.___npcTalk(p, n, "Pssst come here if you want to do some amulet trading");
+                    int menu = Functions.___showMenu(p, n, "What are you selling?", "What do you mean pssst?", "Why don't you ever restock some types of amulets?");
+                    if (menu == 0) {
+                        p.message("Davon opens up his jacket to reveal some amulets");
+                        p.setAccessingShop(shop);
+                        ActionSender.showShop(p, shop);
+                    } else
+                        if (menu == 1) {
+                            Functions.___npcTalk(p, n, "I was clearing my throat");
+                        } else
+                            if (menu == 2) {
+                                Functions.___npcTalk(p, n, "Some of these amulets are very hard to get", "I have to wait until an adventurer supplies me");
+                            }
 
-	@Override
-	public GameStateEvent onTalkToNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					npcTalk(p, n, "Pssst come here if you want to do some amulet trading");
-					int menu = showMenu(p, n, "What are you selling?", "What do you mean pssst?", "Why don't you ever restock some types of amulets?");
-					if (menu == 0) {
-						p.message("Davon opens up his jacket to reveal some amulets");
-						p.setAccessingShop(shop);
-						ActionSender.showShop(p, shop);
-					} else if (menu == 1) {
-						npcTalk(p, n, "I was clearing my throat");
-					} else if (menu == 2) {
-						npcTalk(p, n, "Some of these amulets are very hard to get",
-							"I have to wait until an adventurer supplies me");
-					}
 
-					return null;
-				});
-			}
-		};
-	}
+                    return null;
+                });
+            }
+        };
+    }
 
-	@Override
-	public boolean blockTalkToNpc(Player p, Npc n) {
-		return n.getID() == NpcId.DAVON.id();
-	}
+    @Override
+    public boolean blockTalkToNpc(Player p, Npc n) {
+        return n.getID() == NpcId.DAVON.id();
+    }
 
-	@Override
-	public Shop[] getShops(World world) {
-		return new Shop[]{shop};
-	}
+    @Override
+    public Shop[] getShops(World world) {
+        return new Shop[]{ shop };
+    }
 
-	@Override
-	public boolean isMembers() {
-		return true;
-	}
+    @Override
+    public boolean isMembers() {
+        return true;
+    }
 }
+

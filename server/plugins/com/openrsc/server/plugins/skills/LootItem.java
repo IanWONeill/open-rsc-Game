@@ -2,33 +2,37 @@ package com.openrsc.server.plugins.skills;
 
 
 public class LootItem implements Comparable<LootItem> {
-	private final int id;
-	private final int amount;
-	private int chance;
+    private final int id;
 
-	public LootItem(int id, int amount, int chance) {
-		this.id = id;
-		this.amount = amount;
-		this.chance = chance;
-	}
+    private final int amount;
 
-	public int getChance() {
-		return chance;
-	}
+    private int chance;
 
-	@Override
-	public int compareTo(LootItem arg0) {
-		if (getChance() > arg0.getChance())
-			return 1;
-		else
-			return -1;
-	}
+    public LootItem(int id, int amount, int chance) {
+        this.id = id;
+        this.amount = amount;
+        this.chance = chance;
+    }
 
-	public int getAmount() {
-		return amount;
-	}
+    public int getChance() {
+        return chance;
+    }
 
-	public int getId() {
-		return id;
-	}
+    @Override
+    public int compareTo(LootItem arg0) {
+        if (getChance() > arg0.getChance())
+            return 1;
+        else
+            return -1;
+
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public int getId() {
+        return id;
+    }
 }
+

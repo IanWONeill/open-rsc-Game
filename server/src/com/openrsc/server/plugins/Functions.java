@@ -1061,7 +1061,7 @@ public class Functions {
 		}
 	}
 
-	public static void playerTalk(final Player player, final String message) {
+	public static void ___playerTalk(final Player player, final String message) {
 		player.getUpdateFlags().setChatMessage(new ChatMessage(player, message, player));
 	}
 
@@ -1688,49 +1688,49 @@ public class Functions {
 	public static void sleep(final int delay) {
 	}
 
-	public static void message(final Player player, final int delay, final String... messages) {
+	public static void ___message(final Player player, final int delay, final String... messages) {
 	}
 
-	public static void message(final Player player, final Npc npc, final int delay, final String... messages) {
+	public static void ___message(final Player player, final Npc npc, final int delay, final String... messages) {
 	}
 
-	public static void message(final Player player, final String... messages) {
+	public static void ___message(final Player player, final String... messages) {
 
 	}
 
-	public static void npcTalk(final Player player, final Npc npc, final int delay, final String... messages) {
+	public static void ___npcTalk(final Player player, final Npc npc, final int delay, final String... messages) {
 	}
 
-	public static void npcTalk(final Player player, final Npc npc, final String... messages) {
-	}
-
-
-	public static void doGate(final Player p, final GameObject object) {
+	public static void ___npcTalk(final Player player, final Npc npc, final String... messages) {
 	}
 
 
-	public static void doGate(final Player p, final GameObject object, int replaceID) {
+	public static void ___doGate(final Player p, final GameObject object) {
 	}
 
-	public static void doGate(final Player p, final GameObject object, int replaceID, Point destination) {
+
+	public static void ___doGate(final Player p, final GameObject object, int replaceID) {
 	}
 
-	public static int showMenu(final Player player, final String... options) {
+	public static void ___doGate(final Player p, final GameObject object, int replaceID, Point destination) {
+	}
+
+	public static int ___showMenu(final Player player, final String... options) {
 		return 0;
 	}
 
-	public static int showMenu(final Player player, final Npc npc, final String... options) {
+	public static int ___showMenu(final Player player, final Npc npc, final String... options) {
 		return 0;
 	}
 
-	public static int showMenu(final Player player, final Npc npc, final boolean sendToClient, final String... options) {
+	public static int ___showMenu(final Player player, final Npc npc, final boolean sendToClient, final String... options) {
 		return 0;
 	}
 
-	public static void playerTalk(final Player player, final Npc npc, final String... messages) {
+	public static void ___playerTalk(final Player player, final Npc npc, final String... messages) {
 	}
 
-	public static String getBankPinInput(Player player) {
+	public static String ___getBankPinInput(Player player) {
 		return null;
 	}
 }

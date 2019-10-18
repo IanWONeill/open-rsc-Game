@@ -80,7 +80,7 @@ public class Menu {
 	public void handleReply(Player player, int i) {
 		Option option = options.get(i);
 		if (option != null) {
-			Functions.playerTalk(player, player.getInteractingNpc(), option.getOption());
+			Functions.___playerTalk(player, player.getInteractingNpc(), option.getOption());
 			option.action();
 		}
 		player.resetMenuHandler();

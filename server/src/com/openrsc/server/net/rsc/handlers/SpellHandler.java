@@ -237,9 +237,9 @@ public class SpellHandler implements PacketHandler {
 					return;
 				}
 				if (affectedNpc.getID() == com.openrsc.server.constants.NpcId.LUCIEN_EDGE.id() && !player.getInventory().wielding(com.openrsc.server.constants.ItemId.PENDANT_OF_ARMADYL.id())) {
-					npcTalk(player, affectedNpc, "I'm sure you don't want to attack me really",
+					___npcTalk(player, affectedNpc, "I'm sure you don't want to attack me really",
 						"I am your friend");
-					message(player, "You decide you don't want to attack Lucien really",
+					___message(player, "You decide you don't want to attack Lucien really",
 						"He is your friend");
 					return;
 				}
@@ -1196,7 +1196,7 @@ public class SpellHandler implements PacketHandler {
 		//	return;
 		//}
 		if (player.getInventory().countId(com.openrsc.server.constants.ItemId.ANA_IN_A_BARREL.id()) > 0) {
-			message(player, "You can't teleport while holding Ana,",
+			___message(player, "You can't teleport while holding Ana,",
 				"It's just too difficult to concentrate.");
 			return;
 		}

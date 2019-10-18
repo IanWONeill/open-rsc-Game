@@ -1,10 +1,17 @@
 package com.openrsc.server.plugins.quests.members.legendsquest.npcs;
 
-import com.openrsc.server.constants.*;
+
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.Quests;
+import com.openrsc.server.constants.Skills;
 import com.openrsc.server.event.rsc.GameStateEvent;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.ChatMessage;
+import com.openrsc.server.model.world.World;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.plugins.listeners.action.PlayerKilledNpcListener;
 import com.openrsc.server.plugins.listeners.action.PlayerMageNpcListener;
 import com.openrsc.server.plugins.listeners.action.PlayerNpcRunListener;
@@ -14,252 +21,232 @@ import com.openrsc.server.plugins.listeners.executive.PlayerKilledNpcExecutiveLi
 import com.openrsc.server.plugins.listeners.executive.PlayerMageNpcExecutiveListener;
 import com.openrsc.server.plugins.listeners.executive.PlayerNpcRunExecutiveListener;
 import com.openrsc.server.plugins.listeners.executive.PlayerRangeNpcExecutiveListener;
+import java.util.concurrent.Callable;
 
-import static com.openrsc.server.plugins.Functions.atQuestStages;
-import static com.openrsc.server.plugins.Functions.createGroundItem;
-import static com.openrsc.server.plugins.Functions.getNearestNpc;
-import static com.openrsc.server.plugins.Functions.message;
-import static com.openrsc.server.plugins.Functions.npcTalk;
-import static com.openrsc.server.plugins.Functions.npcWalkFromPlayer;
-import static com.openrsc.server.plugins.Functions.playerTalk;
-import static com.openrsc.server.plugins.Functions.sleep;
-import static com.openrsc.server.plugins.Functions.spawnNpc;
-import static com.openrsc.server.plugins.Functions.transform;
 
-public class LegendsQuestNezikchened implements PlayerMageNpcListener, PlayerMageNpcExecutiveListener, PlayerNpcRunListener, PlayerNpcRunExecutiveListener, PlayerKilledNpcListener, PlayerKilledNpcExecutiveListener, PlayerRangeNpcListener, PlayerRangeNpcExecutiveListener, PlayerAttackNpcExecutiveListener {
+public class LegendsQuestNezikchened implements PlayerKilledNpcListener , PlayerMageNpcListener , PlayerNpcRunListener , PlayerRangeNpcListener , PlayerAttackNpcExecutiveListener , PlayerKilledNpcExecutiveListener , PlayerMageNpcExecutiveListener , PlayerNpcRunExecutiveListener , PlayerRangeNpcExecutiveListener {
+    /**
+     *
+     *
+     * @param p
+     * 		public method to use for third fight summons and nezichened
+     */
+    private static void summonViyeldiCompanions(Player p) {
+        Npc COMPANION = null;
+        if (p.getCache().hasKey("viyeldi_companions") && (p.getCache().getInt("viyeldi_companions") == 1)) {
+            COMPANION = Functions.spawnNpc(NpcId.SAN_TOJALON.id(), p.getX(), p.getY(), 60000 * 15, p);
+        }
+        if (p.getCache().hasKey("viyeldi_companions") && (p.getCache().getInt("viyeldi_companions") == 2)) {
+            COMPANION = Functions.spawnNpc(NpcId.IRVIG_SENAY.id(), p.getX(), p.getY(), 60000 * 15, p);
+        }
+        if (p.getCache().hasKey("viyeldi_companions") && (p.getCache().getInt("viyeldi_companions") == 3)) {
+            COMPANION = Functions.spawnNpc(NpcId.RANALPH_DEVERE.id(), p.getX(), p.getY(), 60000 * 15, p);
+        }
+        if (p.getCache().hasKey("viyeldi_companions") && (p.getCache().getInt("viyeldi_companions") == 4)) {
+            COMPANION = Functions.spawnNpc(NpcId.NEZIKCHENED.id(), p.getX(), p.getY(), 60000 * 15, p);
+        }
+        if (COMPANION != null) {
+            Functions.___npcTalk(p, COMPANION, "Corrupted are we now that Viyeldi is slain..");
+            COMPANION.startCombat(p);
+            Functions.___npcTalk(p, COMPANION, "Bent to this demons will and forced to bring you pain...");
+        }
+    }
 
-	/**
-	 * @param p public method to use for third fight summons and nezichened
-	 */
-	private static void summonViyeldiCompanions(Player p) {
-		Npc COMPANION = null;
-		if (p.getCache().hasKey("viyeldi_companions") && p.getCache().getInt("viyeldi_companions") == 1) {
-			COMPANION = spawnNpc(NpcId.SAN_TOJALON.id(), p.getX(), p.getY(), 60000 * 15, p);
-		}
-		if (p.getCache().hasKey("viyeldi_companions") && p.getCache().getInt("viyeldi_companions") == 2) {
-			COMPANION = spawnNpc(NpcId.IRVIG_SENAY.id(), p.getX(), p.getY(), 60000 * 15, p);
-		}
-		if (p.getCache().hasKey("viyeldi_companions") && p.getCache().getInt("viyeldi_companions") == 3) {
-			COMPANION = spawnNpc(NpcId.RANALPH_DEVERE.id(), p.getX(), p.getY(), 60000 * 15, p);
-		}
-		if (p.getCache().hasKey("viyeldi_companions") && p.getCache().getInt("viyeldi_companions") == 4) {
-			COMPANION = spawnNpc(NpcId.NEZIKCHENED.id(), p.getX(), p.getY(), 60000 * 15, p);
-		}
-		if (COMPANION != null) {
-			npcTalk(p, COMPANION, "Corrupted are we now that Viyeldi is slain..");
-			COMPANION.startCombat(p);
-			npcTalk(p, COMPANION, "Bent to this demons will and forced to bring you pain...");
-		}
-	}
+    public static void demonFight(Player p) {
+        Npc third_nezikchened = Functions.spawnNpc(NpcId.NEZIKCHENED.id(), p.getX(), p.getY(), 60000 * 15, p);
+        if (third_nezikchened != null) {
+            Functions.sleep(600);
+            Functions.___npcTalk(p, third_nezikchened, "Now you try to defile my sanctuary...I will teach thee!");
+            if (p.getCache().hasKey("viyeldi_companions") && (p.getCache().getInt("viyeldi_companions") <= 3)) {
+                Functions.___npcTalk(p, third_nezikchened, "You will pay for your disrespect by meeting some old friends...");
+                Functions.___message(p, third_nezikchened, 1300, "The Demon starts chanting...", "@yel@Nezikchened: Protectors of source, alive in death,", "@yel@Nezikchened: do not rest while this Vacu draws breath!");
+                if (third_nezikchened != null) {
+                    third_nezikchened.remove();
+                    Functions.___message(p, 1300, "The demon is summoning the dead hero's from the Viyeldi caves !");
+                    LegendsQuestNezikchened.summonViyeldiCompanions(p);
+                }
+            } else
+                if (p.getCache().hasKey("viyeldi_companions") && (p.getCache().getInt("viyeldi_companions") == 4)) {
+                    Functions.___message(p, third_nezikchened, 1300, "The Demon screams in rage...");
+                    Functions.___npcTalk(p, third_nezikchened, "Raarrrrghhhh!", "I'll kill you myself !");
+                    third_nezikchened.startCombat(p);
+                    p.message("You feel a great sense of loss...");
+                    p.getSkills().setLevel(Skills.PRAYER, ((int) (Math.ceil(((double) (p.getSkills().getLevel(Skills.PRAYER))) / 4))));
+                    Functions.___npcTalk(p, third_nezikchened, "Your faith will help you little here.");
+                } else {
+                    third_nezikchened.startCombat(p);
+                }
 
-	public static void demonFight(Player p) {
-		Npc third_nezikchened = spawnNpc(NpcId.NEZIKCHENED.id(), p.getX(), p.getY(), 60000 * 15, p);
-		if (third_nezikchened != null) {
-			sleep(600);
-			npcTalk(p, third_nezikchened, "Now you try to defile my sanctuary...I will teach thee!");
-			if (p.getCache().hasKey("viyeldi_companions") && p.getCache().getInt("viyeldi_companions") <= 3) {
-				npcTalk(p, third_nezikchened, "You will pay for your disrespect by meeting some old friends...");
-				message(p, third_nezikchened, 1300, "The Demon starts chanting...",
-					"@yel@Nezikchened: Protectors of source, alive in death,",
-					"@yel@Nezikchened: do not rest while this Vacu draws breath!");
-				if (third_nezikchened != null) {
-					third_nezikchened.remove();
-					message(p, 1300, "The demon is summoning the dead hero's from the Viyeldi caves !");
-					summonViyeldiCompanions(p);
-				}
-			} else if (p.getCache().hasKey("viyeldi_companions") && p.getCache().getInt("viyeldi_companions") == 4) {
-				message(p, third_nezikchened, 1300, "The Demon screams in rage...");
-				npcTalk(p, third_nezikchened, "Raarrrrghhhh!",
-					"I'll kill you myself !");
-				third_nezikchened.startCombat(p);
-				p.message("You feel a great sense of loss...");
-				p.getSkills().setLevel(Skills.PRAYER, (int) Math.ceil((double) p.getSkills().getLevel(Skills.PRAYER) / 4));
-				npcTalk(p, third_nezikchened, "Your faith will help you little here.");
-			} else {
-				third_nezikchened.startCombat(p);
-			}
-		}
-	}
+        }
+    }
 
-	@Override
-	public boolean blockPlayerMageNpc(Player p, Npc n) {
-		return n.getID() == NpcId.NEZIKCHENED.id() && n.getAttribute("spawnedFor", null) != null && !n.getAttribute("spawnedFor").equals(p);
-	}
+    @Override
+    public boolean blockPlayerMageNpc(Player p, Npc n) {
+        return ((n.getID() == NpcId.NEZIKCHENED.id()) && (n.getAttribute("spawnedFor", null) != null)) && (!n.getAttribute("spawnedFor").equals(p));
+    }
 
-	@Override
-	public GameStateEvent onPlayerMageNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (n.getID() == NpcId.NEZIKCHENED.id() && n.getAttribute("spawnedFor", null) != null && !n.getAttribute("spawnedFor").equals(p)) {
-						p.message("Your attack passes through");
-						n.remove();
-					}
+    @Override
+    public GameStateEvent onPlayerMageNpc(Player p, Npc n) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (((n.getID() == NpcId.NEZIKCHENED.id()) && (n.getAttribute("spawnedFor", null) != null)) && (!n.getAttribute("spawnedFor").equals(p))) {
+                        p.message("Your attack passes through");
+                        n.remove();
+                    }
+                    return null;
+                });
+            }
+        };
+    }
 
-					return null;
-				});
-			}
-		};
-	}
+    @Override
+    public boolean blockPlayerNpcRun(Player p, Npc n) {
+        return n.getID() == NpcId.NEZIKCHENED.id();
+    }
 
-	@Override
-	public boolean blockPlayerNpcRun(Player p, Npc n) {
-		return n.getID() == NpcId.NEZIKCHENED.id();
-	}
+    @Override
+    public GameStateEvent onPlayerNpcRun(Player p, Npc n) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (n.getID() == NpcId.NEZIKCHENED.id()) {
+                        switch (p.getQuestStage(Quests.LEGENDS_QUEST)) {
+                            case 3 :
+                                Functions.___npcTalk(p, n, "Run like the coward you are, I will return stronger than before.");
+                                n.teleport(453, 3707);
+                                Functions.___npcTalk(p, n, "Next time we meet, your end will you greet!");
+                                n.remove();
+                                break;
+                            case 7 :
+                                if (!p.getCache().hasKey("ran_from_2nd_nezi")) {
+                                    p.getCache().store("ran_from_2nd_nezi", true);
+                                }
+                                n.getUpdateFlags().setChatMessage(new ChatMessage(n, "Run for your life coward...", p));
+                                Functions.sleep(1900);
+                                n.getUpdateFlags().setChatMessage(new ChatMessage(n, "The next time you come, I will be ready for you!", p));
+                                Functions.sleep(1900);
+                                Npc transformed = Functions.transform(n, NpcId.ECHNED_ZEKIN.id(), true);
+                                if (transformed != null)
+                                    Functions.sleep(1300);
 
-	@Override
-	public GameStateEvent onPlayerNpcRun(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (n.getID() == NpcId.NEZIKCHENED.id()) {
-						switch (p.getQuestStage(Quests.LEGENDS_QUEST)) {
-							case 3:
-								npcTalk(p, n, "Run like the coward you are, I will return stronger than before.");
-								n.teleport(453, 3707);
-								npcTalk(p, n, "Next time we meet, your end will you greet!");
-								n.remove();
-								break;
-							case 7:
-								if (!p.getCache().hasKey("ran_from_2nd_nezi")) {
-									p.getCache().store("ran_from_2nd_nezi", true);
-								}
-								n.getUpdateFlags().setChatMessage(new ChatMessage(n, "Run for your life coward...", p));
-								sleep(1900);
-								n.getUpdateFlags().setChatMessage(new ChatMessage(n, "The next time you come, I will be ready for you!", p));
-								sleep(1900);
-								Npc transformed = transform(n, NpcId.ECHNED_ZEKIN.id(), true);
-								if (transformed != null)
-									sleep(1300);
-								transformed.remove();
-								break;
-							case 8:
-								npcTalk(p, n, "Ha, ha ha!",
-									"Yes, see how fast the little Vacu runs...!",
-									"Trouble me not, or I will crush you like the worm you are.");
-								n.remove();
-								break;
-						}
-					}
+                                transformed.remove();
+                                break;
+                            case 8 :
+                                Functions.___npcTalk(p, n, "Ha, ha ha!", "Yes, see how fast the little Vacu runs...!", "Trouble me not, or I will crush you like the worm you are.");
+                                n.remove();
+                                break;
+                        }
+                    }
+                    return null;
+                });
+            }
+        };
+    }
 
-					return null;
-				});
-			}
-		};
-	}
+    @Override
+    public boolean blockPlayerKilledNpc(Player p, Npc n) {
+        return n.getID() == NpcId.NEZIKCHENED.id();
+    }
 
-	@Override
-	public boolean blockPlayerKilledNpc(Player p, Npc n) {
-		return n.getID() == NpcId.NEZIKCHENED.id();
-	}
+    @Override
+    public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (n.getID() == NpcId.NEZIKCHENED.id()) {
+                        // FIRST FIGHT.
+                        if ((p.getQuestStage(Quests.LEGENDS_QUEST) == 3) && p.getLocation().isInsideFlameWall()) {
+                            p.setBusy(true);
+                            n.getUpdateFlags().setChatMessage(new ChatMessage(n, "Ha ha ha...I shall return for you when the time is right.", p));
+                            Functions.sleep(1900);
+                            Functions.npcWalkFromPlayer(p, n);
+                            Functions.___message(p, 600, "Your opponent is retreating");
+                            if (n != null) {
+                                n.remove();
+                            }
+                            Functions.___message(p, 1300, "The demon starts an incantation...", "@yel@Nezikchened : But I will leave you with a taste of my power...", "As he finishes the incantation a powerful bolt of energy strikes you.");
+                            p.damage(7);
+                            Functions.___message(p, 1300, "@yel@Nezikchened : Haha hah ha ha ha ha....", "The demon explodes in a powerful burst of flame that scorches you.");
+                            p.updateQuestStage(Quests.LEGENDS_QUEST, 4);
+                            p.setBusy(false);
+                            Npc ungadulu = Functions.getNearestNpc(p, NpcId.UNGADULU.id(), 8);
+                            if (ungadulu != null) {
+                                ungadulu.initializeTalkScript(p);
+                            }
+                        } else// SECOND FIGHT.
 
-	@Override
-	public GameStateEvent onPlayerKilledNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (n.getID() == NpcId.NEZIKCHENED.id()) {
-						// FIRST FIGHT.
-						if (p.getQuestStage(Quests.LEGENDS_QUEST) == 3 && p.getLocation().isInsideFlameWall()) {
-							p.setBusy(true);
-							n.getUpdateFlags().setChatMessage(new ChatMessage(n, "Ha ha ha...I shall return for you when the time is right.", p));
-							sleep(1900);
-							npcWalkFromPlayer(p, n);
-							message(p, 600, "Your opponent is retreating");
-							if (n != null) {
-								n.remove();
-							}
-							message(p, 1300, "The demon starts an incantation...",
-								"@yel@Nezikchened : But I will leave you with a taste of my power...",
-								"As he finishes the incantation a powerful bolt of energy strikes you.");
-							p.damage(7);
-							message(p, 1300, "@yel@Nezikchened : Haha hah ha ha ha ha....",
-								"The demon explodes in a powerful burst of flame that scorches you.");
-							p.updateQuestStage(Quests.LEGENDS_QUEST, 4);
-							p.setBusy(false);
-							Npc ungadulu = getNearestNpc(p, NpcId.UNGADULU.id(), 8);
-							if (ungadulu != null) {
-								ungadulu.initializeTalkScript(p);
-							}
-						}
-						// SECOND FIGHT.
-						else if (p.getQuestStage(Quests.LEGENDS_QUEST) == 7 && p.getLocation().isAroundBoulderRock()) {
-							p.setBusy(true);
-							p.updateQuestStage(Quests.LEGENDS_QUEST, 8);
-							npcTalk(p, n, "Arrrgghhhhh, foul Vacu!");
-							n.resetCombatEvent();
-							message(p, "Your opponent is retreating");
-							npcTalk(p, n, "You would bite the hand that feeds you!",
-								"Very well, I will ready myself for our next encounter...");
-							message(p, 1300, "The Demon seems very angry now...",
-								"You deliver a final devastating blow to the demon, ",
-								"and it's unearthly frame crumbles into dust.");
-							if (n != null) {
-								n.remove();
-							}
-							p.setBusy(false);
-						}
-						// THIRD FIGHT.
-						else if (p.getQuestStage(Quests.LEGENDS_QUEST) == 8 && p.getLocation().isAroundTotemPole()) {
-							p.updateQuestStage(Quests.LEGENDS_QUEST, 9);
-							if (n != null) {
-								n.remove();
-							}
-							message(p, 1300, "You deliver the final killing blow to the foul demon.",
-								"The Demon crumbles into a pile of ash.");
-							createGroundItem(ItemId.ASHES.id(), 1, p.getX(), p.getY(), p);
-							message(p, 1300, "@yel@Nezikchened: Arrrghhhh.",
-								"@yel@Nezikchened: I am beaten by a mere mortal.",
-								"@yel@Nezikchened: I will revenge myself upon you...");
-							playerTalk(p, null, "Yeah, yeah, yeah ! ",
-								"Heard it all before !");
-						}
-						// ??
-						else {
-							if (n != null) {
-								n.remove();
-							}
-						}
-					}
+                            if ((p.getQuestStage(Quests.LEGENDS_QUEST) == 7) && p.getLocation().isAroundBoulderRock()) {
+                                p.setBusy(true);
+                                p.updateQuestStage(Quests.LEGENDS_QUEST, 8);
+                                Functions.___npcTalk(p, n, "Arrrgghhhhh, foul Vacu!");
+                                n.resetCombatEvent();
+                                Functions.___message(p, "Your opponent is retreating");
+                                Functions.___npcTalk(p, n, "You would bite the hand that feeds you!", "Very well, I will ready myself for our next encounter...");
+                                Functions.___message(p, 1300, "The Demon seems very angry now...", "You deliver a final devastating blow to the demon, ", "and it's unearthly frame crumbles into dust.");
+                                if (n != null) {
+                                    n.remove();
+                                }
+                                p.setBusy(false);
+                            } else// THIRD FIGHT.
 
-					return null;
-				});
-			}
-		};
-	}
+                                if ((p.getQuestStage(Quests.LEGENDS_QUEST) == 8) && p.getLocation().isAroundTotemPole()) {
+                                    p.updateQuestStage(Quests.LEGENDS_QUEST, 9);
+                                    if (n != null) {
+                                        n.remove();
+                                    }
+                                    Functions.___message(p, 1300, "You deliver the final killing blow to the foul demon.", "The Demon crumbles into a pile of ash.");
+                                    Functions.createGroundItem(ItemId.ASHES.id(), 1, p.getX(), p.getY(), p);
+                                    Functions.___message(p, 1300, "@yel@Nezikchened: Arrrghhhh.", "@yel@Nezikchened: I am beaten by a mere mortal.", "@yel@Nezikchened: I will revenge myself upon you...");
+                                    Functions.___playerTalk(p, null, "Yeah, yeah, yeah ! ", "Heard it all before !");
+                                } else // ??
+                                {
+                                    if (n != null) {
+                                        n.remove();
+                                    }
+                                }
 
-	@Override
-	public boolean blockPlayerRangeNpc(Player p, Npc n) {
-		return n.getID() == NpcId.NEZIKCHENED.id() && n.getAttribute("spawnedFor", null) != null && !n.getAttribute("spawnedFor").equals(p);
-	}
 
-	@Override
-	public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					if (n.getID() == NpcId.NEZIKCHENED.id() && n.getAttribute("spawnedFor", null) != null && !n.getAttribute("spawnedFor").equals(p)) {
-						p.message("Your attack passes through");
-						n.remove();
-					}
+                    }
+                    return null;
+                });
+            }
+        };
+    }
 
-					return null;
-				});
-			}
-		};
-	}
+    @Override
+    public boolean blockPlayerRangeNpc(Player p, Npc n) {
+        return ((n.getID() == NpcId.NEZIKCHENED.id()) && (n.getAttribute("spawnedFor", null) != null)) && (!n.getAttribute("spawnedFor").equals(p));
+    }
 
-	@Override
-	public boolean blockPlayerAttackNpc(Player p, Npc n) {
-		if (n.getID() == NpcId.NEZIKCHENED.id()) {
-			if ((n.getAttribute("spawnedFor", null) != null && !n.getAttribute("spawnedFor").equals(p)) || !atQuestStages(p, Quests.LEGENDS_QUEST, 3, 7, 8)) {
-				message(p, 1300, "Your attack glides straight through the Demon.");
-				message(p, 600, "as if it wasn't really there.");
-				if (n != null)
-					n.remove();
-				return true;
-			}
-		}
-		return false;
-	}
+    @Override
+    public GameStateEvent onPlayerRangeNpc(Player p, Npc n) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    if (((n.getID() == NpcId.NEZIKCHENED.id()) && (n.getAttribute("spawnedFor", null) != null)) && (!n.getAttribute("spawnedFor").equals(p))) {
+                        p.message("Your attack passes through");
+                        n.remove();
+                    }
+                    return null;
+                });
+            }
+        };
+    }
+
+    @Override
+    public boolean blockPlayerAttackNpc(Player p, Npc n) {
+        if (n.getID() == NpcId.NEZIKCHENED.id()) {
+            if (((n.getAttribute("spawnedFor", null) != null) && (!n.getAttribute("spawnedFor").equals(p))) || (!Functions.atQuestStages(p, Quests.LEGENDS_QUEST, 3, 7, 8))) {
+                Functions.___message(p, 1300, "Your attack glides straight through the Demon.");
+                Functions.___message(p, 600, "as if it wasn't really there.");
+                if (n != null)
+                    n.remove();
+
+                return true;
+            }
+        }
+        return false;
+    }
 }
+

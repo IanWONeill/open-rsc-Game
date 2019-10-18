@@ -1,65 +1,63 @@
 package com.openrsc.server.plugins.npcs.ardougne.east;
 
+
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.event.rsc.GameStateEvent;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.plugins.Functions;
 import com.openrsc.server.plugins.ShopInterface;
 import com.openrsc.server.plugins.listeners.action.TalkToNpcListener;
 import com.openrsc.server.plugins.listeners.executive.TalkToNpcExecutiveListener;
+import java.util.concurrent.Callable;
 
-import static com.openrsc.server.plugins.Functions.*;
 
-public class ArdougneGeneralShop implements ShopInterface, TalkToNpcListener,
-	TalkToNpcExecutiveListener {
+public class ArdougneGeneralShop implements ShopInterface , TalkToNpcListener , TalkToNpcExecutiveListener {
+    private final Shop shop = new Shop(true, 15000, 130, 40, 3, new Item(ItemId.VIAL.id(), 10), new Item(ItemId.BRONZE_PICKAXE.id(), 2), new Item(ItemId.IRON_AXE.id(), 2), new Item(ItemId.COOKEDMEAT.id(), 2), new Item(ItemId.TINDERBOX.id(), 2), new Item(ItemId.BALL_OF_WOOL.id(), 2), new Item(ItemId.BRONZE_ARROWS.id(), 30), new Item(ItemId.ROPE.id(), 1), new Item(ItemId.PAPYRUS.id(), 50), new Item(ItemId.SLEEPING_BAG.id(), 10));
 
-	private final Shop shop = new Shop(true, 15000, 130, 40, 3, new Item(ItemId.VIAL.id(),
-		10), new Item(ItemId.BRONZE_PICKAXE.id(), 2), new Item(ItemId.IRON_AXE.id(), 2), new Item(ItemId.COOKEDMEAT.id(), 2),
-		new Item(ItemId.TINDERBOX.id(), 2), new Item(ItemId.BALL_OF_WOOL.id(), 2), new Item(ItemId.BRONZE_ARROWS.id(), 30),
-		new Item(ItemId.ROPE.id(), 1), new Item(ItemId.PAPYRUS.id(), 50), new Item(ItemId.SLEEPING_BAG.id(), 10));
+    @Override
+    public boolean blockTalkToNpc(final Player p, final Npc n) {
+        return (n.getID() == NpcId.KORTAN.id()) || (n.getID() == NpcId.AEMAD.id());
+    }
 
-	@Override
-	public boolean blockTalkToNpc(final Player p, final Npc n) {
-		return n.getID() == NpcId.KORTAN.id() || n.getID() == NpcId.AEMAD.id();
-	}
+    @Override
+    public Shop[] getShops(World world) {
+        return new Shop[]{ shop };
+    }
 
-	@Override
-	public Shop[] getShops(World world) {
-		return new Shop[]{shop};
-	}
+    @Override
+    public boolean isMembers() {
+        return true;
+    }
 
-	@Override
-	public boolean isMembers() {
-		return true;
-	}
+    @Override
+    public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
+        return new GameStateEvent(p.getWorld(), p, 0, (getClass().getSimpleName() + " ") + Thread.currentThread().getStackTrace()[1].getMethodName()) {
+            public void init() {
+                addState(0, () -> {
+                    Functions.___npcTalk(p, n, "Hello you look like a bold adventurer", "You've come to the right place for adventurer's equipment");
+                    final int option = // do not send over
+                    Functions.___showMenu(p, n, false, "Oh that sounds intersting", "No I've come to the wrong place");
+                    if (option == 0) {
+                        Functions.___playerTalk(p, n, "Oh that sounds interesting");
+                        p.setAccessingShop(shop);
+                        ActionSender.showShop(p, shop);
+                    } else
+                        if (option == 1) {
+                            Functions.___playerTalk(p, n, "No I've come to the wrong place");
+                            Functions.___npcTalk(p, n, "Hmph");
+                        }
 
-	@Override
-	public GameStateEvent onTalkToNpc(final Player p, final Npc n) {
-		return new GameStateEvent(p.getWorld(), p, 0, getClass().getSimpleName() + " " + Thread.currentThread().getStackTrace()[1].getMethodName()) {
-			public void init() {
-				addState(0, () -> {
-					npcTalk(p, n, "Hello you look like a bold adventurer",
-						"You've come to the right place for adventurer's equipment");
-					final int option = showMenu(p, n, false, //do not send over
-						"Oh that sounds intersting",
-						"No I've come to the wrong place");
-					if (option == 0) {
-						playerTalk(p, n, "Oh that sounds interesting");
-						p.setAccessingShop(shop);
-						ActionSender.showShop(p, shop);
-					} else if (option == 1) {
-						playerTalk(p, n, "No I've come to the wrong place");
-						npcTalk(p, n, "Hmph");
-					}
-
-					return null;
-				});
-			}
-		};
-	}
+                    return null;
+                });
+            }
+        };
+    }
 }
+
